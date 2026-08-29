@@ -6,7 +6,7 @@ Central Homey monitoring for battery-powered devices that stop reporting, even w
 
 ## Current status
 
-Local flow proposal prepared. No central watchdog has been installed in Homey.
+Advanced Flow installed in Homey, disabled, in the `Codex Flows` folder. It has not run yet.
 
 ## Current version
 
@@ -29,7 +29,7 @@ Local flow proposal prepared. No central watchdog has been installed in Homey.
 ## Open tasks
 
 - Review the generated proposal and device inventory.
-- Explicitly approve disabled installation, then separately approve activation after inspection.
+- Inspect the disabled Flow in Homey, then explicitly approve activation when ready.
 
 ## Known issues
 
@@ -37,12 +37,13 @@ Local flow proposal prepared. No central watchdog has been installed in Homey.
 
 ## Testing
 
-- 2026-08-29: `node --test` passed (2 tests); proposal generation and installer dry-run completed without Homey changes.
+- 2026-08-29: `node --test` passed (2 tests); proposal generation, installer dry-run, and post-install verification completed.
 
 ## Git / releases
 
 - Dedicated local Git repository in this directory.
 - No remote and no release tag.
+- Installed Flow ID: `11111111-1111-4111-8111-111111111111` (disabled).
 
 ## Next step
 

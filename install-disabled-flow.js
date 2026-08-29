@@ -44,8 +44,9 @@ async function main() {
   if (!state) {
     state = await homey.logic.createVariable({ variable: { name: STATE_VARIABLE_NAME, type: 'string', value: '{}' } });
   }
-  const batteryFolder = folders.find(folder => folder.name === 'Battery');
-  const flow = buildFlow({ stateVariableId: state.id, folderId: batteryFolder?.id || null });
+  const codexFlowsFolder = folders.find(folder => folder.name === 'Codex Flows');
+  if (!codexFlowsFolder) throw new Error('Homey folder "Codex Flows" is missing');
+  const flow = buildFlow({ stateVariableId: state.id, folderId: codexFlowsFolder.id });
   validateFlow(flow);
   const created = await homey.flow.createAdvancedFlow({ advancedflow: flow });
   const verified = await homey.flow.getAdvancedFlow({ id: created.id, $cache: false });
