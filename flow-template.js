@@ -5,8 +5,8 @@ const crypto = require('crypto');
 const FLOW_NAME = 'Codex – Zentraler Batterie-Watchdog (Freigabe ausstehend)';
 const STATE_VARIABLE_NAME = 'CODEX_BATTERY_WATCHDOG_ALERT_STATE';
 const CHECK_INTERVAL_HOURS = 6;
-const STALE_AFTER_HOURS = 48;
-const REPEAT_AFTER_HOURS = 24;
+const STALE_AFTER_HOURS = 24;
+const REPEAT_AFTER_HOURS = 6;
 
 function cardId() {
   return crypto.randomUUID();

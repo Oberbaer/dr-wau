@@ -6,7 +6,7 @@ Central Homey monitoring for battery-powered devices that stop reporting, even w
 
 ## Current status
 
-Advanced Flow installed in Homey, disabled, in the `Codex Flows` folder. It has not run yet.
+Advanced Flow is active in Homey in the `Codex Flows` folder. It checks every 6 hours, warns after 24 hours without a device report, and repeats unchanged-fault notifications every 6 hours.
 
 ## Current version
 
@@ -22,14 +22,14 @@ Advanced Flow installed in Homey, disabled, in the `Codex Flows` folder. It has 
 ## Important decisions
 
 - One central check runs every six hours instead of a timer per device.
-- A device is stale after 48 hours without a Homey `lastSeenAt` update.
-- Repeated notifications for an unchanged fault are limited to once per 24 hours.
-- Installation does not enable the flow.
+- A device is stale after 24 hours without a Homey `lastSeenAt` update.
+- Repeated notifications for an unchanged fault are limited to once every 6 hours.
+- The installer creates the Flow disabled; activation was a separate, user-approved step.
 
 ## Open tasks
 
 - Review the generated proposal and device inventory.
-- Inspect the disabled Flow in Homey, then explicitly approve activation when ready.
+- Monitor the first scheduled executions and adjust the 24-hour threshold only if normal devices produce false positives.
 
 ## Known issues
 
@@ -37,7 +37,7 @@ Advanced Flow installed in Homey, disabled, in the `Codex Flows` folder. It has 
 
 ## Testing
 
-- 2026-08-29: `node --test` passed (2 tests); proposal generation, installer dry-run, and post-install verification completed.
+- 2026-08-29: `node --test` passed (2 tests); proposal generation, installer dry-run, post-install verification, and live configuration verification completed. The active Flow contains the 24 h / 6 h thresholds.
 
 ## Git / releases
 
@@ -47,4 +47,4 @@ Advanced Flow installed in Homey, disabled, in the `Codex Flows` folder. It has 
 
 ## Next step
 
-Review `artifacts/central-battery-watchdog.flow.json`; after explicit approval, install it disabled in Homey.
+Monitor the first scheduled run and review its notification result.

@@ -1,6 +1,6 @@
 # Central Battery Watchdog for Homey
 
-This project prepares one Advanced Flow that checks battery-powered Homey devices every six hours. It alerts when a device has not reported for 48 hours, so a dead device does not keep showing an old, misleading battery percentage.
+This project prepares one Advanced Flow that checks battery-powered Homey devices every six hours. It alerts when a device has not reported for 24 hours, so a dead device does not keep showing an old, misleading battery percentage. For an unchanged fault, it can repeat the notification every six hours.
 
 The flow does not poll devices. It reads Homey's existing device state, so its CPU and RAM impact is minimal.
 
