@@ -37,7 +37,7 @@ Central Homey monitoring for battery-powered devices that stop reporting, even w
 ## Known issues
 
 - `lastSeenAt` detects silence, but cannot distinguish an empty battery from radio-range or Zigbee-mesh issues.
-- No dedicated mobile push recipient is configured; notifications target Homey's Timeline.
+- Push enabled for the three explicitly selected current Homey users, in addition to Timeline. Phone delivery depends on their Homey app notification permissions; actual handset receipt is not verified.
 - 9 of 113 battery-capable entries currently have no valid lastSeenAt; reported explicitly as monitoring unknown, not confirmed outages. Includes virtual/vehicle/energy entries because capability filtering is broad.
 - Receiving traffic does not prove that a motion sensor still detects motion correctly.
 - Local tests and HomeyScript dry-run passed; real notification delivery after repair has not been exercised manually. Visual layout was not inspected; card positions/connections were preserved.
@@ -58,4 +58,13 @@ Central Homey monitoring for battery-powered devices that stop reporting, even w
 
 ## Next step
 
-Check Timeline delivery after the next scheduled run. Clarify desired mobile push recipient if push is wanted; review unknown-timestamp device coverage separately. Commit requires explicit approval.
+Check Timeline and handset receipt after the next scheduled run; review unknown-timestamp device coverage separately. Commit requires explicit approval.
+
+## Push addition (2026-09-07)
+
+- Strategy A: updated the same active Flow after explicit user instruction; retained ID, name, folder, positions and connections. No new Flow or ALT version.
+- 8 local tests passed, including all three recipients and push-failure handling. HomeyScript dry-run and exact live code readback passed; no manual test notification sent.
+- Repair tooling uses WATCHDOG_PUSH_USER_IDS for explicit recipient selection and preserves embedded recipients on later repairs.
+- Before-change snapshot: ignored artifacts/live-before-repair-1788793970471.json.
+- Changes on fix/watchdog-delivery remain uncommitted. Existing user modification to AGENTS.md preserved.
+- If a recipient fails mid-batch, already successful recipients may receive a duplicate on retry; failed delivery is never suppressed.

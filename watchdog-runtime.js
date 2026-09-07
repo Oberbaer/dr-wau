@@ -40,6 +40,13 @@ async function watchdog(Homey, config) {
       args: { text: '⚠️ Batterie-Watchdog: ' + batch.map(d => d.text).join('; ') },
     });
     if (result?.error || result === false) throw new Error('Watchdog notification failed: ' + JSON.stringify(result));
+    for (const user of config.pushRecipients || []) {
+      const push = await Homey.flow.runFlowCardAction({
+        id: 'homey:manager:mobile:push_text',
+        args: { user, text: 'Batterie-Watchdog: ' + batch.map(d => d.text).join('; ') },
+      });
+      if (push?.error || push === false) throw new Error('Watchdog push failed: ' + JSON.stringify(push));
+    }
     for (const device of batch) next.devices[device.id].notifiedAt = now;
     await persist();
   }

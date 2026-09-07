@@ -16,7 +16,21 @@ const { buildWatchdogScript } = require('./flow-template');
   const [cardId, card] = match[0];
   const state = Object.values(await h.logic.getVariables()).find(v => v.name === 'CODEX_BATTERY_WATCHDOG_ALERT_STATE');
   if (!state) throw new Error('State variable missing');
-  const code = buildWatchdogScript({ stateVariableId: state.id });
+  let pushRecipients = [];
+  if (process.env.WATCHDOG_PUSH_USER_IDS) {
+    const ids = process.env.WATCHDOG_PUSH_USER_IDS.split(',');
+    const users = Object.values(await h.users.getUsers());
+    pushRecipients = ids.map(id => {
+      const user = users.find(u => u.id === id);
+      if (!user) throw new Error('Requested push recipient no longer exists');
+      return { id: user.id, name: user.name };
+    });
+  } else {
+    // Preserve the explicit recipient configuration during future repairs.
+    const matchConfig = card.args.code.match(/\)\(Homey, (.*)\);$/s);
+    if (matchConfig) pushRecipients = JSON.parse(matchConfig[1]).pushRecipients || [];
+  }
+  const code = buildWatchdogScript({ stateVariableId: state.id, pushRecipients });
   const prefix = `const messages = []; let saved;
 const preview = {call: options => Homey.call(options),logic:{getVariables:()=>Homey.logic.getVariables(),updateVariable:async options=>{saved=JSON.parse(options.variable.value);}},flow:{runFlowCardAction:async options=>{messages.push(options.args.text);return {};}}};
 `;
@@ -37,6 +51,11 @@ const preview = {call: options => Homey.call(options),logic:{getVariables:()=>Ho
   for (const c of Object.values(cards)) {
     if (c.type === 'note' && String(c.value).includes('BATTERIE-WATCHDOG')) {
       c.value = 'BATTERIE-WATCHDOG\nAlle 6 h prüfen; Warnung ab 24 h ohne Lebenszeichen, Wiederholung nach 6 h. Fehlender Zeitstempel wird als Überwachung unklar gemeldet. Homey-Timeline: alle betroffenen Geräte; Versandstatus erst nach erfolgreicher Aktion. Kein separater Push-Empfänger konfiguriert.';
+    }
+  }
+  for (const c of Object.values(cards)) {
+    if (c.type === 'note' && String(c.value).includes('BATTERIE-WATCHDOG') && pushRecipients.length) {
+      c.value = c.value.replace('Kein separater Push-Empfänger konfiguriert.', 'Handy-Push zusätzlich an: ' + pushRecipients.map(u => u.name).join(', ') + '.');
     }
   }
   await h.flow.updateAdvancedFlow({ id, advancedflow: { name: original.name, folder: original.folder, enabled: original.enabled, cards } });

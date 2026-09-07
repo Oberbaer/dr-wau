@@ -12,10 +12,10 @@ function cardId() {
   return crypto.randomUUID();
 }
 
-function buildWatchdogScript({ stateVariableId }) {
+function buildWatchdogScript({ stateVariableId, pushRecipients = [] }) {
   if (!stateVariableId) throw new Error('stateVariableId is required');
   const runtime = require('./watchdog-runtime');
-  return '// CODEX_BATTERY_WATCHDOG_V2\nreturn (' + runtime.toString() + ')(Homey, ' + JSON.stringify({ stateVariableId, staleHours: STALE_AFTER_HOURS, repeatHours: REPEAT_AFTER_HOURS }) + ');';
+  return '// CODEX_BATTERY_WATCHDOG_V2\nreturn (' + runtime.toString() + ')(Homey, ' + JSON.stringify({ stateVariableId, staleHours: STALE_AFTER_HOURS, repeatHours: REPEAT_AFTER_HOURS, pushRecipients }) + ');';
 }
 
 function buildFlow({ stateVariableId, folderId = null }) {
