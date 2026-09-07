@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+
+- Repair existing watchdog notification delivery through the available Homey Flow action.
+- Save notification suppression only after successful delivery; discard unreliable legacy suppression.
+- Report all affected devices and distinguish missing timestamps from confirmed silence.
+
 ### Added
 
 - Initial central battery-device watchdog proposal.

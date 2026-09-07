@@ -19,9 +19,9 @@ test('creates a disabled, connected flow proposal', () => {
 
 test('embedded watchdog uses the agreed thresholds and notification deduplication', () => {
   const script = buildWatchdogScript({ stateVariableId: 'test-state-variable' });
-  assert.match(script, new RegExp(`STALE_AFTER_MS = ${STALE_AFTER_HOURS}`));
-  assert.match(script, /Homey\.notifications\.createNotification/);
-  assert.match(script, /REPEAT_AFTER_MS/);
+  assert.match(script, /"staleHours":24/);
+  assert.match(script, /notifications:create_notification/);
+  assert.match(script, /"repeatHours":6/);
   assert.match(script, /lastSeenAt/);
   assert.equal(CHECK_INTERVAL_HOURS, 6);
 });

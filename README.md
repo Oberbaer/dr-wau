@@ -12,3 +12,7 @@ The flow does not poll devices. It reads Homey's existing device state, so its C
 4. Review the disabled Flow in Homey before enabling it.
 
 No Homey state is changed by proposal generation or tests.
+
+The watchdog posts to Homey's Timeline; no dedicated mobile push recipient is configured. Missing lastSeenAt values produce monitoring-unknown warnings. Device traffic is a sign of communication, not proof of full sensor functionality.
+
+For an approved direct repair, set WATCHDOG_FLOW_ID and run `node repair-existing-flow.js` for a HomeyScript dry-run with notification/state writes intercepted. Add `--apply --approve` only for the approved update; an ignored local backup is created before changing the existing Flow.
