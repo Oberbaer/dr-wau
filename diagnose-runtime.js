@@ -1,9 +1,32 @@
 'use strict';
-const A = require('homey/lib/AthomApi');
-(async () => {
-  const h = await new A().getActiveHomey();
-  const code = `const raw = await Homey.call({method:'GET',path:'/api/manager/devices/device/'});
+
+const { loadAthomApi } = require('./homey-api');
+
+function deviceNameFromEnvironment(environment = process.env) {
+  const name = environment.WATCHDOG_DEVICE_NAME?.trim();
+  if (!name) throw new Error('Set WATCHDOG_DEVICE_NAME to the device name to inspect.');
+  return name;
+}
+
+function buildDiagnosticCode(deviceName) {
+  const name = JSON.stringify(deviceName);
+  return `const targetName = ${name};
+const raw = await Homey.call({ method: 'GET', path: '/api/manager/devices/device/' });
 const wrapped = await Homey.devices.getDevices();
-return JSON.stringify({raw:Object.values(raw).filter(d=>/Example sensor/.test(d.name)).map(d=>({id:d.id,lastSeenAt:d.lastSeenAt})),wrapped:Object.values(wrapped).filter(d=>/Example sensor/.test(d.name)).map(d=>({id:d.id,lastSeenAt:d.lastSeenAt})),notificationMethod:typeof Homey.notifications.createNotification});`;
-  console.log(JSON.stringify(await h.flow.runFlowCardAction({id:'homey:app:com.athom.homeyscript:runCodeReturnsString_v2',args:{code}}),null,2));
-})().catch(e=>{console.error(e.message);process.exitCode=1;});
+const matches = devices => Object.values(devices).filter(device => device.name === targetName).map(device => ({ id: device.id, lastSeenAt: device.lastSeenAt }));
+return JSON.stringify({ raw: matches(raw), wrapped: matches(wrapped), notificationMethod: typeof Homey.notifications.createNotification });`;
+}
+
+async function main() {
+  const AthomApi = loadAthomApi();
+  const homey = await new AthomApi().getActiveHomey();
+  const result = await homey.flow.runFlowCardAction({
+    id: 'homey:app:com.athom.homeyscript:runCodeReturnsString_v2',
+    args: { code: buildDiagnosticCode(deviceNameFromEnvironment()) },
+  });
+  console.log(JSON.stringify(result, null, 2));
+}
+
+if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });
+
+module.exports = { buildDiagnosticCode, deviceNameFromEnvironment };

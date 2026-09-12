@@ -1,0 +1,10 @@
+{
+  "name": "homey-battery-watchdog",
+  "private": true,
+  "description": "Generate a disabled Homey Advanced Flow that detects battery-capable devices that have stopped reporting.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "proposal": "node generate-flow-proposal.js"
+  }
+}

@@ -2,13 +2,14 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('node:assert/strict');
-const A = require('homey/lib/AthomApi');
+const { loadAthomApi } = require('./homey-api');
 const { buildWatchdogScript } = require('./flow-template');
 
 (async () => {
   const id = process.env.WATCHDOG_FLOW_ID;
   if (!id) throw new Error('Set WATCHDOG_FLOW_ID to the reviewed existing Flow ID');
-  const h = await new A().getActiveHomey();
+  const AthomApi = loadAthomApi();
+  const h = await new AthomApi().getActiveHomey();
   const original = JSON.parse(JSON.stringify(await h.flow.getAdvancedFlow({ id })));
   const entries = Object.entries(original.cards);
   const match = entries.filter(([, c]) => c.type === 'action' && c.args?.code?.includes('CODEX_BATTERY_WATCHDOG_'));
@@ -42,7 +43,7 @@ const preview = {call: options => Homey.call(options),logic:{getVariables:()=>Ho
   if (!process.argv.includes('--apply') || !process.argv.includes('--approve')) return;
   const backupDir = path.join(__dirname, 'artifacts');
   fs.mkdirSync(backupDir, { recursive: true });
-  const backupPath = path.join(backupDir, 'live-before-repair-' + Date.now() + '.json');
+  const backupPath = path.join(backupDir, 'backup-before-repair-' + Date.now() + '.json');
   fs.writeFileSync(backupPath, JSON.stringify({ flow: original, state }, null, 2), { flag: 'wx' });
   const current = JSON.parse(JSON.stringify(await h.flow.getAdvancedFlow({ id })));
   assert.deepEqual(current, original, 'Flow changed during review; aborting');

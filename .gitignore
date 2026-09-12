@@ -18,7 +18,8 @@ yarn-debug.log*
 pnpm-debug.log*
 
 # Lokal erzeugte Homey-Artefakte
-artifacts/*.json
+artifacts/
+PROJECT_NOTES.local.md
 
 # Tests / Coverage
 coverage/
