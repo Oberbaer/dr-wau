@@ -2,7 +2,12 @@
 
 ## What it does
 
-This project generates a Homey Advanced Flow that checks battery-capable devices every six hours. It warns when a device has not reported to Homey for 24 hours, even if Homey still displays an old battery percentage. An unchanged warning can repeat after six hours.
+This repository contains two related implementations:
+
+- Advanced Flow tooling that checks battery-capable devices every six hours. It warns when a device has not reported to Homey for 24 hours, even if Homey still displays an old battery percentage. An unchanged warning can repeat after six hours.
+- [`Homey_Watchdog`](Homey_Watchdog/README.md), a Homey app fork that combines the earlier Automation Health diagnostics with the same configurable battery silence monitoring.
+
+The app emits a `battery_watchdog_warning` Flow trigger for mobile delivery. A compact companion Flow forwards its `text` token to Homey's native all-users push action because Homey does not grant apps permission to execute that action directly.
 
 The generated watchdog only reads existing Homey data. It does not poll or wake battery devices.
 
@@ -43,14 +48,14 @@ The generated Flow is disabled by default. `--apply --approve` is the intentiona
 | --- | --- | --- |
 | `HOMEY_CLI_MODULE_DIR` | live scripts | Explicit directory containing the globally installed `homey` npm module, if automatic discovery is unavailable. |
 | `WATCHDOG_FLOW_ID` | `repair-existing-flow.js` | ID of a reviewed Flow for repair dry-run or approved repair. |
-| `WATCHDOG_PUSH_USER_IDS` | `repair-existing-flow.js` | Comma-separated approved Homey user IDs for optional mobile push delivery. |
+| `WATCHDOG_PUSH_USER_IDS` | `repair-existing-flow.js` | Comma-separated approved Homey user IDs, or `__all__` for Homey's native all-users recipient. |
 | `WATCHDOG_DEVICE_NAME` | `diagnose-runtime.js` | Exact device name for the read-only diagnostic; it has no default. |
 
 Use fake values in scripts and documentation. Keep real IDs in private configuration or ignored local artifacts.
 
 ## Optional push recipients
 
-Timeline notification is always attempted first. During a repair, set `WATCHDOG_PUSH_USER_IDS` only for approved recipients. Without it, the repair script preserves the recipients embedded in the reviewed Flow.
+Timeline notification is always attempted first. During a repair, set `WATCHDOG_PUSH_USER_IDS` only for approved recipients. Use `__all__` to let Homey deliver to all current users. Without the variable, the repair script preserves the recipients embedded in the reviewed Flow.
 
 ## Generated Flow behavior
 
@@ -59,6 +64,8 @@ The Flow runs every six hours and includes devices advertising `measure_battery`
 ## Testing
 
 Run `npm test` for the local unit tests. `npm run proposal` validates and writes a disabled Flow proposal. Neither command contacts Homey.
+
+For the app, run `npm run test:app`, `npm run validate:app`, and `npm run build:app`. These commands test and build locally; they do not install the app on Homey or publish it.
 
 The optional diagnostic is read-only with respect to Homey state, but it does contact Homey:
 

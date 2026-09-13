@@ -6,7 +6,8 @@ All global Codex rules remain applicable.
 
 ## 1. Scope
 
-This repository contains the Homey Battery Watchdog tooling and documentation.
+This repository contains the Homey Battery Watchdog tooling, documentation,
+and the `Homey_Watchdog` Homey app source.
 
 Keep work limited to:
 
@@ -15,10 +16,16 @@ Keep work limited to:
 - notification logic
 - Flow proposal/generation
 - Flow installation tooling
+- the combined Homey Watchdog app
+- health-report analysis inherited from the Automation Health codebase
+- app settings, manifests, tests, and publish validation
 - related tests
 - documentation
 
-Do not mix unrelated Homey projects or repositories.
+Do not mix other unrelated Homey projects or repositories.
+
+The app fork is intentionally in scope. Keep its app id, settings keys, and
+release artifacts separate from the already-installed Automation Health app.
 
 ## 2. Homey Safety
 

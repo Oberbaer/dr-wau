@@ -22,6 +22,7 @@ const { buildWatchdogScript } = require('./flow-template');
     const ids = process.env.WATCHDOG_PUSH_USER_IDS.split(',');
     const users = Object.values(await h.users.getUsers());
     pushRecipients = ids.map(id => {
+      if (id === '__all__') return { id: '__all__', name: 'Alle' };
       const user = users.find(u => u.id === id);
       if (!user) throw new Error('Requested push recipient no longer exists');
       return { id: user.id, name: user.name };

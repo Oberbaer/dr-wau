@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Generate a reviewable, disabled Homey Advanced Flow that detects battery-capable devices which have stopped reporting.
+Maintain a reviewable Advanced Flow and a separate Homey Watchdog app that detect battery-capable devices which have stopped reporting.
 
 ## Architecture
 
@@ -11,6 +11,8 @@ Generate a reviewable, disabled Homey Advanced Flow that detects battery-capable
 - `homey-api.js` resolves the Homey CLI API from a local dependency, an explicitly configured module directory, or the global npm directory.
 - `generate-flow-proposal.js` produces ignored local JSON for review.
 - Live install and repair scripts require explicit `--apply --approve` flags.
+- `Homey_Watchdog/` is a fork of the local Automation Health 0.2.1 source. It retains the read-only health analysis and adds scheduled battery monitoring.
+- Mobile push is delivered by a compact companion Flow listening to the app's warning trigger; Timeline delivery remains inside the app.
 
 ## Design decisions
 
@@ -18,6 +20,7 @@ Generate a reviewable, disabled Homey Advanced Flow that detects battery-capable
 - Device inspection is read-only and only considers `measure_battery` and `alarm_battery` capabilities.
 - Missing timestamps are monitoring unknown, not a known low-battery condition.
 - The generated Flow is disabled by default.
+- Live mobile delivery can use Homey's native `__all__` recipient; a real test invocation was accepted by Homey.
 
 ## Known limitations
 
@@ -30,4 +33,4 @@ Run `npm test` for local runtime, Flow, and diagnostic configuration tests. Run 
 
 ## Release status and next steps
 
-The project is prepared as a sanitized source tree for a future 0.1.0 public release. Before publishing a new repository, rerun the public-data scan, tests, proposal generation, and review the proposed Flow in a non-production context.
+The combined source is maintained on `feature/homey-watchdog-app`. Before publication, rerun the privacy/license audit, tests, Homey publish validation, and staged diff review.

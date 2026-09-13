@@ -1,0 +1,21 @@
+{
+  "id": "battery_watchdog_warning",
+  "title": {
+    "en": "A battery watchdog warning is sent",
+    "de": "Eine Batterie-Watchdog-Warnung wird gesendet"
+  },
+  "hint": {
+    "en": "Provides the complete warning text for a Homey mobile-push action.",
+    "de": "Liefert den vollständigen Warntext für eine Homey-Handy-Push-Aktion."
+  },
+  "tokens": [
+    {
+      "name": "text",
+      "type": "string",
+      "title": {
+        "en": "Warning text",
+        "de": "Warntext"
+      }
+    }
+  ]
+}
