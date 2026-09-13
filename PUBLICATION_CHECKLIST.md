@@ -1,6 +1,6 @@
 # Publication checklist
 
-Last local review: 2026-09-12
+Last local review: 2026-09-13
 
 ## Current tree
 
@@ -35,11 +35,14 @@ Last local review: 2026-09-12
   Athom's current `homey-api` Socket.IO chain, with no high or critical runtime
   advisories. See `Homey_Watchdog/SECURITY.md`.
 
-## Blocking history finding
+## History sanitization
 
-Older commits still contain a private device label, a live Homey Flow UUID,
-and a local account alias. They are absent from the current tree but remain in
-Git history. Do not make this repository public or claim a fully sanitized
-history until all refs are rewritten or a new clean repository is created and
-the result is rescanned. History rewriting and force-pushing require explicit
-approval.
+On 2026-09-13, all local branches and remote-tracking refs were rewritten to
+remove the previously identified private device label, live Homey Flow UUID,
+local account alias, local path, and monitoring-count detail. The reachable
+history of `main`, `chore/public-readiness`, `feature/homey-watchdog-app`, and
+`fix/watchdog-delivery` was rescanned for those values with no matches.
+
+The pre-rewrite repository is retained only as an ignored local Git bundle for
+rollback. The rewritten branch tips must be force-pushed before this result is
+reflected on the remote; existing clones will need to resynchronize afterward.
