@@ -1,0 +1,6 @@
+.homeycompose/
+.homeychangelog.json
+docs/
+test/
+tools/
+assets/images/source.svg

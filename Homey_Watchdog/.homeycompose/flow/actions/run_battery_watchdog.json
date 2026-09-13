@@ -1,0 +1,11 @@
+{
+  "id": "run_battery_watchdog",
+  "title": {
+    "en": "Run the battery watchdog now",
+    "de": "Batterie-Watchdog jetzt ausführen"
+  },
+  "hint": {
+    "en": "Checks battery-capable devices and sends configured notifications.",
+    "de": "Prüft batteriefähige Geräte und sendet die konfigurierten Meldungen."
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "0.3.0": {
+    "en": "Combine Automation Health with scheduled battery-device silence alerts, owner-only migration, Timeline notifications and optional push to all Homey users.",
+    "de": "Automation Health mit geplanten Ausfallwarnungen für Batteriegeräte, geschützter Migration, Timeline-Meldungen und optionalem Push an alle Homey-Benutzer kombiniert."
+  },
+  "0.2.1": {
+    "en": "Filter active and archived findings by flows, devices, apps or maintenance.",
+    "de": "Aktive und archivierte Befunde lassen sich nach Flows, Geräten, Apps oder Wartbarkeit filtern."
+  },
+  "0.2.0": {
+    "en": "Add persistent finding priorities, statuses, notes and an ignore board. Ignored findings remain archived but no longer affect future scores.",
+    "de": "Dauerhafte Prioritäten, Status, Notizen und eine Ignorieren-Schalttafel ergänzt. Ignorierte Befunde bleiben archiviert, beeinflussen künftige Scores aber nicht mehr."
+  },
+  "0.1.5": {
+    "en": "Load the required Homey settings bridge so the configuration window can finish opening.",
+    "de": "Die erforderliche Homey-Settings-Bridge wird geladen, damit sich das Konfigurationsfenster vollständig öffnet."
+  },
+  "0.1.4": {
+    "en": "Fix the Homey settings handshake so the configuration window opens reliably.",
+    "de": "Der Homey-Settings-Handshake wurde korrigiert, damit sich das Konfigurationsfenster zuverlässig öffnet."
+  },
+  "0.1.3": {
+    "en": "Use diminishing score reductions so several related findings cannot abruptly force a category to zero.",
+    "de": "Abnehmende Score-Abzüge verhindern, dass mehrere verwandte Befunde eine Kategorie abrupt auf null setzen."
+  },
+  "0.1.2": {
+    "en": "Score mixed severities independently and classify stale battery readings before low values.",
+    "de": "Gemischte Schweregrade werden getrennt bewertet; veraltete Batteriewerte werden vor niedrigen Werten klassifiziert."
+  },
+  "0.1.1": {
+    "en": "Prevent unknown battery values from being interpreted as 0%.",
+    "de": "Unbekannte Batteriewerte werden nicht mehr als 0 % interpretiert."
+  },
+  "0.1.0": {
+    "en": "Initial read-only health scan prototype.",
+    "de": "Erster rein lesender Gesundheitscheck-Prototyp."
+  }
+}

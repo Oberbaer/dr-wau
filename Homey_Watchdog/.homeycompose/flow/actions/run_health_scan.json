@@ -1,0 +1,10 @@
+{
+  "title": {
+    "en": "Run a read-only health scan",
+    "de": "Einen rein lesenden Gesundheitscheck ausführen"
+  },
+  "hint": {
+    "en": "Reads flows, devices, apps and variables. It never changes them.",
+    "de": "Liest Flows, Geräte, Apps und Variablen. Es werden keine Änderungen vorgenommen."
+  }
+}

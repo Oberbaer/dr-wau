@@ -1,0 +1,153 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.oberbaer.homeywatchdog",
+  "version": "0.3.0",
+  "compatibility": ">=12.4.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Homey Watchdog",
+    "de": "Homey Watchdog"
+  },
+  "description": {
+    "en": "Health checks and battery-device silence alerts for Homey Pro.",
+    "de": "Gesundheitschecks und Ausfallwarnungen für Batteriegeräte auf Homey Pro."
+  },
+  "category": [
+    "tools"
+  ],
+  "brandColor": "#0B6B5F",
+  "permissions": [
+    "homey:manager:api"
+  ],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Oberbaer"
+  },
+  "api": {
+    "getReport": {
+      "method": "get",
+      "path": "/report",
+      "public": false,
+      "role": "owner"
+    },
+    "runScan": {
+      "method": "post",
+      "path": "/scan",
+      "public": false,
+      "role": "owner"
+    },
+    "updateFinding": {
+      "method": "post",
+      "path": "/finding",
+      "public": false,
+      "role": "owner"
+    },
+    "getWatchdog": {
+      "method": "get",
+      "path": "/watchdog",
+      "public": false,
+      "role": "owner"
+    },
+    "updateWatchdog": {
+      "method": "post",
+      "path": "/watchdog",
+      "public": false,
+      "role": "owner"
+    },
+    "runWatchdog": {
+      "method": "post",
+      "path": "/watchdog/run",
+      "public": false,
+      "role": "owner"
+    },
+    "testWatchdogNotification": {
+      "method": "post",
+      "path": "/watchdog/test",
+      "public": false,
+      "role": "owner"
+    },
+    "importAutomationHealth": {
+      "method": "post",
+      "path": "/migration/automation-health",
+      "public": false,
+      "role": "owner"
+    }
+  },
+  "flow": {
+    "triggers": [
+      {
+        "id": "battery_watchdog_warning",
+        "title": {
+          "en": "A battery watchdog warning is sent",
+          "de": "Eine Batterie-Watchdog-Warnung wird gesendet"
+        },
+        "hint": {
+          "en": "Provides the complete warning text for a Homey mobile-push action.",
+          "de": "Liefert den vollständigen Warntext für eine Homey-Handy-Push-Aktion."
+        },
+        "tokens": [
+          {
+            "name": "text",
+            "type": "string",
+            "title": {
+              "en": "Warning text",
+              "de": "Warntext"
+            }
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "title": {
+          "en": "The health score is below [[score]]",
+          "de": "Der Gesundheitswert liegt unter [[score]]"
+        },
+        "titleFormatted": {
+          "en": "The health score is below [[score]]",
+          "de": "Der Gesundheitswert liegt unter [[score]]"
+        },
+        "args": [
+          {
+            "name": "score",
+            "type": "number",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "id": "health_score_below"
+      }
+    ],
+    "actions": [
+      {
+        "id": "run_battery_watchdog",
+        "title": {
+          "en": "Run the battery watchdog now",
+          "de": "Batterie-Watchdog jetzt ausführen"
+        },
+        "hint": {
+          "en": "Checks battery-capable devices and sends configured notifications.",
+          "de": "Prüft batteriefähige Geräte und sendet die konfigurierten Meldungen."
+        }
+      },
+      {
+        "title": {
+          "en": "Run a read-only health scan",
+          "de": "Einen rein lesenden Gesundheitscheck ausführen"
+        },
+        "hint": {
+          "en": "Reads flows, devices, apps and variables. It never changes them.",
+          "de": "Liest Flows, Geräte, Apps und Variablen. Es werden keine Änderungen vorgenommen."
+        },
+        "id": "run_health_scan"
+      }
+    ]
+  }
+}

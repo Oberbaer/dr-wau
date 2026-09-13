@@ -2,7 +2,7 @@
 
 const crypto = require('crypto');
 
-const FLOW_NAME = 'Codex – Zentraler Batterie-Watchdog (Freigabe ausstehend)';
+const FLOW_NAME = 'Zentraler Batterie-Watchdog (vor Aktivierung prüfen)';
 const STATE_VARIABLE_NAME = 'CODEX_BATTERY_WATCHDOG_ALERT_STATE';
 const CHECK_INTERVAL_HOURS = 6;
 const STALE_AFTER_HOURS = 24;
@@ -47,7 +47,7 @@ function buildFlow({ stateVariableId, folderId = null }) {
         id: 'undefined:undefined',
         color: 'yellow',
         x: 40, y: -100, width: 1350, height: 180,
-        value: `BATTERIE-WATCHDOG V1\nPrüft alle ${CHECK_INTERVAL_HOURS} Stunden batterie-fähige Geräte. Meldung ab ${STALE_AFTER_HOURS} Stunden ohne Lebenszeichen; Wiederholung frühestens nach ${REPEAT_AFTER_HOURS} Stunden. Der Flow liest nur vorhandene Homey-Daten und fragt keine Geräte aktiv ab.`,
+        value: `BATTERIE-WATCHDOG V2\nPrüft alle ${CHECK_INTERVAL_HOURS} Stunden batteriefähige Geräte. Meldung ab ${STALE_AFTER_HOURS} Stunden ohne Lebenszeichen; Wiederholung frühestens nach ${REPEAT_AFTER_HOURS} Stunden. Der Flow liest nur vorhandene Homey-Daten und fragt keine Geräte aktiv ab.`,
       },
     },
   };

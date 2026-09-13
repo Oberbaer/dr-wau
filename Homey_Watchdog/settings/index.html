@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homey Watchdog</title>
+  <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <style>
+    :root { color-scheme: light dark; font-family: Inter, system-ui, sans-serif; --accent: #0b6b5f; --critical: #b42318; --high: #d92d20; --medium: #dc6803; --low: #475467; --surface: color-mix(in srgb, Canvas 94%, var(--accent)); }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: Canvas; color: CanvasText; }
+    main { max-width: 1040px; margin: 0 auto; }
+    header, .section-heading { display: flex; gap: 18px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 5px; font-size: 25px; }
+    h2 { font-size: 18px; margin: 0; }
+    .muted { opacity: .7; }
+    button { appearance: none; border: 0; border-radius: 10px; padding: 10px 14px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
+    button.secondary { background: transparent; color: CanvasText; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
+    button.danger { background: transparent; color: var(--critical); border: 1px solid color-mix(in srgb, var(--critical) 35%, transparent); }
+    button:disabled { opacity: .55; cursor: wait; }
+    .actions, .editor-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+    .notice { margin: 18px 0; padding: 13px 15px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 12px; background: var(--surface); }
+    .score-grid { display: grid; grid-template-columns: 1.25fr repeat(4, minmax(100px, 1fr)); gap: 10px; margin: 18px 0; }
+    .score-card { min-height: 112px; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; padding: 15px; background: var(--surface); }
+    .score-card.main { background: var(--accent); color: white; }
+    .score { font-size: 36px; font-weight: 800; line-height: 1; margin: 7px 0; }
+    .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
+    .inventory { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+    .filters { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px; border-radius: 12px; background: var(--surface); }
+    .filters label { font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .filters select { max-width: 260px; }
+    .pill, .badge { padding: 6px 9px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); font-size: 12px; }
+    .badge { padding: 3px 7px; }
+    .badge.ignored { color: var(--medium); border-color: color-mix(in srgb, var(--medium) 55%, transparent); }
+    .finding { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-left: 5px solid var(--low); border-radius: 10px; padding: 13px 14px; margin-bottom: 10px; }
+    .finding.critical { border-left-color: var(--critical); }
+    .finding.high { border-left-color: var(--high); }
+    .finding.medium { border-left-color: var(--medium); }
+    .finding.ignored { opacity: .82; border-left-style: dashed; }
+    .finding h3 { font-size: 15px; margin: 5px 0; }
+    .finding p { margin: 4px 0 0; font-size: 13px; }
+    .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11px; opacity: .75; text-transform: uppercase; letter-spacing: .04em; }
+    details { margin-top: 10px; }
+    summary { cursor: pointer; color: var(--accent); font-weight: 700; font-size: 13px; }
+    .editor { display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: 10px; padding: 12px 0 2px; }
+    .editor label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
+    .editor label.wide, .editor-actions { grid-column: 1 / -1; }
+    select, textarea { width: 100%; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); background: Canvas; color: CanvasText; padding: 9px; font: inherit; }
+    textarea { min-height: 70px; resize: vertical; }
+    .check { display: flex !important; grid-template-columns: auto 1fr !important; align-items: center; justify-content: start; }
+    .check input { width: 18px; height: 18px; }
+    .board { margin: 22px 0; padding: 16px; border-radius: 14px; background: color-mix(in srgb, var(--medium) 6%, Canvas); border: 1px solid color-mix(in srgb, var(--medium) 30%, transparent); }
+    .watchdog { margin: 18px 0 24px; padding: 16px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 14px; background: var(--surface); }
+    .watchdog-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }
+    .watchdog-grid label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
+    .watchdog-grid input[type="number"] { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); background: Canvas; color: CanvasText; }
+    #watchdog-ignore { min-height: 130px; }
+    .board-description { margin: 8px 0 14px; }
+    .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
+    @media (max-width: 760px) { body { padding: 16px; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Homey Watchdog</h1>
+      <p class="muted" data-i18n="subtitle">Read-only check with persistent finding management.</p>
+    </div>
+    <div class="actions">
+      <button class="secondary" id="export" disabled data-i18n="export">Export JSON</button>
+      <button class="secondary" id="board-toggle" data-i18n="board">Ignore board</button>
+      <button id="scan" data-i18n="scan">Start scan</button>
+    </div>
+  </header>
+
+  <div class="notice" id="status" data-i18n="privacy">The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.</div>
+  <section class="watchdog">
+    <div class="section-heading"><h2 data-i18n="watchdogTitle">Battery watchdog</h2><span class="pill" id="watchdog-state">Loading…</span></div>
+    <p class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</p>
+    <div class="watchdog-grid">
+      <label><span data-i18n="checkHours">Check interval (hours)</span><input id="watchdog-check" type="number" min="1" max="168"></label>
+      <label><span data-i18n="staleHours">Warn after (hours)</span><input id="watchdog-stale" type="number" min="1" max="720"></label>
+      <label><span data-i18n="repeatHours">Repeat after (hours)</span><input id="watchdog-repeat" type="number" min="1" max="168"></label>
+    </div>
+    <div class="actions">
+      <label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label>
+      <label class="check"><input id="watchdog-timeline" type="checkbox"><span data-i18n="timeline">Homey Timeline</span></label>
+      <label class="check"><input id="watchdog-push" type="checkbox"><span data-i18n="pushAll">Push to all Homey users</span></label>
+    </div>
+    <label><span data-i18n="ignoredDevices">Excluded battery devices</span><select id="watchdog-ignore" multiple></select></label>
+    <div class="actions" style="margin-top:12px">
+      <button id="watchdog-save" data-i18n="saveWatchdog">Save watchdog</button>
+      <button class="secondary" id="watchdog-run" data-i18n="runWatchdog">Run check now</button>
+      <button class="secondary" id="watchdog-test" data-i18n="testNotification">Send test notification</button>
+    </div>
+  </section>
+  <section class="board" id="board-panel" hidden>
+    <div class="section-heading"><h2 data-i18n="boardTitle">Ignore board & archive</h2><span class="pill" id="board-count">0</span></div>
+    <p class="muted board-description" data-i18n="boardDescription">Ignored findings do not affect the active score, but remain available here and can be restored at any time.</p>
+    <div id="managed-findings"></div>
+  </section>
+  <section id="report" hidden>
+    <div class="score-grid" id="scores"></div>
+    <div class="inventory" id="inventory"></div>
+    <div class="filters">
+      <label for="category-filter" data-i18n="category">Category</label>
+      <select id="category-filter">
+        <option value="all" data-i18n="categoryAll">All categories</option>
+        <option value="flows" data-i18n="flows">Flows</option>
+        <option value="devices" data-i18n="devices">Devices</option>
+        <option value="apps" data-i18n="apps">Apps</option>
+        <option value="maintenance" data-i18n="maintenance">Maintenance</option>
+      </select>
+    </div>
+    <div class="section-heading"><h2 data-i18n="priorities">Active findings</h2><span class="pill" id="active-count">0</span></div>
+    <p class="muted" data-i18n="scoreHint">Ignored findings and user priority changes are already reflected in the score.</p>
+    <div id="findings"></div>
+  </section>
+  <div class="empty" id="empty" data-i18n="empty">No report yet. Start the first read-only scan.</div>
+</main>
+
+<script>
+(() => {
+  const de = navigator.language.toLowerCase().startsWith('de');
+  const translations = {
+    subtitle: ['Read-only check with persistent finding management.', 'Rein lesende Prüfung mit dauerhafter Befundverwaltung.'],
+    export: ['Export JSON', 'JSON exportieren'], scan: ['Start scan', 'Scan starten'], scanning: ['Scanning…', 'Prüfung läuft…'],
+    privacy: ['The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.', 'Der Scan läuft lokal und verändert keine Flows oder Geräte. Deine Entscheidungen werden lokal auf Homey gespeichert.'],
+    priorities: ['Active findings', 'Aktive Befunde'], empty: ['No report yet. Start the first read-only scan.', 'Noch kein Bericht vorhanden. Starte den ersten rein lesenden Scan.'],
+    overall: ['Overall', 'Gesamt'], flows: ['Flows', 'Flows'], devices: ['Devices', 'Geräte'], apps: ['Apps', 'Apps'], maintenance: ['Maintenance', 'Wartbarkeit'],
+    normalFlows: ['Normal Flows', 'Normale Flows'], advancedFlows: ['Advanced Flows', 'Advanced Flows'], enabledFlows: ['enabled flows', 'aktive Flows'],
+    unavailableDevices: ['unavailable devices', 'nicht verfügbare Geräte'], variables: ['variables', 'Variablen'], zigbee: ['detected Zigbee devices', 'erkannte Zigbee-Geräte'],
+    recommendation: ['Recommendation', 'Empfehlung'], generated: ['Generated', 'Erstellt'], noFindings: ['No active findings in the available data.', 'Keine aktiven Befunde in den verfügbaren Daten.'],
+    manage: ['Classify finding', 'Befund einordnen'], priority: ['Priority', 'Priorität'], statusLabel: ['Status', 'Status'], note: ['Note', 'Notiz'],
+    ignoreNext: ['Ignore in future scans and score', 'Bei künftigen Scans und im Score ignorieren'], save: ['Save', 'Speichern'], reset: ['Reset decision', 'Entscheidung zurücksetzen'], saved: ['Decision saved.', 'Entscheidung gespeichert.'],
+    board: ['Ignore board', 'Ignorieren-Schalttafel'], boardTitle: ['Ignore board & archive', 'Ignorieren-Schalttafel & Archiv'],
+    boardDescription: ['Ignored findings do not affect the active score, but remain available here and can be restored at any time.', 'Ignorierte Befunde beeinflussen den aktiven Score nicht, bleiben hier aber sichtbar und können jederzeit zurückgeholt werden.'],
+    boardEmpty: ['No saved decisions yet.', 'Noch keine gespeicherten Entscheidungen.'], scoreHint: ['Ignored findings and user priority changes are already reflected in the score.', 'Ignorierte Befunde und geänderte Prioritäten sind im Score bereits berücksichtigt.'],
+    category: ['Category', 'Kategorie'], categoryAll: ['All categories', 'Alle Kategorien'], filteredEmpty: ['No findings in this category.', 'Keine Befunde in dieser Kategorie.'],
+    current: ['Currently detected', 'Aktuell erkannt'], historical: ['Not detected in latest scan', 'Im letzten Scan nicht erkannt'], lastSeen: ['Last seen', 'Zuletzt gesehen'], ignored: ['Ignored', 'Ignoriert'], original: ['original', 'ursprünglich'],
+    pAuto: ['Automatic', 'Automatisch'], pCritical: ['Critical', 'Kritisch'], pHigh: ['High', 'Hoch'], pMedium: ['Normal', 'Normal'], pLow: ['Low', 'Niedrig'], pUnimportant: ['Unimportant', 'Unwichtig'],
+    sOpen: ['Open', 'Offen'], sAcknowledged: ['Acknowledged', 'Bestätigt'], sExpected: ['Expected / intentional', 'Erwartet / absichtlich'], sResolved: ['Resolved', 'Erledigt'],
+    watchdogTitle: ['Battery watchdog', 'Batterie-Watchdog'], watchdogDescription: ['Checks battery-capable devices and warns when they stop reporting.', 'Prüft batteriefähige Geräte und warnt, wenn sie sich nicht mehr melden.'],
+    checkHours: ['Check interval (hours)', 'Prüfintervall (Stunden)'], staleHours: ['Warn after (hours)', 'Warnung nach (Stunden)'], repeatHours: ['Repeat after (hours)', 'Wiederholung nach (Stunden)'],
+    watchdogEnabled: ['Automatic checks enabled', 'Automatische Prüfungen aktiv'], timeline: ['Homey Timeline', 'Homey-Timeline'], pushAll: ['Push to all Homey users', 'Push an alle Homey-Benutzer'], ignoredDevices: ['Excluded battery devices', 'Ausgeschlossene Batteriegeräte'],
+    saveWatchdog: ['Save watchdog', 'Watchdog speichern'], runWatchdog: ['Run check now', 'Jetzt prüfen'], testNotification: ['Send test notification', 'Testmeldung senden'], watchdogSaved: ['Watchdog settings saved.', 'Watchdog-Einstellungen gespeichert.'],
+  };
+  const t = (key) => translations[key]?.[de ? 1 : 0] || key;
+  document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
+
+  let appHomey;
+  let latestReport;
+  let latestAnnotations = [];
+  let activeCategory = 'all';
+  let watchdogOverview;
+  const byId = (id) => document.getElementById(id);
+  const api = (method, path, body = {}) => new Promise((resolve, reject) => {
+    let settled = false;
+    const done = (error, value) => {
+      if (settled) return;
+      settled = true;
+      if (error) reject(error); else resolve(value);
+    };
+    try {
+      const result = appHomey.api(method, path, body, done);
+      if (result?.then) result.then((value) => done(null, value)).catch(done);
+    } catch (error) { done(error); }
+  });
+
+  function localized(value) {
+    if (typeof value === 'string') return value;
+    return value?.[de ? 'de' : 'en'] || value?.en || value?.de || '';
+  }
+
+  function inActiveCategory(finding, annotation) {
+    if (activeCategory === 'all') return true;
+    return (finding.group || annotation?.snapshot?.group) === activeCategory;
+  }
+
+  function option(value, label, selected) {
+    const item = document.createElement('option'); item.value = value; item.textContent = label; item.selected = value === selected; return item;
+  }
+
+  function editor(finding, annotation) {
+    const container = document.createElement('div'); container.className = 'editor';
+    const priorityLabel = document.createElement('label'); priorityLabel.textContent = t('priority');
+    const priority = document.createElement('select');
+    [['auto', 'pAuto'], ['critical', 'pCritical'], ['high', 'pHigh'], ['medium', 'pMedium'], ['low', 'pLow'], ['unimportant', 'pUnimportant']]
+      .forEach(([value, key]) => priority.append(option(value, t(key), annotation?.priority || 'auto')));
+    priorityLabel.append(priority);
+    const statusLabel = document.createElement('label'); statusLabel.textContent = t('statusLabel');
+    const status = document.createElement('select');
+    [['open', 'sOpen'], ['acknowledged', 'sAcknowledged'], ['expected', 'sExpected'], ['resolved', 'sResolved']]
+      .forEach(([value, key]) => status.append(option(value, t(key), annotation?.status || 'open')));
+    statusLabel.append(status);
+    const noteLabel = document.createElement('label'); noteLabel.className = 'wide'; noteLabel.textContent = t('note');
+    const note = document.createElement('textarea'); note.value = annotation?.note || ''; note.maxLength = 1000; noteLabel.append(note);
+    const ignoreLabel = document.createElement('label'); ignoreLabel.className = 'wide check';
+    const ignored = document.createElement('input'); ignored.type = 'checkbox'; ignored.checked = annotation?.ignored === true;
+    const ignoreText = document.createElement('span'); ignoreText.textContent = t('ignoreNext'); ignoreLabel.append(ignored, ignoreText);
+    const actions = document.createElement('div'); actions.className = 'editor-actions';
+    const save = document.createElement('button'); save.textContent = t('save');
+    const reset = document.createElement('button'); reset.className = 'danger'; reset.textContent = t('reset'); reset.hidden = !annotation;
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try {
+        const result = await api('POST', '/finding', { id: finding.id, priority: priority.value, status: status.value, note: note.value, ignored: ignored.checked });
+        render(result.report, result.annotations); byId('status').textContent = t('saved');
+      } catch (error) { byId('status').textContent = error.message || String(error); }
+      finally { save.disabled = false; }
+    });
+    reset.addEventListener('click', async () => {
+      reset.disabled = true;
+      try { const result = await api('POST', '/finding', { id: finding.id, reset: true }); render(result.report, result.annotations); }
+      catch (error) { byId('status').textContent = error.message || String(error); }
+      finally { reset.disabled = false; }
+    });
+    actions.append(save, reset); container.append(priorityLabel, statusLabel, noteLabel, ignoreLabel, actions); return container;
+  }
+
+  function findingCard(finding, annotation, archive = false) {
+    const severity = finding.effectiveSeverity || finding.severity || annotation?.snapshot?.severity || 'info';
+    const row = document.createElement('article'); row.className = `finding ${severity}${annotation?.ignored ? ' ignored' : ''}`;
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const details = [severity, finding.group || annotation?.snapshot?.group, finding.confidence].filter(Boolean);
+    meta.textContent = details.join(' · ');
+    if (finding.severity && finding.effectiveSeverity !== finding.severity) meta.textContent += ` · ${t('original')}: ${finding.severity}`;
+    if (annotation?.ignored) { const badge = document.createElement('span'); badge.className = 'badge ignored'; badge.textContent = t('ignored'); meta.append(badge); }
+    const title = document.createElement('h3'); title.textContent = localized(finding.title || annotation?.snapshot?.title);
+    const subject = document.createElement('p'); subject.textContent = finding.subject || annotation?.snapshot?.subject || '';
+    row.append(meta, title, subject);
+    if (finding.recommendation) { const recommendation = document.createElement('p'); recommendation.textContent = `${t('recommendation')}: ${localized(finding.recommendation)}`; row.append(recommendation); }
+    if (archive && annotation) {
+      const seen = document.createElement('p'); seen.className = 'muted';
+      seen.textContent = `${annotation.current ? t('current') : t('historical')} · ${t('lastSeen')}: ${annotation.lastSeenAt ? new Date(annotation.lastSeenAt).toLocaleString() : '–'}`; row.append(seen);
+    }
+    const detailsElement = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = t('manage');
+    detailsElement.append(summary, editor(finding, annotation)); row.append(detailsElement); return row;
+  }
+
+  function scoreCard(label, score, main = false) {
+    const card = document.createElement('div'); card.className = `score-card${main ? ' main' : ''}`;
+    const caption = document.createElement('div'); caption.className = 'label'; caption.textContent = label;
+    const value = document.createElement('div'); value.className = 'score'; value.textContent = String(score);
+    const suffix = document.createElement('div'); suffix.className = 'muted'; suffix.textContent = '/ 100'; card.append(caption, value, suffix); return card;
+  }
+
+  function renderManagement(report, annotations) {
+    const container = byId('managed-findings'); container.replaceChildren();
+    const current = new Map([...(report?.findings || []), ...(report?.ignoredFindings || [])].map((finding) => [finding.id, finding]));
+    const ordered = [...annotations].sort((a, b) => Number(b.ignored) - Number(a.ignored) || String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    const filtered = ordered.filter((annotation) => inActiveCategory(current.get(annotation.id) || {}, annotation));
+    byId('board-count').textContent = activeCategory === 'all' ? String(annotations.length) : `${filtered.length} / ${annotations.length}`;
+    if (!filtered.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = annotations.length ? t('filteredEmpty') : t('boardEmpty'); container.append(empty); return; }
+    for (const annotation of filtered) {
+      const finding = current.get(annotation.id) || { id: annotation.id, ...(annotation.snapshot || {}) };
+      container.append(findingCard(finding, annotation, true));
+    }
+  }
+
+  function render(report, annotations = []) {
+    latestReport = report; latestAnnotations = annotations || [];
+    renderManagement(report, latestAnnotations);
+    if (!report) return;
+    byId('empty').hidden = true; byId('report').hidden = false; byId('export').disabled = false;
+    byId('status').textContent = `${t('generated')}: ${new Date(report.generatedAt).toLocaleString()} · ${report.mode}`;
+    const scores = byId('scores'); scores.replaceChildren(); scores.append(scoreCard(t('overall'), report.score.overall, true));
+    for (const key of ['flows', 'devices', 'apps', 'maintenance']) scores.append(scoreCard(t(key), report.score.categories[key]));
+    const inventory = byId('inventory'); inventory.replaceChildren();
+    const entries = [['normalFlows', report.inventory.normalFlows], ['advancedFlows', report.inventory.advancedFlows], ['enabledFlows', report.inventory.enabledFlows], ['devices', report.inventory.devices], ['unavailableDevices', report.inventory.unavailableDevices], ['apps', report.inventory.apps], ['variables', report.inventory.variables], ['zigbee', report.inventory.zigbee.detectedDevices]];
+    for (const [label, value] of entries) { const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `${value} ${t(label)}`; inventory.append(pill); }
+    const findings = byId('findings'); findings.replaceChildren();
+    const filteredFindings = report.findings.filter((finding) => inActiveCategory(finding));
+    const filteredIgnored = (report.ignoredFindings || []).filter((finding) => inActiveCategory(finding));
+    byId('active-count').textContent = activeCategory === 'all'
+      ? `${report.findings.length} · ${report.ignoredFindings?.length || 0} ${t('ignored')}`
+      : `${filteredFindings.length} / ${report.findings.length} · ${filteredIgnored.length} ${t('ignored')}`;
+    if (!filteredFindings.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = report.findings.length ? t('filteredEmpty') : t('noFindings'); findings.append(empty); return; }
+    const annotationMap = new Map(latestAnnotations.map((item) => [item.id, item]));
+    for (const item of filteredFindings.slice(0, 250)) findings.append(findingCard(item, annotationMap.get(item.id)));
+  }
+
+  async function load() { const result = await api('GET', '/report'); render(result?.report, result?.annotations); }
+  function renderWatchdog(overview) {
+    if (!overview?.config) return;
+    watchdogOverview = overview;
+    const config = overview.config;
+    byId('watchdog-enabled').checked = config.enabled;
+    byId('watchdog-timeline').checked = config.timeline;
+    byId('watchdog-push').checked = config.pushAll;
+    byId('watchdog-check').value = config.checkHours;
+    byId('watchdog-stale').value = config.staleHours;
+    byId('watchdog-repeat').value = config.repeatHours;
+    const ignored = new Set(config.ignoredDeviceIds || []);
+    const select = byId('watchdog-ignore'); select.replaceChildren();
+    for (const device of overview.batteryDevices || []) {
+      const item = document.createElement('option'); item.value = device.id; item.textContent = device.name; item.selected = ignored.has(device.id); select.append(item);
+    }
+    const status = overview.status;
+    byId('watchdog-state').textContent = status ? `${status.ok ? '✓' : '⚠'} ${new Date(status.checkedAt).toLocaleString()} · ${status.checkedDevices ?? '?'} Geräte · ${status.warnings ?? '?'} Warnungen` : 'Noch nicht ausgeführt';
+  }
+  async function loadWatchdog() { renderWatchdog(await api('GET', '/watchdog')); }
+  async function saveWatchdog() {
+    const body = {
+      enabled: byId('watchdog-enabled').checked, timeline: byId('watchdog-timeline').checked, pushAll: byId('watchdog-push').checked,
+      checkHours: Number(byId('watchdog-check').value), staleHours: Number(byId('watchdog-stale').value), repeatHours: Number(byId('watchdog-repeat').value),
+      ignoredDeviceIds: [...byId('watchdog-ignore').selectedOptions].map(option => option.value),
+    };
+    renderWatchdog(await api('POST', '/watchdog', body)); byId('status').textContent = t('watchdogSaved');
+  }
+  async function runWatchdog() { await api('POST', '/watchdog/run'); await loadWatchdog(); }
+  async function testWatchdog() { await api('POST', '/watchdog/test'); }
+  async function scan() {
+    const button = byId('scan'); button.disabled = true; button.textContent = t('scanning');
+    try { const result = await api('POST', '/scan'); render(result.report, result.annotations); }
+    catch (error) { byId('status').textContent = error.message || String(error); }
+    finally { button.disabled = false; button.textContent = t('scan'); }
+  }
+  function exportReport() {
+    if (!latestReport) return;
+    const payload = { report: latestReport, annotations: latestAnnotations };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `homey-watchdog-${latestReport.generatedAt.replace(/[:.]/g, '-')}.json`; link.click(); URL.revokeObjectURL(link.href);
+  }
+
+  window.onHomeyReady = function onHomeyReady(Homey) {
+    appHomey = Homey;
+    if (appHomey && typeof appHomey.ready === 'function') appHomey.ready();
+    byId('scan').addEventListener('click', scan); byId('export').addEventListener('click', exportReport);
+    byId('board-toggle').addEventListener('click', () => { byId('board-panel').hidden = !byId('board-panel').hidden; });
+    byId('category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; render(latestReport, latestAnnotations); });
+    byId('watchdog-save').addEventListener('click', () => saveWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
+    byId('watchdog-run').addEventListener('click', () => runWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
+    byId('watchdog-test').addEventListener('click', () => testWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
+    load().catch((error) => { byId('status').textContent = error.message || String(error); });
+    loadWatchdog().catch((error) => { byId('watchdog-state').textContent = error.message || String(error); });
+  };
+})();
+</script>
+</body>
+</html>

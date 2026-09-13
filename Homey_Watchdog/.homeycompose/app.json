@@ -1,0 +1,82 @@
+{
+  "id": "com.oberbaer.homeywatchdog",
+  "version": "0.3.0",
+  "compatibility": ">=12.4.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Homey Watchdog",
+    "de": "Homey Watchdog"
+  },
+  "description": {
+    "en": "Health checks and battery-device silence alerts for Homey Pro.",
+    "de": "Gesundheitschecks und Ausfallwarnungen für Batteriegeräte auf Homey Pro."
+  },
+  "category": [
+    "tools"
+  ],
+  "brandColor": "#0B6B5F",
+  "permissions": [
+    "homey:manager:api"
+  ],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Oberbaer"
+  },
+  "api": {
+    "getReport": {
+      "method": "get",
+      "path": "/report",
+      "public": false,
+      "role": "owner"
+    },
+    "runScan": {
+      "method": "post",
+      "path": "/scan",
+      "public": false,
+      "role": "owner"
+    },
+    "updateFinding": {
+      "method": "post",
+      "path": "/finding",
+      "public": false,
+      "role": "owner"
+    },
+    "getWatchdog": {
+      "method": "get",
+      "path": "/watchdog",
+      "public": false,
+      "role": "owner"
+    },
+    "updateWatchdog": {
+      "method": "post",
+      "path": "/watchdog",
+      "public": false,
+      "role": "owner"
+    },
+    "runWatchdog": {
+      "method": "post",
+      "path": "/watchdog/run",
+      "public": false,
+      "role": "owner"
+    },
+    "testWatchdogNotification": {
+      "method": "post",
+      "path": "/watchdog/test",
+      "public": false,
+      "role": "owner"
+    },
+    "importAutomationHealth": {
+      "method": "post",
+      "path": "/migration/automation-health",
+      "public": false,
+      "role": "owner"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "com.oberbaer.homeywatchdog",
+  "version": "0.3.0",
+  "description": "Health scoring and battery-device silence alerts for Homey Pro.",
+  "main": "app.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "homey app build",
+    "validate": "homey app validate",
+    "validate:publish": "homey app validate --level publish"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "homey-api": "3.20.0"
+  },
+  "devDependencies": {
+    "homey": "4.5.0"
+  },
+  "license": "MIT",
+  "private": true
+}
