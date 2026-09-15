@@ -9,9 +9,15 @@ const vm = require('node:vm');
 test('settings page exposes onHomeyReady and acknowledges Homey immediately', async () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'settings', 'index.html'), 'utf8');
   assert.match(html, /<script[^>]+src=["']\/homey\.js["'][^>]+data-origin=["']settings["'][^>]*><\/script>/i);
-  assert.match(html, /id="board-panel"/);
+  assert.match(html, /role="tablist"/);
+  assert.match(html, /data-tab="overview"/);
+  assert.match(html, /data-tab="health"/);
+  assert.match(html, /data-tab="watchdog"/);
+  assert.match(html, /data-tab="management"/);
+  assert.match(html, /id="panel-management"/);
   assert.match(html, /id="managed-findings"/);
   assert.match(html, /id="category-filter"/);
+  assert.match(html, /id="management-category-filter"/);
   assert.match(html, /value="flows"/);
   assert.match(html, /value="devices"/);
   assert.match(html, /value="apps"/);
@@ -27,8 +33,10 @@ test('settings page exposes onHomeyReady and acknowledges Homey immediately', as
   assert.ok(script, 'inline settings script is present');
 
   const elements = new Map();
-  const element = () => ({
-    addEventListener() {},
+  const element = (initial = {}) => ({
+    listeners: {},
+    attributes: {},
+    addEventListener(type, listener) { this.listeners[type] = listener; },
     append() {},
     replaceChildren() {},
     click() {},
@@ -38,11 +46,16 @@ test('settings page exposes onHomeyReady and acknowledges Homey immediately', as
     disabled: false,
     textContent: '',
     className: '',
+    setAttribute(name, value) { this.attributes[name] = value; },
+    focus() { this.focused = true; },
+    ...initial,
   });
+  const tabs = ['overview', 'health', 'watchdog', 'management'].map((name) => element({ dataset: { tab: name } }));
+  const panels = ['overview', 'health', 'watchdog', 'management'].map((name) => element({ dataset: { panel: name } }));
   const sandbox = {
     navigator: { language: 'de-DE' },
     document: {
-      querySelectorAll: () => [],
+      querySelectorAll: (selector) => selector === '[role="tab"]' ? tabs : selector === '[role="tabpanel"]' ? panels : [],
       getElementById: (id) => {
         if (!elements.has(id)) elements.set(id, element());
         return elements.get(id);
@@ -66,4 +79,9 @@ test('settings page exposes onHomeyReady and acknowledges Homey immediately', as
   });
 
   assert.equal(readyCalls, 1);
+  tabs[2].listeners.click();
+  assert.equal(tabs[2].attributes['aria-selected'], 'true');
+  assert.equal(tabs[0].attributes['aria-selected'], 'false');
+  assert.equal(panels[2].hidden, false);
+  assert.equal(panels[0].hidden, true);
 });

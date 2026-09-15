@@ -4,6 +4,7 @@
 
 ### Added
 
+- Responsive top-level tabs for Overview, Automation Health, Battery Watchdog, and finding management, including compact status cards and keyboard navigation.
 - `Homey_Watchdog`, a fork of the local Automation Health 0.2.1 codebase with configurable battery-device silence monitoring, Timeline alerts, and mobile push to all Homey users.
 - Owner-only migration of existing Automation Health reports and annotations.
 - An app warning trigger for Homey's native mobile-push Flow action.

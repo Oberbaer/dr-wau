@@ -20,6 +20,17 @@
     button.danger { background: transparent; color: var(--critical); border: 1px solid color-mix(in srgb, var(--critical) 35%, transparent); }
     button:disabled { opacity: .55; cursor: wait; }
     .actions, .editor-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 6px; margin: 18px 0; padding: 4px; overflow-x: auto; border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); border-radius: 12px; background: var(--surface); scrollbar-width: thin; }
+    .tab { flex: 0 0 auto; padding: 9px 12px; background: transparent; color: CanvasText; border: 1px solid transparent; white-space: nowrap; }
+    .tab[aria-selected="true"] { background: var(--accent); color: white; box-shadow: 0 2px 7px color-mix(in srgb, var(--accent) 28%, transparent); }
+    .tab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 1px; }
+    .tab-panel[hidden] { display: none; }
+    .panel-heading { margin-bottom: 16px; }
+    .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .module-card { min-height: 150px; padding: 18px; text-align: left; color: CanvasText; background: var(--surface); border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; }
+    .module-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+    .module-card h2 { margin-bottom: 9px; }
+    .module-card .module-state { display: block; margin-top: 16px; color: var(--accent); font-size: 13px; font-weight: 800; }
     .notice { margin: 18px 0; padding: 13px 15px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 12px; background: var(--surface); }
     .score-grid { display: grid; grid-template-columns: 1.25fr repeat(4, minmax(100px, 1fr)); gap: 10px; margin: 18px 0; }
     .score-card { min-height: 112px; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; padding: 15px; background: var(--surface); }
@@ -58,7 +69,7 @@
     #watchdog-ignore { min-height: 130px; }
     .board-description { margin: 8px 0 14px; }
     .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
-    @media (max-width: 760px) { body { padding: 16px; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -68,15 +79,37 @@
       <h1>Homey Watchdog</h1>
       <p class="muted" data-i18n="subtitle">Read-only check with persistent finding management.</p>
     </div>
-    <div class="actions">
-      <button class="secondary" id="export" disabled data-i18n="export">Export JSON</button>
-      <button class="secondary" id="board-toggle" data-i18n="board">Ignore board</button>
-      <button id="scan" data-i18n="scan">Start scan</button>
-    </div>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Homey Watchdog">
+    <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" data-tab="overview" data-i18n="tabOverview">Overview</button>
+    <button class="tab" id="tab-health" role="tab" aria-selected="false" aria-controls="panel-health" data-tab="health" data-i18n="tabHealth">Automation Health</button>
+    <button class="tab" id="tab-watchdog" role="tab" aria-selected="false" aria-controls="panel-watchdog" data-tab="watchdog" data-i18n="tabWatchdog">Battery watchdog</button>
+    <button class="tab" id="tab-management" role="tab" aria-selected="false" aria-controls="panel-management" data-tab="management" data-i18n="tabManagement">Management</button>
+  </nav>
+
   <div class="notice" id="status" data-i18n="privacy">The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.</div>
-  <section class="watchdog">
+
+  <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
+    <div class="panel-heading">
+      <h2 data-i18n="overviewTitle">System overview</h2>
+      <p class="muted" data-i18n="overviewDescription">Choose a module or check its latest status at a glance.</p>
+    </div>
+    <div class="overview-grid">
+      <button class="module-card" type="button" data-open-tab="health">
+        <h2 data-i18n="tabHealth">Automation Health</h2>
+        <span class="muted" data-i18n="healthDescription">Analyzes flows, devices, apps and maintenance without making changes.</span>
+        <span class="module-state" id="overview-health-state" data-i18n="overviewNoScan">No scan available yet</span>
+      </button>
+      <button class="module-card" type="button" data-open-tab="watchdog">
+        <h2 data-i18n="tabWatchdog">Battery watchdog</h2>
+        <span class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</span>
+        <span class="module-state" id="overview-watchdog-state" data-i18n="overviewLoading">Loading status...</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="tab-panel watchdog" id="panel-watchdog" role="tabpanel" aria-labelledby="tab-watchdog" data-panel="watchdog" hidden>
     <div class="section-heading"><h2 data-i18n="watchdogTitle">Battery watchdog</h2><span class="pill" id="watchdog-state">Loading…</span></div>
     <p class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</p>
     <div class="watchdog-grid">
@@ -96,11 +129,32 @@
       <button class="secondary" id="watchdog-test" data-i18n="testNotification">Send test notification</button>
     </div>
   </section>
-  <section class="board" id="board-panel" hidden>
+  <section class="tab-panel board" id="panel-management" role="tabpanel" aria-labelledby="tab-management" data-panel="management" hidden>
     <div class="section-heading"><h2 data-i18n="boardTitle">Ignore board & archive</h2><span class="pill" id="board-count">0</span></div>
     <p class="muted board-description" data-i18n="boardDescription">Ignored findings do not affect the active score, but remain available here and can be restored at any time.</p>
+    <div class="filters">
+      <label for="management-category-filter" data-i18n="category">Category</label>
+      <select id="management-category-filter">
+        <option value="all" data-i18n="categoryAll">All categories</option>
+        <option value="flows" data-i18n="flows">Flows</option>
+        <option value="devices" data-i18n="devices">Devices</option>
+        <option value="apps" data-i18n="apps">Apps</option>
+        <option value="maintenance" data-i18n="maintenance">Maintenance</option>
+      </select>
+    </div>
     <div id="managed-findings"></div>
   </section>
+  <section class="tab-panel" id="panel-health" role="tabpanel" aria-labelledby="tab-health" data-panel="health" hidden>
+    <div class="section-heading panel-heading">
+      <div>
+        <h2 data-i18n="tabHealth">Automation Health</h2>
+        <p class="muted" data-i18n="healthDescription">Analyzes flows, devices, apps and maintenance without making changes.</p>
+      </div>
+      <div class="actions">
+        <button class="secondary" id="export" disabled data-i18n="export">Export JSON</button>
+        <button id="scan" data-i18n="scan">Start scan</button>
+      </div>
+    </div>
   <section id="report" hidden>
     <div class="score-grid" id="scores"></div>
     <div class="inventory" id="inventory"></div>
@@ -119,12 +173,16 @@
     <div id="findings"></div>
   </section>
   <div class="empty" id="empty" data-i18n="empty">No report yet. Start the first read-only scan.</div>
+  </section>
 </main>
 
 <script>
 (() => {
   const de = navigator.language.toLowerCase().startsWith('de');
   const translations = {
+    tabOverview: ['Overview', '\u00dcbersicht'], tabHealth: ['Automation Health', 'Automation Health'], tabWatchdog: ['Battery watchdog', 'Batterie-Watchdog'], tabManagement: ['Management', 'Verwaltung'],
+    overviewTitle: ['System overview', 'System\u00fcbersicht'], overviewDescription: ['Choose a module or check its latest status at a glance.', 'W\u00e4hle eine Hauptfunktion oder pr\u00fcfe ihren letzten Status auf einen Blick.'],
+    healthDescription: ['Analyzes flows, devices, apps and maintenance without making changes.', 'Analysiert Flows, Ger\u00e4te, Apps und Wartbarkeit, ohne \u00c4nderungen vorzunehmen.'], overviewNoScan: ['No scan available yet', 'Noch kein Scan vorhanden'], overviewLoading: ['Loading status...', 'Status wird geladen...'], overviewScore: ['Overall score', 'Gesamtscore'],
     subtitle: ['Read-only check with persistent finding management.', 'Rein lesende Prüfung mit dauerhafter Befundverwaltung.'],
     export: ['Export JSON', 'JSON exportieren'], scan: ['Start scan', 'Scan starten'], scanning: ['Scanning…', 'Prüfung läuft…'],
     privacy: ['The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.', 'Der Scan läuft lokal und verändert keine Flows oder Geräte. Deine Entscheidungen werden lokal auf Homey gespeichert.'],
@@ -156,6 +214,32 @@
   let activeCategory = 'all';
   let watchdogOverview;
   const byId = (id) => document.getElementById(id);
+
+  function activateTab(name, focus = false) {
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    const panels = [...document.querySelectorAll('[role="tabpanel"]')];
+    for (const tab of tabs) {
+      const selected = tab.dataset.tab === name;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      if (selected && focus) tab.focus();
+    }
+    for (const panel of panels) panel.hidden = panel.dataset.panel !== name;
+  }
+
+  function setupTabs() {
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(tab.dataset.tab));
+      tab.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        activateTab(tabs[nextIndex].dataset.tab, true);
+      });
+    });
+    document.querySelectorAll('[data-open-tab]').forEach((button) => button.addEventListener('click', () => activateTab(button.dataset.openTab, true)));
+  }
   const api = (method, path, body = {}) => new Promise((resolve, reject) => {
     let settled = false;
     const done = (error, value) => {
@@ -266,6 +350,7 @@
     if (!report) return;
     byId('empty').hidden = true; byId('report').hidden = false; byId('export').disabled = false;
     byId('status').textContent = `${t('generated')}: ${new Date(report.generatedAt).toLocaleString()} · ${report.mode}`;
+    byId('overview-health-state').textContent = `${t('overviewScore')}: ${report.score.overall}/100 ? ${new Date(report.generatedAt).toLocaleString()}`;
     const scores = byId('scores'); scores.replaceChildren(); scores.append(scoreCard(t('overall'), report.score.overall, true));
     for (const key of ['flows', 'devices', 'apps', 'maintenance']) scores.append(scoreCard(t(key), report.score.categories[key]));
     const inventory = byId('inventory'); inventory.replaceChildren();
@@ -301,14 +386,14 @@
     const status = overview.status;
     byId('watchdog-state').textContent = status ? `${status.ok ? '✓' : '⚠'} ${new Date(status.checkedAt).toLocaleString()} · ${status.checkedDevices ?? '?'} Geräte · ${status.warnings ?? '?'} Warnungen` : 'Noch nicht ausgeführt';
   }
-  async function loadWatchdog() { renderWatchdog(await api('GET', '/watchdog')); }
+  async function loadWatchdog() { renderWatchdog(await api('GET', '/watchdog')); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; }
   async function saveWatchdog() {
     const body = {
       enabled: byId('watchdog-enabled').checked, timeline: byId('watchdog-timeline').checked, pushAll: byId('watchdog-push').checked,
       checkHours: Number(byId('watchdog-check').value), staleHours: Number(byId('watchdog-stale').value), repeatHours: Number(byId('watchdog-repeat').value),
       ignoredDeviceIds: [...byId('watchdog-ignore').selectedOptions].map(option => option.value),
     };
-    renderWatchdog(await api('POST', '/watchdog', body)); byId('status').textContent = t('watchdogSaved');
+    renderWatchdog(await api('POST', '/watchdog', body)); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; byId('status').textContent = t('watchdogSaved');
   }
   async function runWatchdog() { await api('POST', '/watchdog/run'); await loadWatchdog(); }
   async function testWatchdog() { await api('POST', '/watchdog/test'); }
@@ -328,9 +413,10 @@
   window.onHomeyReady = function onHomeyReady(Homey) {
     appHomey = Homey;
     if (appHomey && typeof appHomey.ready === 'function') appHomey.ready();
+    setupTabs();
     byId('scan').addEventListener('click', scan); byId('export').addEventListener('click', exportReport);
-    byId('board-toggle').addEventListener('click', () => { byId('board-panel').hidden = !byId('board-panel').hidden; });
-    byId('category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; render(latestReport, latestAnnotations); });
+    byId('category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; byId('management-category-filter').value = activeCategory; render(latestReport, latestAnnotations); });
+    byId('management-category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; byId('category-filter').value = activeCategory; render(latestReport, latestAnnotations); });
     byId('watchdog-save').addEventListener('click', () => saveWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-run').addEventListener('click', () => runWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-test').addEventListener('click', () => testWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
