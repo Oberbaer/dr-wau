@@ -350,7 +350,7 @@
     if (!report) return;
     byId('empty').hidden = true; byId('report').hidden = false; byId('export').disabled = false;
     byId('status').textContent = `${t('generated')}: ${new Date(report.generatedAt).toLocaleString()} · ${report.mode}`;
-    byId('overview-health-state').textContent = `${t('overviewScore')}: ${report.score.overall}/100 ? ${new Date(report.generatedAt).toLocaleString()}`;
+    byId('overview-health-state').textContent = `${t('overviewScore')}: ${report.score.overall}/100 \u00b7 ${new Date(report.generatedAt).toLocaleString()}`;
     const scores = byId('scores'); scores.replaceChildren(); scores.append(scoreCard(t('overall'), report.score.overall, true));
     for (const key of ['flows', 'devices', 'apps', 'maintenance']) scores.append(scoreCard(t(key), report.score.categories[key]));
     const inventory = byId('inventory'); inventory.replaceChildren();
