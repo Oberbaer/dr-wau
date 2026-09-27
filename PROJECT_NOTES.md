@@ -29,7 +29,7 @@ Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Auto
 - Communication silence does not identify its cause.
 - A later optional push failure can cause a repeated Timeline notification on retry.
 - Mobile push requires a normal Homey Flow connected to the app trigger.
-- The integrated backup UI has passed static build validation but has not been exercised on a live Homey.
+- The integrated backup settings subpage has passed static build validation but has not been exercised on a live Homey.
 
 ## Test strategy
 

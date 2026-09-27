@@ -25,7 +25,6 @@
     .tab[aria-selected="true"] { background: var(--accent); color: white; box-shadow: 0 2px 7px color-mix(in srgb, var(--accent) 28%, transparent); }
     .tab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 1px; }
     .tab-panel[hidden] { display: none; }
-    .backup-frame { display: block; width: 100%; min-height: 1350px; border: 0; border-radius: 12px; background: #fff; }
     .panel-heading { margin-bottom: 16px; }
     .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .module-card { min-height: 150px; padding: 18px; text-align: left; color: CanvasText; background: var(--surface); border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; }
@@ -119,7 +118,7 @@
     <div class="panel-heading"><h2 data-i18n="tabBackup">Backups</h2>
       <p class="muted" data-i18n="backupMigration">Existing Backup Center credentials and schedules must be entered again in Dr. Wau; app settings do not transfer between Homey app IDs.</p>
     </div>
-    <iframe class="backup-frame" title="Dr. Wau Backups" data-backup-src="backup/index.html"></iframe>
+    <p><a href="backup/index.html" data-i18n="openBackup">Open backup management</a></p>
   </section>
 
   <section class="tab-panel watchdog" id="panel-watchdog" role="tabpanel" aria-labelledby="tab-watchdog" data-panel="watchdog" hidden>
@@ -218,6 +217,7 @@
     watchdogTitle: ['Battery watchdog', 'Batterie-Watchdog'], watchdogDescription: ['Checks battery-capable devices and warns when they stop reporting.', 'Prüft batteriefähige Geräte und warnt, wenn sie sich nicht mehr melden.'],
     tabBackup: ['Backups', 'Backups'], backupDescription: ['Create, schedule and selectively restore Homey configuration backups.', 'Homey-Konfiguration sichern, planen und gezielt wiederherstellen.'],
     backupMigration: ['Existing Backup Center credentials and schedules must be entered again in Dr. Wau; app settings do not transfer between Homey app IDs.', 'Zugangsdaten und Zeitpläne aus Backup Center müssen in Dr. Wau erneut eingetragen werden; Homey überträgt App-Einstellungen nicht zwischen App-IDs.'],
+    openBackup: ['Open backup management', 'Backup-Verwaltung öffnen'],
     checkHours: ['Check interval (hours)', 'Prüfintervall (Stunden)'], staleHours: ['Warn after (hours)', 'Warnung nach (Stunden)'], repeatHours: ['Repeat after (hours)', 'Wiederholung nach (Stunden)'],
     watchdogEnabled: ['Automatic checks enabled', 'Automatische Prüfungen aktiv'], timeline: ['Homey Timeline', 'Homey-Timeline'], pushAll: ['Push to all Homey users', 'Push an alle Homey-Benutzer'], ignoredDevices: ['Excluded battery devices', 'Ausgeschlossene Batteriegeräte'],
     ignoredZones: ['Zones out of service (including subzones)', 'Zonen außer Betrieb (einschließlich Unterzonen)'], ignoredZonesHelp: ['Devices in these zones are excluded from battery alerts and device findings.', 'Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.'],
@@ -243,10 +243,6 @@
       if (selected && focus) tab.focus();
     }
     for (const panel of panels) panel.hidden = panel.dataset.panel !== name;
-    if (name === 'backup') {
-      const frame = document.querySelector('[data-backup-src]');
-      if (frame && !frame.src) frame.src = frame.dataset.backupSrc;
-    }
   }
 
   function setupTabs() {

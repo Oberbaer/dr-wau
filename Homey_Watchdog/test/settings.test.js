@@ -13,6 +13,11 @@ test('settings page exposes onHomeyReady and acknowledges Homey immediately', as
   assert.match(html, /data-tab="overview"/);
   assert.match(html, /data-tab="health"/);
   assert.match(html, /data-tab="watchdog"/);
+  assert.match(html, /data-tab="backup"/);
+  assert.match(html, /href="backup\/index\.html"/);
+  const backupHtml = fs.readFileSync(path.join(__dirname, '..', 'settings', 'backup', 'index.html'), 'utf8');
+  assert.match(backupHtml, /src="\/homey\.js" data-origin="settings"/);
+  assert.match(backupHtml, /href="\.\.\/index\.html"/);
   assert.match(html, /data-tab="management"/);
   assert.match(html, /id="panel-management"/);
   assert.match(html, /id="managed-findings"/);
