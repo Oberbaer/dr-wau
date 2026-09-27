@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed v5 backup files being rejected by the integrated backup import; Dr. Wau 0.4.1.
 - Renamed the app to Dr. Wau while retaining the existing Homey app ID.
 - Integrated Backup Center with manual/scheduled backups and explicitly confirmed selective restore.
 - Added whole-zone exclusions, including subzones, for battery alerts and device health findings.

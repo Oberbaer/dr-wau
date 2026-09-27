@@ -7,7 +7,7 @@ const path = require('node:path');
 test('compose manifest identifies Dr. Wau and exposes private owner APIs', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.homeycompose', 'app.json'), 'utf8'));
   assert.equal(manifest.id, 'com.oberbaer.homeywatchdog');
-  assert.equal(manifest.version, '0.4.0');
+  assert.equal(manifest.version, '0.4.1');
   assert.equal(manifest.name.en, 'Dr. Wau 🐶🔧⚙️👀');
   const trigger = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.homeycompose', 'flow', 'triggers', 'battery_watchdog_warning.json'), 'utf8'));
   assert.equal(trigger.tokens[0].name, 'text');

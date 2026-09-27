@@ -48,9 +48,9 @@
       if (data.format === 'homey-flow-backup' && data.version === 1) {
         validateFlows(data.flows); return data;
       }
-      if (data.format === 'homey-backup-center' && [2, 3, 4].includes(data.version)) {
+      if (data.format === 'homey-backup-center' && [2, 3, 4, 5].includes(data.version)) {
         validateFlows(data.flows);
-        if (data.version === 3 && (!data.inventory || typeof data.inventory !== 'object')) throw Error(tr('Inventaris ontbreekt.'));
+        if (data.version >= 3 && (!data.inventory || typeof data.inventory !== 'object')) throw Error(tr('Inventaris ontbreekt.'));
         return data;
       }
       throw Error(tr('Dit is geen ondersteunde Homey-back-up.'));
