@@ -4,6 +4,8 @@ const Homey = require('homey');
 const { HomeyAPI } = require('homey-api');
 const { analyzeSnapshot, applyFindingAnnotations, findingId } = require('./lib/analyzer');
 const { evaluateBatteryDevices, markDelivered, normalizeConfig } = require('./lib/battery-watchdog');
+const { isZoneExcluded, zoneMap } = require('./lib/zone-exclusions');
+const BackupApp = require('./backup/app');
 
 const REPORT_SETTING = 'latest_report_v1';
 const ANNOTATIONS_SETTING = 'finding_annotations_v1';
@@ -68,7 +70,13 @@ class HomeyWatchdogApp extends Homey.App {
     });
 
     this.scheduleBatteryWatchdog();
-    this.log('Homey Watchdog initialized');
+    await BackupApp.prototype.onInit.call(this);
+    this.log('Dr. Wau initialized');
+  }
+
+  onUninit() {
+    if (this.watchdogTimer) this.homey.clearInterval(this.watchdogTimer);
+    BackupApp.prototype.onUninit.call(this);
   }
 
   scheduleBatteryWatchdog() {
@@ -82,14 +90,24 @@ class HomeyWatchdogApp extends Homey.App {
 
   async getWatchdogOverview() {
     const api = await this.ensureApi();
-    const devices = await api.call({ method: 'GET', path: '/api/manager/devices/device/' });
+    const [devices, zonesRaw] = await Promise.all([
+      api.call({ method: 'GET', path: '/api/manager/devices/device/' }),
+      api.zones.getZones({ $cache: false }),
+    ]);
     const ignored = new Set(this.watchdogConfig.ignoredDeviceIds);
+    const ignoredZones = new Set(this.watchdogConfig.ignoredZoneIds);
+    const zones = zoneMap(zonesRaw);
     const batteryDevices = Object.values(devices || {}).filter(device => {
       const capabilities = Array.isArray(device.capabilities) ? device.capabilities : Object.keys(device.capabilitiesObj || {});
       return capabilities.some(id => id === 'measure_battery' || id === 'alarm_battery');
-    }).map(device => ({ id: device.id, name: device.name || device.id, ignored: ignored.has(device.id) }))
+    }).map(device => ({ id: device.id, name: device.name || device.id,
+      ignored: ignored.has(device.id) || isZoneExcluded(device.zone, zones, ignoredZones) }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    return { config: this.watchdogConfig, status: this.watchdogStatus, batteryDevices };
+    const availableZones = Object.values(zones).map(zone => ({ id: zone.id, name: zone.name || zone.id,
+      parent: zone.parent?.id || zone.parent || null,
+      ignored: isZoneExcluded(zone.id, zones, ignoredZones) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { config: this.watchdogConfig, status: this.watchdogStatus, batteryDevices, zones: availableZones };
   }
 
   async updateWatchdogConfig(input = {}) {
@@ -135,7 +153,7 @@ class HomeyWatchdogApp extends Homey.App {
   }
 
   async sendWatchdogTestNotification() {
-    await this.deliverWatchdogMessage('✅ Homey Watchdog: Testbenachrichtigung erfolgreich ausgelöst.');
+    await this.deliverWatchdogMessage('✅ Dr. Wau: Testbenachrichtigung erfolgreich ausgelöst.');
     return { ok: true };
   }
 
@@ -149,12 +167,15 @@ class HomeyWatchdogApp extends Homey.App {
     const startedAt = Date.now();
     try {
       const api = await this.ensureApi();
-      const devices = await api.call({ method: 'GET', path: '/api/manager/devices/device/' });
+      const [devices, zones] = await Promise.all([
+        api.call({ method: 'GET', path: '/api/manager/devices/device/' }),
+        api.zones.getZones({ $cache: false }),
+      ]);
       const previous = this.homey.settings.get(WATCHDOG_STATE_SETTING) || {};
-      const evaluation = evaluateBatteryDevices(devices, previous, this.watchdogConfig, startedAt);
+      const evaluation = evaluateBatteryDevices(devices, previous, this.watchdogConfig, startedAt, zones);
       for (let offset = 0; offset < evaluation.pending.length; offset += 2) {
         const batch = evaluation.pending.slice(offset, offset + 2);
-        await this.deliverWatchdogMessage(`⚠️ Homey Watchdog: ${batch.map(item => item.message).join('; ')}`);
+        await this.deliverWatchdogMessage(`⚠️ Dr. Wau: ${batch.map(item => item.message).join('; ')}`);
         markDelivered(evaluation.state, batch.map(item => item.id), startedAt);
         await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
       }
@@ -312,6 +333,7 @@ class HomeyWatchdogApp extends Homey.App {
       variables,
       apps,
       zones,
+      ignoredZoneIds: this.watchdogConfig.ignoredZoneIds,
       coverage,
       source,
       generatedAt: new Date().toISOString(),
@@ -323,6 +345,14 @@ class HomeyWatchdogApp extends Homey.App {
     await this.homey.settings.set(REPORT_SETTING, managedReport);
     return managedReport;
   }
+}
+
+for (const [name, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(BackupApp.prototype))) {
+  if (['constructor', 'onInit', 'onUninit'].includes(name)) continue;
+  if (Object.prototype.hasOwnProperty.call(HomeyWatchdogApp.prototype, name)) {
+    throw new Error(`Backup integration method conflict: ${name}`);
+  }
+  Object.defineProperty(HomeyWatchdogApp.prototype, name, descriptor);
 }
 
 module.exports = HomeyWatchdogApp;

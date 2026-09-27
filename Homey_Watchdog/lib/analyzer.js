@@ -1,4 +1,5 @@
 'use strict';
+const { isZoneExcluded } = require('./zone-exclusions');
 
 const OUTPUT_KEYS = ['outputSuccess', 'outputError', 'outputTrue', 'outputFalse'];
 const GROUPS = {
@@ -238,6 +239,8 @@ function analyzeSnapshot(snapshot) {
   const variables = mapById(snapshot.variables);
   const apps = mapById(snapshot.apps);
   const zones = mapById(snapshot.zones);
+  const ignoredZoneIds = new Set(snapshot.ignoredZoneIds || []);
+  const deviceExcluded = device => isZoneExcluded(device?.zone, zones, ignoredZoneIds);
   const findings = [];
   const variableReferences = new Set();
   const appReferences = new Map();
@@ -357,7 +360,7 @@ function analyzeSnapshot(snapshot) {
           recommendation: localized('Back up and select the intended device again.', 'Sichern und das beabsichtigte Gerät erneut auswählen.'),
           subject,
         });
-        else if (devices[deviceId].available === false) add({
+        else if (devices[deviceId].available === false && !deviceExcluded(devices[deviceId])) add({
           code: 'flow_uses_unavailable_device', group: 'flows', severity: enabled ? 'medium' : 'info',
           title: localized('Active path uses an unavailable device', 'Aktiver Pfad nutzt ein nicht verfügbares Gerät'),
           recommendation: localized('Confirm seasonal devices; repair the device before changing the flow.', 'Saisonale Geräte bestätigen; das Gerät vor einer Flow-Änderung reparieren.'),
@@ -409,6 +412,7 @@ function analyzeSnapshot(snapshot) {
   let zigbeeRouters = 0;
   let zigbeeEndDevices = 0;
   for (const device of values(devices)) {
+    if (deviceExcluded(device)) continue;
     const subject = [device.name || device.id, zonePath(zones, device.zone)].filter(Boolean).join(' · ');
     const zigbee = isZigbee(device);
     if (zigbee) {
@@ -506,7 +510,8 @@ function analyzeSnapshot(snapshot) {
       advancedFlows: values(advancedFlows).length,
       enabledFlows: allFlows.filter(({ flow }) => flow.enabled !== false).length,
       devices: values(devices).length,
-      unavailableDevices: values(devices).filter((device) => device.available === false).length,
+      unavailableDevices: values(devices).filter((device) => device.available === false && !deviceExcluded(device)).length,
+      excludedDevices: values(devices).filter(deviceExcluded).length,
       apps: values(apps).length,
       variables: values(variables).length,
       zigbee: {

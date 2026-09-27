@@ -30,10 +30,10 @@ $points = [System.Drawing.Point[]]@(
 )
 $graphics.DrawLines($pulsePen, $points)
 
-$font = [System.Drawing.Font]::new('Arial', 68, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+$font = [System.Drawing.Font]::new('Arial', 84, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
 $format = [System.Drawing.StringFormat]::new()
 $format.Alignment = [System.Drawing.StringAlignment]::Center
-$graphics.DrawString('Homey Watchdog', $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(0, 545, 1000, 100), $format)
+$graphics.DrawString('Dr. Wau', $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(0, 545, 1000, 100), $format)
 
 $xlargePath = Join-Path $assetDirectory 'xlarge.png'
 $bitmap.Save($xlargePath, [System.Drawing.Imaging.ImageFormat]::Png)

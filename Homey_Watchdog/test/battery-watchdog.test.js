@@ -28,3 +28,21 @@ test('starts disabled until explicitly enabled', () => {
   assert.equal(normalizeConfig({}).enabled, false);
   assert.equal(normalizeConfig({ enabled: true }).enabled, true);
 });
+test('excludes a whole zone including subzones while keeping other devices', () => {
+  const zones = {
+    off: { id: 'off', name: 'Außer Betrieb' },
+    child: { id: 'child', name: 'Regal', parent: 'off' },
+    active: { id: 'active', name: 'Wohnzimmer' },
+  };
+  const devices = [
+    { ...device('direct', 48), zone: 'off' },
+    { ...device('nested', 48), zone: 'child' },
+    { ...device('live', 48), zone: 'active' },
+  ];
+  const config = normalizeConfig({ ignoredZoneIds: ['off', 'off'] });
+  assert.deepEqual(config.ignoredZoneIds, ['off']);
+  const result = evaluateBatteryDevices(devices, {}, config, NOW, zones);
+  assert.equal(result.checkedDevices, 1);
+  assert.deepEqual(result.pending.map(item => item.id), ['live']);
+  assert.deepEqual(Object.keys(result.state.devices), ['live']);
+});

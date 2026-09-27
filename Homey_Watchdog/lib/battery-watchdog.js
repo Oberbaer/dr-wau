@@ -1,8 +1,9 @@
 'use strict';
+const { isZoneExcluded, zoneMap } = require('./zone-exclusions');
 
 const DEFAULT_CONFIG = Object.freeze({
   enabled: false, checkHours: 6, staleHours: 24, repeatHours: 6,
-  timeline: true, pushAll: true, ignoredDeviceIds: [],
+  timeline: true, pushAll: true, ignoredDeviceIds: [], ignoredZoneIds: [],
 });
 
 function clampNumber(value, fallback, min, max) {
@@ -19,6 +20,7 @@ function normalizeConfig(input = {}) {
     timeline: input.timeline !== false,
     pushAll: input.pushAll !== false,
     ignoredDeviceIds: [...new Set(Array.isArray(input.ignoredDeviceIds) ? input.ignoredDeviceIds.map(String).filter(Boolean) : [])],
+    ignoredZoneIds: [...new Set(Array.isArray(input.ignoredZoneIds) ? input.ignoredZoneIds.map(String).filter(Boolean) : [])],
   };
 }
 
@@ -28,11 +30,14 @@ function isBatteryDevice(device) {
   return capabilities.some(id => id === 'measure_battery' || id === 'alarm_battery');
 }
 
-function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now()) {
+function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(), zonesRaw = {}) {
   const config = normalizeConfig(configRaw);
   const previous = stateRaw?.schema === 1 && stateRaw.devices && typeof stateRaw.devices === 'object' ? stateRaw.devices : {};
   const ignored = new Set(config.ignoredDeviceIds);
-  const devices = values(devicesRaw).filter(device => isBatteryDevice(device) && !ignored.has(device.id));
+  const ignoredZones = new Set(config.ignoredZoneIds);
+  const zones = zoneMap(zonesRaw);
+  const devices = values(devicesRaw).filter(device => isBatteryDevice(device)
+    && !ignored.has(device.id) && !isZoneExcluded(device.zone, zones, ignoredZones));
   const pending = [];
   const state = { schema: 1, lastCheckedAt: now, checkedDevices: devices.length, devices: {} };
   for (const device of devices) {

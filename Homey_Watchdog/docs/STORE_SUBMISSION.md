@@ -2,7 +2,7 @@
 
 ## Why this is a separate concept
 
-Homey Watchdog combines the former Automation Health concept with focused battery-device silence monitoring. It is not a replacement for Flow Checker, Zigbee Insights, Audit, sysInternals or Flow Gadgets.
+Dr. Wau combines the former Automation Health concept with battery-device silence monitoring and configuration backups. It is not a replacement for Flow Checker, Zigbee Insights, Audit, sysInternals or Flow Gadgets.
 
 - Flow Checker focuses on broken, disabled and unused flows and variables.
 - Device Watchdog continuously monitors battery, reachability and data freshness.
@@ -11,16 +11,16 @@ Homey Watchdog combines the former Automation Health concept with focused batter
 - sysInternals presents system performance data.
 - Flow Gadgets provides reusable calculation and logic cards.
 
-Homey Watchdog combines read-only snapshots into an explainable, cross-layer assessment and adds scheduled silence detection for battery-capable devices. Its distinctive output is a weighted score, confidence-labelled findings, dependency-aware prioritization, configurable notifications and a portable report. It does not control devices, manage radios or provide generic calculation cards.
+Dr. Wau combines read-only snapshots into an explainable, cross-layer assessment, adds scheduled silence detection for battery-capable devices, and integrates explicit configuration backup and selective restore. It does not control devices during health checks or manage radios.
 
 ## Safety and privacy
 
 - Device, Flow and dependency inspection uses read operations exposed by Homey Web API.
 - Configured warnings use Homey Timeline and Homey's mobile push action.
 - There is no automatic repair function.
-- No device, Flow, variable, app or wireless setting is changed.
+- Health scans do not change devices, Flows, variables, apps or wireless settings. Explicit selective restore can change selected configuration objects.
 - Processing and report storage remain local on Homey Pro.
-- External data transfer is not implemented.
+- Backup files can be transferred to destinations explicitly configured by the owner.
 - The owner can explicitly download a JSON report.
 
 ## Compensation
@@ -29,4 +29,4 @@ Every app feature, including the full scan, all findings, recommendations and JS
 
 ## Permission justification
 
-`homey:manager:api` is required because the assessment correlates normal Flows, Advanced Flows, devices, apps, Logic variables, folders and zones, and because the optional push notification uses Homey's built-in mobile action. The settings page exposes the notification controls.
+`homey:manager:api` is required because the assessment correlates normal Flows, Advanced Flows, devices, apps, Logic variables, folders and zones. Optional mobile push is emitted through the app's warning trigger and forwarded by a user-created Homey Flow; the app does not execute Homey's mobile action directly.

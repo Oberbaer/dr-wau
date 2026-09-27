@@ -1,10 +1,12 @@
 # Third-party notices
 
-Homey Watchdog source code is licensed under the repository's MIT License.
+Dr. Wau source code is licensed under the repository's MIT License. The integrated
+Backup Center code is copyright Dennis Weel and retains its separate MIT license,
+credits, and dependency notices in [`backup/`](backup/).
 
 Runtime dependency:
 
-- `homey-api` 3.20.0, copyright Athom B.V. Its package license permits free use with Homey products, keeps the source proprietary to Athom B.V., and provides no warranty. Homey Watchdog is exclusively a Homey product integration. Dependency source is installed from npm and is not copied into this repository.
+- `homey-api` 3.20.0, copyright Athom B.V. Its package license permits free use with Homey products, keeps the source proprietary to Athom B.V., and provides no warranty. Dr. Wau is exclusively a Homey product integration. Dependency source is installed from npm and is not copied into this repository.
 
 Development dependency:
 

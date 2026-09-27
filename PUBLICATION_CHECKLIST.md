@@ -1,48 +1,39 @@
 # Publication checklist
 
-Last local review: 2026-09-13
+Last local review: 2026-09-27
+
+## Repository scope
+
+- The current tree presents `Homey_Watchdog/` as the only supported Dr. Wau implementation, including its integrated backup module.
+- Legacy Advanced Flow watchdog scripts, their root tests, and the root npm configuration have been removed from the current tree.
+- Historical implementations remain available through normal Git history; no history was rewritten for the App-only cleanup.
+- Future screenshot paths are documented, but no screenshot files have been created.
 
 ## Current tree
 
-- No Homey token, API key, password, private key, e-mail address, private IP
-  address, live Flow id, local machine path, or known private device label was
-  found in files eligible for Git.
-- The two UUIDs in app analyzer tests are fixed synthetic values.
-- Generated PNG files contain only standard image chunks and no textual
-  metadata.
-- `node_modules`, `.homeybuild`, generated Flow proposals, logs, and local
-  project notes are ignored.
-- The generated Homey build was scanned separately and contains no known
-  private data or secret pattern.
+- No Homey token, API key, password, private key, e-mail address, private IP address, live Flow ID, local machine path, or known private device label is expected in files eligible for Git.
+- Synthetic identifiers in tests do not identify a real Homey object.
+- `node_modules`, `.homeybuild`, reports, logs, backups, runtime artifacts, and machine-local project notes are ignored.
+- The locally generated Homey build was scanned for the known private values and local paths with no matches; repeat this check immediately before any future public release.
 
 ## Licensing
 
 - Repository source is offered under the root MIT License.
-- Runtime dependencies are permissively licensed, except `homey-api`, whose
-  Athom license explicitly permits use with Homey products.
-- Older transitive dependencies with missing lockfile license fields were
-  resolved from their bundled license/README files or upstream repositories;
-  all are MIT.
-- LGPL Sharp/libvips packages belong only to the local Homey CLI development
-  toolchain and are not app runtime dependencies.
-- Detailed dependency notes are in
-  `Homey_Watchdog/THIRD_PARTY_NOTICES.md`.
+- Runtime dependencies are permissively licensed, except `homey-api`, whose Athom license permits use with Homey products.
+- Older transitive dependencies with missing lockfile license fields were resolved from bundled licenses, README files, or upstream repositories as MIT.
+- LGPL Sharp/libvips packages belong only to the local Homey CLI development toolchain and are not app runtime dependencies.
+- Detailed dependency notes are in `Homey_Watchdog/THIRD_PARTY_NOTICES.md`.
 
 ## Security
 
-- Homey publish-level manifest validation passes.
-- `npm audit --omit=dev` reports four moderate advisories inherited from
-  Athom's current `homey-api` Socket.IO chain, with no high or critical runtime
-  advisories. See `Homey_Watchdog/SECURITY.md`.
+- Owner API routes are private.
+- Publish-level manifest validation must pass before release preparation is considered complete.
+- The current runtime audit (`npm audit --omit=dev`) reports zero vulnerabilities. Re-run it before release and see `Homey_Watchdog/SECURITY.md`.
 
-## History sanitization
+## History
 
-On 2026-09-13, all local branches and remote-tracking refs were rewritten to
-remove the previously identified private device label, live Homey Flow UUID,
-local account alias, local path, and monitoring-count detail. The reachable
-history of `main`, `chore/public-readiness`, `feature/homey-watchdog-app`, and
-`fix/watchdog-delivery` was rescanned for those values with no matches.
+The earlier privacy cleanup rewrote and rescanned the repository history before this App-only task. This task preserves the resulting history and changes only the current working tree. Existing private rollback bundles remain ignored and must not be published.
 
-The pre-rewrite repository is retained only as an ignored local Git bundle for
-rollback. The rewritten branch tips must be force-pushed before this result is
-reflected on the remote; existing clones will need to resynchronize afterward.
+## Release boundary
+
+The user has requested this task's GitHub consolidation. Homey installation, Homey App Store submission, tags, releases, and deployments are separate actions.

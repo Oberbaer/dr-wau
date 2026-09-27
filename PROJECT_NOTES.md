@@ -1,36 +1,40 @@
-# Project Notes — Homey Battery Watchdog
+# Project Notes - Dr. Wau
 
 ## Purpose
 
-Maintain a reviewable Advanced Flow and a separate Homey Watchdog app that detect battery-capable devices which have stopped reporting.
+Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Automation Health diagnostics, scheduled battery monitoring, and integrated Backup Center functionality.
 
 ## Architecture
 
-- `flow-template.js` builds the Flow and embeds the self-contained runtime.
-- `watchdog-runtime.js` evaluates devices and persists notification state only after successful delivery.
-- `homey-api.js` resolves the Homey CLI API from a local dependency, an explicitly configured module directory, or the global npm directory.
-- `generate-flow-proposal.js` produces ignored local JSON for review.
-- Live install and repair scripts require explicit `--apply --approve` flags.
-- `Homey_Watchdog/` is a fork of the local Automation Health 0.2.1 source. It retains the read-only health analysis and adds scheduled battery monitoring.
-- Mobile push is delivered by a compact companion Flow listening to the app's warning trigger; Timeline delivery remains inside the app.
+- `Homey_Watchdog/app.js` initializes the app, owner-only API, scans, schedules, notifications, and persistent settings.
+- `Homey_Watchdog/lib/analyzer.js` produces health scores and findings.
+- `Homey_Watchdog/lib/battery-watchdog.js` evaluates battery-capable devices and repeat suppression.
+- `Homey_Watchdog/lib/zone-exclusions.js` applies whole-zone exclusions, including descendants.
+- `Homey_Watchdog/backup/` contains Backup Center's runtime and license; `settings/backup/` hosts its UI.
+- `Homey_Watchdog/settings/index.html` provides Overview, Automation Health, Battery Watchdog, Backups, and Management views.
+- `.homeycompose/` is the source for app metadata and Flow cards; `app.json` is generated.
+- Mobile push is emitted through the app warning trigger and forwarded by a normal user-created Homey Flow. Timeline delivery stays inside the app.
 
 ## Design decisions
 
-- The Flow runs every six hours; stale reporting begins after 24 hours and repeats no sooner than every six hours.
-- Device inspection is read-only and only considers `measure_battery` and `alarm_battery` capabilities.
+- Recommended defaults are a 6-hour check interval, a warning after 24 hours, and a 6-hour repeat interval.
+- Device inspection is read-only and considers `measure_battery` and `alarm_battery` capabilities.
 - Missing timestamps are monitoring unknown, not a known low-battery condition.
-- The generated Flow is disabled by default.
-- Live mobile delivery can use Homey's native `__all__` recipient; a real test invocation was accepted by Homey.
+- Automatic checks start disabled on a fresh installation.
+- Finding decisions and reports remain local on Homey.
+- The Watchdog app ID remains unchanged. Backup Center used a separate ID, so its credentials and schedule require manual re-entry.
 
 ## Known limitations
 
 - Communication silence does not identify its cause.
-- A later optional push failure can cause duplicate Timeline and previously successful push notifications on retry.
+- A later optional push failure can cause a repeated Timeline notification on retry.
+- Mobile push requires a normal Homey Flow connected to the app trigger.
+- The integrated backup UI has passed static build validation but has not been exercised on a live Homey.
 
 ## Test strategy
 
-Run `npm test` for local runtime, Flow, and diagnostic configuration tests. Run `npm run proposal` to validate a disabled generated proposal. These checks make no live Homey changes.
+Run `npm.cmd ci`, `npm.cmd test`, `npm.cmd run validate:publish`, and `npx.cmd homey app build` from `Homey_Watchdog/`. These checks do not install or publish the app.
 
-## Release status and next steps
+## Current status
 
-The combined source is maintained on `feature/homey-watchdog-app`. Before publication, rerun the privacy/license audit, tests, Homey publish validation, and staged diff review.
+The supported source is on `main`. Legacy root tooling for the former Advanced Flow watchdog has been removed from the current tree while remaining available through Git history. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.

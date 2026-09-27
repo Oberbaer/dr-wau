@@ -38,4 +38,5 @@ module.exports = {
   async importAutomationHealth({ homey, body }) {
     return homey.app.importLegacyData(body);
   },
+  ...require('./backup/api'),
 };

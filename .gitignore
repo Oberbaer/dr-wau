@@ -21,6 +21,7 @@ pnpm-debug.log*
 artifacts/
 .homeybuild/
 PROJECT_NOTES.local.md
+_sources/
 
 # Tests / Coverage
 coverage/
