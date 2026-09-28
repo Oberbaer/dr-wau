@@ -66,7 +66,11 @@
     .watchdog-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }
     .watchdog-grid label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
     .watchdog-grid input[type="number"] { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); background: Canvas; color: CanvasText; }
-    #watchdog-ignore { min-height: 130px; }
+    .checkbox-list { max-height: 190px; overflow-y: auto; margin-top: 6px; padding: 5px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 8px; background: Canvas; }
+    .checkbox-row { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .checkbox-row:hover { background: var(--surface); }
+    .checkbox-row input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; }
+    .checkbox-row span { overflow-wrap: anywhere; }
     .board-description { margin: 8px 0 14px; }
     .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
     @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid { grid-template-columns: 1fr; } }
@@ -132,10 +136,15 @@
     <div class="actions">
       <label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label>
       <label class="check"><input id="watchdog-timeline" type="checkbox"><span data-i18n="timeline">Homey Timeline</span></label>
-      <label class="check"><input id="watchdog-push" type="checkbox"><span data-i18n="pushAll">Push to all Homey users</span></label>
+      <label class="check"><input id="watchdog-flow-trigger" type="checkbox"><span data-i18n="flowTrigger">Trigger my Homey notification Flow</span></label>
     </div>
-    <label><span data-i18n="ignoredDevices">Excluded battery devices</span><select id="watchdog-ignore" multiple></select></label>
-    <label><span data-i18n="ignoredZones">Zones außer Betrieb (einschließlich Unterzonen)</span><select id="watchdog-ignore-zones" multiple></select></label>
+    <p class="muted" data-i18n="channelHelp">Timeline saves a warning in Homey. The Flow option only starts your own Flow; it does not send a push by itself. Both are independent of the direct recipients below.</p>
+    <div><span id="watchdog-users-label" data-i18n="pushUsers">Direct push recipients</span><div id="watchdog-users" class="checkbox-list" role="group" aria-labelledby="watchdog-users-label"></div></div>
+    <p class="muted" data-i18n="pushUsersHelp">Only checked users receive direct phone pushes. With no users checked, no direct push is sent. If your own Flow also sends pushes, disable its trigger to avoid duplicates.</p>
+    <p id="watchdog-push-auth" role="status"></p>
+    <p><a href="backup/index.html#api-key" data-i18n="pushKeyLink">Configure the shared API Key for restore and direct push</a></p>
+    <div><span id="watchdog-ignore-label" data-i18n="ignoredDevices">Excluded battery devices</span><div id="watchdog-ignore" class="checkbox-list" role="group" aria-labelledby="watchdog-ignore-label"></div></div>
+    <div><span id="watchdog-ignore-zones-label" data-i18n="ignoredZones">Zones außer Betrieb (einschließlich Unterzonen)</span><div id="watchdog-ignore-zones" class="checkbox-list" role="group" aria-labelledby="watchdog-ignore-zones-label"></div></div>
     <p class="muted" data-i18n="ignoredZonesHelp">Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.</p>
     <div class="actions" style="margin-top:12px">
       <button id="watchdog-save" data-i18n="saveWatchdog">Save watchdog</button>
@@ -219,7 +228,9 @@
     backupMigration: ['Existing Backup Center credentials and schedules must be entered again in Dr. Wau; app settings do not transfer between Homey app IDs.', 'Zugangsdaten und Zeitpläne aus Backup Center müssen in Dr. Wau erneut eingetragen werden; Homey überträgt App-Einstellungen nicht zwischen App-IDs.'],
     openBackup: ['Open backup management', 'Backup-Verwaltung öffnen'],
     checkHours: ['Check interval (hours)', 'Prüfintervall (Stunden)'], staleHours: ['Warn after (hours)', 'Warnung nach (Stunden)'], repeatHours: ['Repeat after (hours)', 'Wiederholung nach (Stunden)'],
-    watchdogEnabled: ['Automatic checks enabled', 'Automatische Prüfungen aktiv'], timeline: ['Homey Timeline', 'Homey-Timeline'], pushAll: ['Push to all Homey users', 'Push an alle Homey-Benutzer'], ignoredDevices: ['Excluded battery devices', 'Ausgeschlossene Batteriegeräte'],
+    watchdogEnabled: ['Automatic checks enabled', 'Automatische Prüfungen aktiv'], timeline: ['Homey Timeline', 'Homey-Timeline'], flowTrigger: ['Trigger my Homey notification Flow', 'Meinen Homey-Benachrichtigungs-Flow auslösen'], channelHelp: ['Timeline saves a warning in Homey. The Flow option only starts your own Flow; it does not send a push by itself. Both are independent of the direct recipients below.', 'Timeline legt eine Meldung in Homey ab. Die Flow-Option startet nur deinen eigenen Flow und sendet selbst keinen Push. Beide sind unabhängig von den direkten Empfängern darunter.'], ignoredDevices: ['Excluded battery devices', 'Ausgeschlossene Batteriegeräte'],
+    pushUsers: ['Direct push recipients', 'Direkte Push-Empfänger'], pushUsersHelp: ['Only checked users receive direct phone pushes. With no users checked, no direct push is sent. If your own Flow also sends pushes, disable its trigger to avoid duplicates.', 'Nur angehakte Benutzer erhalten direkte Handy-Pushs. Ohne Benutzer-Haken wird kein direkter Push gesendet. Falls dein eigener Flow ebenfalls Pushs sendet, seinen Auslöser ausschalten, um doppelte Meldungen zu vermeiden.'],
+    pushKeyLink: ['Configure the shared API Key for restore and direct push', 'Gemeinsamen API Key für Wiederherstellung und direkte Pushs einrichten'], pushKeyReady: ['API Key connected. The key needs Flow write permission for direct push.', 'API Key verbunden. Für direkte Pushs braucht er das Flow-Schreibrecht.'], pushKeyMissing: ['Direct push needs a Homey API Key with Flow write permission. Configure it before saving recipients.', 'Direkte Pushs benötigen einen Homey API Key mit Flow-Schreibrecht. Bitte vor dem Speichern von Empfängern einrichten.'], pushUsersUnavailable: ['Homey users could not be loaded. Existing recipients are preserved when saving.', 'Homey-Benutzer konnten nicht geladen werden. Bestehende Empfänger bleiben beim Speichern erhalten.'], testSent: ['Selected notification channels were triggered successfully.', 'Ausgewählte Benachrichtigungskanäle wurden erfolgreich ausgelöst.'],
     ignoredZones: ['Zones out of service (including subzones)', 'Zonen außer Betrieb (einschließlich Unterzonen)'], ignoredZonesHelp: ['Devices in these zones are excluded from battery alerts and device findings.', 'Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.'],
     saveWatchdog: ['Save watchdog', 'Watchdog speichern'], runWatchdog: ['Run check now', 'Jetzt prüfen'], testNotification: ['Send test notification', 'Testmeldung senden'], watchdogSaved: ['Watchdog settings saved.', 'Watchdog-Einstellungen gespeichert.'],
   };
@@ -386,42 +397,50 @@
   }
 
   async function load() { const result = await api('GET', '/report'); render(result?.report, result?.annotations); }
+  function renderCheckboxList(id, entries, selectedIds) {
+    const container = byId(id);
+    container.replaceChildren();
+    for (const entry of entries) {
+      const row = document.createElement('label'); row.className = 'checkbox-row';
+      const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.value = entry.id;
+      checkbox.checked = selectedIds.has(entry.id);
+      const name = document.createElement('span'); name.textContent = entry.name;
+      row.append(checkbox, name); container.append(row);
+    }
+  }
+  function checkedIds(id) {
+    return [...byId(id).querySelectorAll('input[type="checkbox"]:checked')].map(checkbox => checkbox.value);
+  }
   function renderWatchdog(overview) {
     if (!overview?.config) return;
     watchdogOverview = overview;
     const config = overview.config;
     byId('watchdog-enabled').checked = config.enabled;
     byId('watchdog-timeline').checked = config.timeline;
-    byId('watchdog-push').checked = config.pushAll;
+    byId('watchdog-flow-trigger').checked = config.flowTrigger;
     byId('watchdog-check').value = config.checkHours;
     byId('watchdog-stale').value = config.staleHours;
     byId('watchdog-repeat').value = config.repeatHours;
-    const ignored = new Set(config.ignoredDeviceIds || []);
-    const select = byId('watchdog-ignore'); select.replaceChildren();
-    for (const device of overview.batteryDevices || []) {
-      const item = document.createElement('option'); item.value = device.id; item.textContent = device.name; item.selected = ignored.has(device.id); select.append(item);
-    }
-    const ignoredZones = new Set(config.ignoredZoneIds || []);
-    const zoneSelect = byId('watchdog-ignore-zones'); zoneSelect.replaceChildren();
-    for (const zone of overview.zones || []) {
-      const item = document.createElement('option'); item.value = zone.id; item.textContent = zone.name;
-      item.selected = ignoredZones.has(zone.id); zoneSelect.append(item);
-    }
+    renderCheckboxList('watchdog-ignore', overview.batteryDevices || [], new Set(config.ignoredDeviceIds || []));
+    renderCheckboxList('watchdog-ignore-zones', overview.zones || [], new Set(config.ignoredZoneIds || []));
+    renderCheckboxList('watchdog-users', overview.users || [], new Set(config.pushUserIds || []));
+    byId('watchdog-push-auth').textContent = t(overview.pushUsersError ? 'pushUsersUnavailable' : overview.pushAuthReady ? 'pushKeyReady' : 'pushKeyMissing');
     const status = overview.status;
-    byId('watchdog-state').textContent = status ? `${status.ok ? '✓' : '⚠'} ${new Date(status.checkedAt).toLocaleString()} · ${status.checkedDevices ?? '?'} Geräte · ${status.warnings ?? '?'} Warnungen` : 'Noch nicht ausgeführt';
+    byId('watchdog-state').textContent = status ? `${status.ok ? '✓' : '⚠'} ${new Date(status.checkedAt).toLocaleString()} · ${status.checkedDevices ?? '?'} Geräte · ${status.warnings ?? '?'} Warnungen${status.error ? ' · ' + status.error : ''}` : 'Noch nicht ausgeführt';
   }
   async function loadWatchdog() { renderWatchdog(await api('GET', '/watchdog')); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; }
   async function saveWatchdog() {
     const body = {
-      enabled: byId('watchdog-enabled').checked, timeline: byId('watchdog-timeline').checked, pushAll: byId('watchdog-push').checked,
+      enabled: byId('watchdog-enabled').checked, timeline: byId('watchdog-timeline').checked, flowTrigger: byId('watchdog-flow-trigger').checked,
+      pushUserIds: watchdogOverview?.pushUsersError ? watchdogOverview.config.pushUserIds || [] : checkedIds('watchdog-users'),
       checkHours: Number(byId('watchdog-check').value), staleHours: Number(byId('watchdog-stale').value), repeatHours: Number(byId('watchdog-repeat').value),
-      ignoredDeviceIds: [...byId('watchdog-ignore').selectedOptions].map(option => option.value),
-      ignoredZoneIds: [...byId('watchdog-ignore-zones').selectedOptions].map(option => option.value),
+      ignoredDeviceIds: checkedIds('watchdog-ignore'),
+      ignoredZoneIds: checkedIds('watchdog-ignore-zones'),
     };
     renderWatchdog(await api('POST', '/watchdog', body)); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; byId('status').textContent = t('watchdogSaved');
   }
   async function runWatchdog() { await api('POST', '/watchdog/run'); await loadWatchdog(); }
-  async function testWatchdog() { await api('POST', '/watchdog/test'); }
+  async function testWatchdog() { await api('POST', '/watchdog/test'); byId('status').textContent = t('testSent'); }
   async function scan() {
     const button = byId('scan'); button.disabled = true; button.textContent = t('scanning');
     try { const result = await api('POST', '/scan'); render(result.report, result.annotations); }

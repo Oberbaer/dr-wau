@@ -30,7 +30,8 @@ test('settings page exposes onHomeyReady and acknowledges Homey immediately', as
   assert.match(html, /id="watchdog-enabled"/);
   assert.match(html, /id="watchdog-stale"/);
   assert.match(html, /id="watchdog-repeat"/);
-  assert.match(html, /id="watchdog-push"/);
+  assert.match(html, /id="watchdog-flow-trigger"/);
+  assert.match(html, /id="watchdog-users"/);
   assert.match(html, /\/watchdog\/test/);
   assert.match(html, /function inActiveCategory/);
   assert.match(html, /\/finding/);

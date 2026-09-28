@@ -14,7 +14,7 @@ Deutsche Dokumentation: [README.de.md](README.de.md)
 - Active findings with priority, status, notes, and persistent decisions.
 - Battery-device silence alerts based on Homey's existing `lastSeenAt` data.
 - Configurable check, warning, and repeat intervals.
-- Homey Timeline notifications and optional mobile push through a Homey Flow trigger.
+- Homey Timeline notifications, checkbox-selected direct push recipients, and an optional Homey Flow trigger.
 - Device and whole-zone exclusions (including subzones), an ignore board, local report storage, and JSON export.
 - Integrated Backup Center: manual and scheduled configuration backups, WebDAV/SMB/SFTP/FTP destinations, and explicitly confirmed selective restore.
 - Read-only analysis: the app does not repair Flows, control devices, or wake battery devices.
@@ -85,7 +85,7 @@ Battery Watchdog evaluates devices that expose a battery capability. Its control
 - Repeat after
 - Automatic checks
 - Homey Timeline
-- Push notifications
+- Direct push recipients (checkboxes) and an optional notification Flow trigger
 - Excluded battery devices
 - Excluded zones, including all descendant zones
 
@@ -123,13 +123,15 @@ The Management view contains the Ignore Board and archive. It keeps ignored and 
 
 ## Notifications
 
-Timeline notifications are created directly by the app when enabled. For mobile push, enable **Push notifications** in Battery Watchdog and create a normal Homey Flow:
+Timeline notifications are created directly by the app when enabled. For direct mobile pushes, configure the shared Homey API Key under Backups (Flow write permission required), then select the recipients by checkbox in Battery Watchdog. With no selected users, the app sends no direct push.
+
+The separate **Trigger my Homey notification Flow** option supports existing custom Flows:
 
 1. **When:** Homey Watchdog ? a battery watchdog warning is sent.
 2. **Then:** send a mobile push notification to the desired Homey users.
 3. Use the trigger's `text` token as the notification text.
 
-The app suppresses unchanged repeat alerts until the configured repeat interval has elapsed. If delivery fails, the warning is not marked as delivered so a later run can retry it.
+The app suppresses unchanged repeat alerts separately per channel and recipient. Failed routes can retry without repeating successful deliveries. If a custom Flow also sends pushes, disable its trigger when using direct pushes to avoid duplicates.
 
 ## Privacy & Security
 

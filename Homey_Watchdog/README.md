@@ -10,7 +10,9 @@ See the repository [English documentation](../README.md) or [German documentatio
 - Battery Watchdog detects communication silence from Homey's existing device timestamps.
 - Recommended starting values are a 6-hour check interval, a warning after 24 hours, and a 6-hour repeat interval.
 - Timeline notifications are delivered directly by the app.
-- Optional mobile push uses the app's `battery_watchdog_warning` trigger and a normal Homey Flow that forwards its `text` token.
+- Direct mobile push targets only users selected by checkbox. It uses the same locally stored Homey API Key as selective restore and requires Flow write permission.
+- The optional `battery_watchdog_warning` trigger remains available for user-created notification Flows, separately from direct push.
+- Repeat suppression is tracked per channel and recipient so failed deliveries do not repeat successful ones.
 - Device exclusions, finding annotations, reports, and delivery state are stored locally on Homey.
 - Out-of-service zones exclude their devices and all descendant-zone devices from battery alerts and device findings.
 - Backup Center source is included under `backup/`, with its original MIT license and credits. Restore requires an explicit user choice and confirmation.

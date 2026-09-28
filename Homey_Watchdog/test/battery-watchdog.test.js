@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { evaluateBatteryDevices, markDelivered, normalizeConfig } = require('../lib/battery-watchdog');
+const { evaluateBatteryDevices, markDelivered, normalizeConfig, notificationRoutes } = require('../lib/battery-watchdog');
 const NOW = Date.parse('2026-09-12T20:00:00.000Z');
 const device = (id, hours, battery = 80) => ({ id, name: `Sensor ${id}`, capabilities: ['measure_battery'], lastSeenAt: hours === null ? null : new Date(NOW - hours * 3600000).toISOString(), capabilitiesObj: { measure_battery: { value: battery } } });
 test('detects 24-hour silence and ignores fresh devices', () => {
@@ -27,6 +27,28 @@ test('supports exclusions and clamps configuration', () => {
 test('starts disabled until explicitly enabled', () => {
   assert.equal(normalizeConfig({}).enabled, false);
   assert.equal(normalizeConfig({ enabled: true }).enabled, true);
+});
+test('legacy push option migrates to a Flow trigger without selecting direct recipients', () => {
+  assert.equal(normalizeConfig({ pushAll: true }).flowTrigger, true);
+  assert.equal(normalizeConfig({ pushAll: false }).flowTrigger, false);
+  assert.equal(normalizeConfig({}).flowTrigger, false);
+  const config = normalizeConfig({ pushAll: true, flowTrigger: false, pushUserIds: ['user-a', 'user-a', 'user-b'] });
+  assert.deepEqual(config.pushUserIds, ['user-a', 'user-b']);
+  assert.deepEqual(notificationRoutes(config), ['timeline', 'push:user-a', 'push:user-b']);
+});
+test('only failed recipients remain pending after partial delivery', () => {
+  const config = { timeline: true, pushUserIds: ['user-a', 'user-b'] };
+  const first = evaluateBatteryDevices([device('stale', 48)], {}, config, NOW);
+  markDelivered(first.state, ['stale'], NOW, ['timeline', 'push:user-a']);
+  const retry = evaluateBatteryDevices([device('stale', 48)], first.state, config, NOW + 3600000);
+  assert.deepEqual(retry.pending[0].routes, ['push:user-b']);
+  markDelivered(retry.state, ['stale'], NOW + 3600000, ['push:user-b']);
+  assert.equal(evaluateBatteryDevices([device('stale', 48)], retry.state, config, NOW + 2 * 3600000).pending.length, 0);
+});
+test('old delivery suppression does not pretend a new direct recipient was notified', () => {
+  const old = { schema: 1, devices: { stale: { fingerprint: new Date(NOW - 48 * 3600000).toISOString(), notifiedAt: NOW } } };
+  const next = evaluateBatteryDevices([device('stale', 48)], old, { timeline: true, pushUserIds: ['user-a'] }, NOW + 3600000);
+  assert.deepEqual(next.pending[0].routes, ['push:user-a']);
 });
 test('excludes a whole zone including subzones while keeping other devices', () => {
   const zones = {

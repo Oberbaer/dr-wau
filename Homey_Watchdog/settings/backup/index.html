@@ -56,13 +56,14 @@
 <label class="button file-button" for="file">Choose backup file</label><input id="file" type="file" accept=".json,.txt" class="file-input"><p id="source"></p>
 </section>
 
-<section class="card"><h2>4. Schrijfrechten voor restore</h2>
+<section class="card" id="api-key"><h2>4. Schrijfrechten voor restore</h2>
 <p>For restore writes, save a Homey API Key. Earlier versions called this a Personal Access Token (PAT). Existing saved keys are kept.</p>
+<p>This key also enables direct watchdog pushes to selected Homey users (Flow write permission). Saving a key never starts a restore; restore still requires a reviewed selection and explicit confirmation.</p>
 <div class="field"><label for="restorePat">Homey API Key</label><input id="restorePat" type="password" autocomplete="new-password" placeholder="Leeg laten om bestaande token te behouden"></div>
 <div class="target-actions"><button id="saveRestorePat">Homey API Key bewaren</button><button id="testRestorePat" class="secondary">Verbinding testen</button><button id="clearRestorePat" class="danger">Homey API Key wissen</button></div>
 <p id="restoreAuthStatus" class="hint" role="status">Status wordt geladen…</p>
 <details><summary>Where do I create a Homey API Key?</summary>
-<p>Open Homey Web, select your Homey and go to Settings → API Keys → New API Key. Name it Backup Center and grant the permissions below. Copy the key when it is shown and paste it here; Homey only shows it once.</p>
+<p>Open Homey Web, select your Homey and go to Settings → API Keys → New API Key. Name it Dr. Wau and grant the permissions below. Copy the key when it is shown and paste it here; Homey only shows it once.</p>
 <p>Required permissions for full selective restore: Logic, Devices, Zones, Flows and Apps (write access). Technical scopes: <code>homey.logic</code>, <code>homey.device</code>, <code>homey.zone</code>, <code>homey.flow</code>, <code>homey.app</code>.</p>
 <p>The connection test checks authentication. It does not prove that every write permission is present.</p>
 <a href="https://support.homey.app/hc/en-us/articles/8178797067292-Create-and-use-API-Keys-on-Homey-Pro" target="_blank" rel="noopener">Official Homey instructions</a></details>

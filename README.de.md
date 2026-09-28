@@ -14,7 +14,7 @@ English documentation: [README.md](README.md)
 - Aktive Befunde mit Priorität, Status, Notizen und dauerhaften Entscheidungen.
 - Warnung bei verstummten Batteriegeräten anhand der vorhandenen `lastSeenAt`-Daten von Homey.
 - Einstellbare Prüf-, Warn- und Wiederholungsintervalle.
-- Homey-Timeline-Meldungen und optionaler Handy-Push über einen Homey-Flow-Trigger.
+- Homey-Timeline-Meldungen, direkte Push-Empfänger per Häkchen und ein optionaler Homey-Flow-Trigger.
 - Geräte- und Zonenausschlüsse samt Unterzonen, Ignorieren-Schalttafel, lokale Berichtsspeicherung und JSON-Export.
 - Integrierte Backups mit Zeitplan, Netzwerkzielen und gezielter Wiederherstellung nach ausdrücklicher Bestätigung.
 - Rein lesende Analyse: Die App repariert keine Flows, steuert keine Geräte und weckt keine Batteriegeräte auf.
@@ -85,7 +85,7 @@ Der Batterie-Watchdog bewertet Geräte, die eine Batteriefunktion bereitstellen.
 - Wiederholung nach
 - Automatische Prüfungen
 - Homey-Timeline
-- Push-Benachrichtigungen
+- Direkte Push-Empfänger per Häkchen und optionaler Benachrichtigungs-Flow-Auslöser
 - Ausgeschlossene Batteriegeräte
 - Ausgeschlossene Zonen einschließlich aller Unterzonen
 
@@ -123,13 +123,15 @@ Die Ansicht Verwaltung enthält die Ignorieren-Schalttafel und das Archiv. Dort 
 
 ## Benachrichtigungen
 
-Timeline-Meldungen werden bei aktivierter Option direkt von der App erstellt. Für Handy-Push wird **Push-Benachrichtigungen** im Batterie-Watchdog aktiviert und ein normaler Homey Flow angelegt:
+Timeline-Meldungen werden bei aktivierter Option direkt von der App erstellt. Für direkte Handy-Pushs zuerst den gemeinsamen Homey API Key unter Backups einrichten (Flow-Schreibrecht erforderlich), anschließend die Empfänger im Batterie-Watchdog anhaken. Ohne ausgewählte Benutzer sendet die App keinen direkten Push.
+
+Die getrennte Option **Meinen Homey-Benachrichtigungs-Flow auslösen** unterstützt bestehende eigene Flows:
 
 1. **Wenn:** Homey Watchdog — eine Batterie-Watchdog-Warnung wird gesendet.
 2. **Dann:** Handy-Push an die gewünschten Homey-Benutzer senden.
 3. Das `text`-Token des Triggers als Meldungstext verwenden.
 
-Die App unterdrückt unveränderte Wiederholungswarnungen bis zum Ablauf des eingestellten Wiederholungsintervalls. Schlägt die Zustellung fehl, wird die Warnung nicht als zugestellt gespeichert und kann später erneut versucht werden.
+Die App unterdrückt unveränderte Wiederholungswarnungen getrennt pro Kanal und Empfänger. Fehlgeschlagene Zustellungen können erneut versucht werden, ohne erfolgreiche Zustellungen zu wiederholen. Falls ein eigener Flow ebenfalls Pushs sendet, seinen Auslöser bei direkten Pushs ausschalten, um doppelte Meldungen zu vermeiden.
 
 ## Datenschutz & Sicherheit
 

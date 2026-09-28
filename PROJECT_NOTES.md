@@ -13,7 +13,8 @@ Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Auto
 - `Homey_Watchdog/backup/` contains Backup Center's runtime and license; `settings/backup/` hosts its UI.
 - `Homey_Watchdog/settings/index.html` provides Overview, Automation Health, Battery Watchdog, Backups, and Management views.
 - `.homeycompose/` is the source for app metadata and Flow cards; `app.json` is generated.
-- Mobile push is emitted through the app warning trigger and forwarded by a normal user-created Homey Flow. Timeline delivery stays inside the app.
+- Direct push uses checkbox-selected Homey users and the shared restore API Key. The legacy warning Flow trigger is separately configurable. Timeline delivery stays inside the app.
+- Repeat suppression is tracked per channel/recipient; only successful route deliveries are persisted.
 
 ## Design decisions
 
@@ -27,8 +28,7 @@ Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Auto
 ## Known limitations
 
 - Communication silence does not identify its cause.
-- A later optional push failure can cause a repeated Timeline notification on retry.
-- Mobile push requires a normal Homey Flow connected to the app trigger.
+- Direct push requires an owner-supplied API Key with Flow write permission. The connection test verifies authentication, not every write scope.
 - The integrated backup settings subpage has passed static build validation but has not been exercised on a live Homey.
 
 ## Test strategy
@@ -37,4 +37,6 @@ Run `npm.cmd ci`, `npm.cmd test`, `npm.cmd run validate:publish`, and `npx.cmd h
 
 ## Current status
 
-The supported source is on `main`. Legacy root tooling for the former Advanced Flow watchdog has been removed from the current tree while remaining available through Git history. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
+Integration work is on `feature/dr-wau-integrated-app` with a draft PR against the existing public repository. Version 0.5.0 adds checkbox selectors and direct recipients; live installation/recipient delivery still needs explicit approval. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
+
+Local validation: reproducible `npm ci`, 108 passing tests, publish-level manifest validation, and Homey build. No live push or restore was performed for 0.5.0. The existing dependency audit reports 19 vulnerabilities (2 low, 13 moderate, 4 high); no dependency versions were changed in this feature.

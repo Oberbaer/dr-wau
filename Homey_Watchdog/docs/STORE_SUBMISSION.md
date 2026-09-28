@@ -29,4 +29,4 @@ Every app feature, including the full scan, all findings, recommendations and JS
 
 ## Permission justification
 
-`homey:manager:api` is required because the assessment correlates normal Flows, Advanced Flows, devices, apps, Logic variables, folders and zones. Optional mobile push is emitted through the app's warning trigger and forwarded by a user-created Homey Flow; the app does not execute Homey's mobile action directly.
+`homey:manager:api` is required because the assessment correlates normal Flows, Advanced Flows, devices, apps, Logic variables, folders and zones. The optional warning trigger supports user-created notification Flows. Direct pushes to selected users use an owner-supplied Homey API Key with Flow write permission; the same key supports explicitly confirmed selective restore. The app never broadens the key's permissions itself.
