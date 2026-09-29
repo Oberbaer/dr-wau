@@ -15,6 +15,7 @@ Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Auto
 - `.homeycompose/` is the source for app metadata and Flow cards; `app.json` is generated.
 - Direct push uses checkbox-selected Homey users and the shared restore API Key. The legacy warning Flow trigger is separately configurable. Timeline delivery stays inside the app.
 - Repeat suppression is tracked per channel/recipient; only successful route deliveries are persisted.
+- Backup translations are shared between `backup/settings/` and the served `settings/backup/` UI. German `de.js` uses English canonical messages with aliases for the imported Dutch source strings; tests enforce copy consistency and preserve protocol data.
 
 ## Design decisions
 
@@ -37,6 +38,6 @@ Run `npm.cmd ci`, `npm.cmd test`, `npm.cmd run validate:publish`, and `npx.cmd h
 
 ## Current status
 
-Integration work is on `feature/dr-wau-integrated-app` with a draft PR against the existing public repository. Version 0.5.0 adds checkbox selectors and direct recipients; live installation/recipient delivery still needs explicit approval. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
+Integration work is on `feature/dr-wau-integrated-app` with a draft PR against the existing public repository. Version 0.5.0 is installed; 0.5.1 adds German backup settings, blue/cream styling and a status overview and still requires live installation approval. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
 
-Local validation: reproducible `npm ci`, 108 passing tests, publish-level manifest validation, and Homey build. No live push or restore was performed for 0.5.0. The existing dependency audit reports 19 vulnerabilities (2 low, 13 moderate, 4 high); no dependency versions were changed in this feature.
+Local validation for 0.5.1: reproducible `npm ci`, 114 passing tests, publish-level manifest validation, and Homey build. German UI was inspected with synthetic data in a local narrow browser preview; full dark-mode visual QA was interrupted by a browser connection timeout. No live backup, push, restore or settings write was performed for this update. The existing dependency audit reports 19 vulnerabilities (2 low, 13 moderate, 4 high); no dependency versions were changed in this feature.

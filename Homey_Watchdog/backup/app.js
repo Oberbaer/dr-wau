@@ -226,7 +226,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
   }
   getAppInfo(){return {version:this.homey.app.manifest.version,language:I18n.getLanguage()};}
   saveLanguage(language){
-    if(!['en','nl'].includes(language))throw Error(tr('Unsupported language.'));
+    if(!['en','nl','de'].includes(language))throw Error(tr('Unsupported language.'));
     this.homey.settings.set('language',language); I18n.setLanguage(language);
     return this.getAppInfo();
   }

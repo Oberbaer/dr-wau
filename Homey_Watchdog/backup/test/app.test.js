@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {createRequire}=require('node:module');const realRequire=createRequire(require('node:path').resolve(__dirname,'../app.js'));
 const {fixture,job,stage}=require('./helpers.cjs');
-for(const language of ['nl','en'])test('export, staged plan and selective restore preserve protocol fields in '+language,async()=>{
+for(const language of ['nl','en','de'])test('export, staged plan and selective restore preserve protocol fields in '+language,async()=>{
  const f=await fixture(language),backup=await f.app.exportBackup();
  assert.equal(backup.inventory.variables.a.name,'Test variable');assert.equal(backup.inventory.zones.a.name,'Room');assert.equal(backup.inventory.zones.a.icon,'home');assert(!backup.inventory.variables.c);
  const same=await f.app.buildRestorePlan(backup);assert.equal(same.totalChanges,0);assert.equal(same.variables.operations[0].action,'none');
@@ -231,7 +231,7 @@ test('BLL restore writes nothing when no BLL changes are explicitly selected',as
  assert(report.betterLogicVariables.skipped.some(v=>v.name==='Do not touch BLL'));
 });
 
-test('language choice persists and unknown language rejected',async()=>{const f=await fixture();assert.equal(f.app.saveLanguage('en').language,'en');assert.equal(f.state.language,'en');assert.throws(()=>f.app.saveLanguage('fr'));});
+test('language choice persists and unknown language rejected',async()=>{const f=await fixture();for(const language of ['en','de','nl']){assert.equal(f.app.saveLanguage(language).language,language);assert.equal(f.state.language,language);}assert.throws(()=>f.app.saveLanguage('fr'));});
 test('schedule validates days, time and destination; active target cannot be removed',async()=>{
  const {app}=await fixture();const c={enabled:true,time:'03:00',weekdays:['2'],targetId:'koofr'};
  for(const bad of [{weekdays:[]},{weekdays:['7']},{time:'25:00'},{targetId:'missing'}])assert.throws(()=>app.saveSchedule({...c,...bad}));

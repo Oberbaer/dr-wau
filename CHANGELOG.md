@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Dr. Wau 0.5.1: German backup UI and runtime messages, blue/cream responsive styling with dark mode, and a read-only backup/access overview.
+- Keep the overview in view during initialization instead of scrolling to the network form; existing schedules and credentials remain untouched.
 - Dr. Wau 0.5.0: checkbox-based device/zone exclusions and direct push recipients using the shared restore API Key.
 - Clarified the legacy notification Flow trigger and suppress successful deliveries separately per channel and recipient.
 - Fixed v5 backup files being rejected by the integrated backup import; Dr. Wau 0.4.1.

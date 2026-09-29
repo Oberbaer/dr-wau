@@ -1,19 +1,24 @@
 <!doctype html>
 <html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Backup Center</title>
+<title>Dr. Wau – Backups</title>
 <script src="/homey.js" data-origin="settings"></script>
+<script src="de.js"></script>
 <script src="i18n.js"></script>
 <script src="backup.js"></script>
 <script src="transfer.js"></script>
 <script src="download.js"></script>
-<style>
-*{box-sizing:border-box}body{font:16px/1.5 system-ui,-apple-system,sans-serif;margin:0;background:#f5f7f5;color:#18332a}main{max-width:860px;padding:20px;margin:auto}h1{font-size:30px;margin:6px 0}h2{font-size:20px;margin-top:0}p{color:#455c52}.card{background:#fff;padding:20px;margin:18px 0;border:1px solid #dce4df;border-radius:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.stat{padding:10px;background:#f3f7f5;border-radius:10px;text-align:center}.stat b{display:block;font-size:20px}button,.button{font:inherit;background:#236b55;color:white;border:0;border-radius:9px;padding:12px 16px;cursor:pointer}button.secondary{background:#e7efeb;color:#18332a}button.danger{background:#8c2f2f}button:disabled{opacity:.5;cursor:wait}input,select{font:inherit;width:100%;padding:10px;border:1px solid #b9ccc1;border-radius:8px}.field{margin:10px 0}.field label{display:block;font-weight:600;margin-bottom:4px}.target{border-top:1px solid #e5ebe7;padding:14px 0}.target-actions{display:flex;gap:8px;flex-wrap:wrap}.flow{padding:13px 0;border-top:1px solid #e5ebe7;display:flex;gap:12px;align-items:center;justify-content:space-between}.flow small{display:block;color:#65776e}.flow button{font-size:14px;flex-shrink:0}#search{margin:10px 0}#status,#webdavStatus,#scheduleStatus{white-space:pre-wrap}.badge{font-size:13px;color:#52685d}.hint{font-size:14px;color:#65776e}.ok{color:#17663a}.error{color:#9b2929}.restore-result{margin:14px 0;padding:14px;border-radius:10px;background:#f3f7f5;font-weight:650}.restore-result:empty{display:none}.restore-result.ok{background:#eef8f1}.restore-result.error{background:#fff1f1}.restore-selection{margin-top:12px}.restore-selection label{display:flex!important;gap:8px;align-items:flex-start;padding:9px 0;border-top:1px solid #e5ebe7}.restore-selection input{width:auto;margin-top:5px;flex:0 0 auto}.restore-selection p{margin:14px 0 5px}.restore-details{margin-top:14px;border-top:1px solid #e5ebe7;padding-top:10px}.restore-details summary{cursor:pointer;font-weight:600;color:#52685d}.restore-details pre{max-height:420px;overflow:auto}.restore-counts{white-space:pre-wrap;margin:8px 0;color:#52685d}@media(max-width:600px){main{padding:13px}.grid,.stats{grid-template-columns:1fr}.flow{align-items:flex-start;flex-direction:column}}
-#schedWeekdays input{width:auto}#schedWeekdays label{min-height:44px}#downloadLinks a{display:inline-block;padding:12px 0}.file-input{position:absolute;width:1px;height:1px;opacity:0;padding:0}.file-button{display:inline-block;cursor:pointer}.file-button:has(+input:focus-visible){outline:3px solid #18332a;outline-offset:3px}.file-button:has(+input:disabled){opacity:.5;cursor:wait}</style></head><body><main>
-<span class="badge">PERSOONLIJKE APP · VERSIE <span id="appVersion">…</span></span><h1>Backup Center</h1>
-<div class="field"><label for="language">Language</label><select id="language"><option value="nl">Nederlands</option><option value="en">English</option></select><p id="languageStatus" class="hint">Changing language reloads this page. Save any edited settings first.</p></div>
-<p>Maak één back-up van je flows en Homey-inventaris. Bewaar hem op iPhone/iPad, computer of één of meer WebDAV-locaties.</p>
+<link rel="stylesheet" href="backup.css"></head><body><main>
+<a class="back-link" href="../index.html">← Dr. Wau</a>
+<header class="hero"><div class="hero-mark" aria-hidden="true">🐶</div><div><span class="badge"><span>Dr. Wau · Version</span> <span id="appVersion">…</span></span><h1>Backups</h1><p class="tagline">Keep your smart home in safe paws.</p><p>Create, schedule and check your Homey configuration backups. You choose what is restored.</p></div></header>
+<div class="summary-strip" aria-live="polite">
+<div class="summary-tile"><small>Automatic backups</small><strong id="backup-summary-schedule">Loading schedule…</strong><a href="#automatic-backup">Schedule</a></div>
+<div class="summary-tile"><small>Last successful backup</small><strong id="backup-summary-success">Loading status…</strong></div>
+<div class="summary-tile"><small>Restore and push access</small><strong id="backup-summary-auth">Loading status…</strong><a href="#api-key">Configure key</a></div>
+</div>
+<nav class="jump-nav" aria-label="Backup navigation"><a href="#create-backup">Create backup</a><a href="#automatic-backup">Schedule</a><a href="#network-destinations">Destinations</a><a href="#selective-restore">Restore</a></nav>
+<div class="field language-card"><label for="language">Language</label><select id="language"><option value="de">Deutsch</option><option value="en">English</option><option value="nl">Nederlands</option></select><p id="languageStatus" class="hint">Changing language reloads this page. Save any edited settings first.</p></div>
 
-<section class="card"><h2>1. Back-up ophalen</h2>
+<section class="card" id="create-backup"><h2>1. Back-up ophalen</h2>
 <p>This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Other device settings and Flow arguments may contain sensitive information.</p>
 <div class="target-actions"><button id="fetch">Back-up ophalen</button><button id="share" class="secondary" disabled>Share or save</button><button id="save" class="secondary" disabled>Download bestand</button></div>
 <div id="stats" class="stats" hidden></div><p id="status" role="status">Nog geen back-up opgehaald.</p>
@@ -28,7 +33,7 @@
 <p id="webdavStatus" role="status"></p>
 </section>
 
-<section class="card"><h2>SMB / SFTP / FTP network backups</h2>
+<section class="card" id="network-destinations"><h2>SMB / SFTP / FTP network backups</h2>
 <p>Configure a destination, test it, then select it in the “Create backup to network destination” Flow action. Use a Homey date/time trigger to schedule it. The destination folder must already exist.</p>
 <p>Passwords stay in Homey app settings and are excluded from this app's backup exports and Flow tokens. SMB2 is for a trusted local network; this client does not provide SMB3 encryption. FTP is not encrypted and should only be used on a trusted network. SFTP requires the server host-key fingerprint. SHA256 is recommended, but SHA1 fingerprints are also accepted. Use the fingerprint of the existing SSH/SFTP host key shown by your NAS/server; do not create a separate key for Backup Center.</p>
 <fieldset id="network-fields"><legend>Network destination</legend>
@@ -64,12 +69,12 @@
 <p id="restoreAuthStatus" class="hint" role="status">Status wordt geladen…</p>
 <details><summary>Where do I create a Homey API Key?</summary>
 <p>Open Homey Web, select your Homey and go to Settings → API Keys → New API Key. Name it Dr. Wau and grant the permissions below. Copy the key when it is shown and paste it here; Homey only shows it once.</p>
-<p>Required permissions for full selective restore: Logic, Devices, Zones, Flows and Apps (write access). Technical scopes: <code>homey.logic</code>, <code>homey.device</code>, <code>homey.zone</code>, <code>homey.flow</code>, <code>homey.app</code>.</p>
+<p><span>Required permissions for full selective restore: Logic, Devices, Zones, Flows and Apps (write access). Technical scopes:</span> <code>homey.logic</code>, <code>homey.device</code>, <code>homey.zone</code>, <code>homey.flow</code>, <code>homey.app</code>.</p>
 <p>The connection test checks authentication. It does not prove that every write permission is present.</p>
 <a href="https://support.homey.app/hc/en-us/articles/8178797067292-Create-and-use-API-Keys-on-Homey-Pro" target="_blank" rel="noopener">Official Homey instructions</a></details>
 </section>
 
-<section class="card"><h2>5. Automatische back-up</h2>
+<section class="card" id="automatic-backup"><h2>5. Automatische back-up</h2>
 <p>On selected weekdays, the app starts around the chosen time (Europe/Amsterdam, checked every minute). A failed backup gets up to two retries, at least 15 minutes apart, including after midnight. Manual backups have their own status. Only after all three attempts fail does the app send a push and create a Timeline notification.</p>
 <div class="field"><label><input id="schedEnabled" type="checkbox" style="width:auto"> Automatische back-up inschakelen</label></div>
 <div class="grid">
@@ -82,8 +87,9 @@
 <p id="scheduleStatus" class="hint" role="status">Schema laden…</p>
 </section>
 
-<section class="card"><h2>6. Selective restore</h2>
-<p>Versie <span id="restoreVersion">…</span> kan een herstelplan opvragen voor apps, zones, Logic, Better Logic Library, apparatenkoppelingen en flows. De app voert nooit automatisch een restore uit: controleer eerst het plan en bevestig daarna expliciet.</p>
+<section class="card restore-card" id="selective-restore"><h2>6. Selective restore</h2>
+<p class="tagline">Never restored automatically</p>
+<p>Versie <span id="restoreVersion">…</span> <span>can create a restore plan for apps, zones, Logic, Better Logic Library, devices and Flows. Review the plan and explicitly confirm your selection before restoring.</span></p>
 <div class="target-actions"><button id="planRestore" class="secondary" disabled>Wijzigingen selecteren</button><button id="runRestore" class="danger" disabled>Restore uitvoeren</button></div>
 <p id="restoreStatus" role="status">Open eerst een back-upbestand.</p>
 <div id="restoreResult" class="restore-result" role="status"></div>

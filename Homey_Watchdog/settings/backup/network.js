@@ -3,10 +3,10 @@
 const NetworkUi=(()=>{
  const el=id=>document.getElementById(id);
  const fields=['name','type','host','port','share','directory','domain','username','password','fingerprint','timeoutMs'];
- let selected='',targets=[],busy=false;
+ let selected='',targets=[],busy=false,initializing=true;
  const selectionKey='homeyBackupCenter.network.selected';
  function rememberSelection(){try{if(selected)localStorage.setItem(selectionKey,selected);else localStorage.removeItem(selectionKey);}catch(_){/* Storage can be unavailable in embedded settings views. */}}
- const label=(en,nl)=>BackupI18n.getLanguage()==='nl'?nl:en;
+ const label=(en,nl)=>BackupI18n.getLanguage()==='nl'?nl:BackupI18n.t?BackupI18n.t(en):en;
  function retentionControls(){const enabled=el('net-retentionEnabled').checked;for(const key of ['retentionDays','minimumBackupsToKeep'])el('net-'+key).disabled=!enabled;}
  function protocol(){
   const type=el('net-type').value,smb=type==='smb',sftp=type==='sftp',ftp=type==='ftp';
@@ -48,7 +48,7 @@ const NetworkUi=(()=>{
   try{for(;;){const job=await api('POST','/job',{id:handle.jobId});if(job.status==='error'){done=true;throw Error(job.error);}if(job.status==='done'){done=true;return job.result;}await new Promise(resolve=>setTimeout(resolve,700));}}
   finally{if(done)await api('POST','/job/release',{id:handle.jobId}).catch(()=>{});}
  }
- function status(text,kind=''){const s=el('network-status');s.textContent=text;s.className='hint'+(kind?' '+kind:'');s.scrollIntoView({block:'nearest',behavior:'smooth'});} async function act(fn){if(busy)return;busy=true;el('network-fields').disabled=true;status(label('Working…','Bezig…'));try{await fn();}catch(e){status('✗ '+(e.message||String(e)),'error');}finally{busy=false;el('network-fields').disabled=false;}}
+ function status(text,kind=''){const s=el('network-status');s.textContent=text;s.className='hint'+(kind?' '+kind:'');if(text&&!initializing)s.scrollIntoView({block:'nearest',behavior:'smooth'});} async function act(fn){if(busy)return;busy=true;el('network-fields').disabled=true;status(label('Working…','Bezig…'));try{await fn();}catch(e){const message=e.message||String(e);status('✗ '+(BackupI18n.t?BackupI18n.t(message):message),'error');}finally{busy=false;el('network-fields').disabled=false;}}
  async function init(){
   el('net-retentionEnabled').onchange=retentionControls;
   el('net-type').onchange=()=>{const type=el('net-type').value;el('net-port').value=type==='smb'?445:type==='ftp'?21:22;el('net-directory').value=type==='smb'?'':'/';protocol();};
@@ -57,6 +57,7 @@ const NetworkUi=(()=>{
   el('net-remove').onclick=()=>act(async()=>{if(!selected)return;targets=await api('POST','/network/remove',{id:selected});selected='';rememberSelection();render();edit();status('✓ '+label('Destination removed. Existing Flows must select another destination.','Bestemming verwijderd. Kies in bestaande Flows een andere bestemming.'),'ok');});
   for(const [id,path] of [['net-test','/network/test'],['net-backup','/network/backup']])el(id).onclick=()=>act(async()=>{status(id==='net-test'?label('Saving settings, then testing connection and write access…','Instellingen opslaan, daarna verbinding en schrijfrechten testen…'):label('Saving settings, then creating network backup…','Instellingen opslaan, daarna netwerkback-up maken…'));await save();const result=await poll(path);const warning=result.retention?.errors?.length? '\n'+label('Retention cleanup had errors; the backup succeeded.','Bewaren opruimen had fouten; de back-up is geslaagd.'):'';status('✓ '+(result.filename?label('Backup saved: ','Back-up opgeslagen: ')+result.filename:label('Connection and write permissions verified.','Verbinding en schrijfrechten gecontroleerd.'))+warning,warning?'error':'ok');});
   await act(async()=>{targets=await api('GET','/network',null);let remembered='';try{remembered=localStorage.getItem(selectionKey)||'';}catch(_){/* Ignore unavailable storage. */}selected=targets.some(t=>t.id===remembered)?remembered:(targets[0]?.id||'');rememberSelection();render();edit(targets.find(t=>t.id===selected));status('');});
+  initializing=false;
  }
  return {init};
 })();

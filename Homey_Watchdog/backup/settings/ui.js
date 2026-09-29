@@ -68,7 +68,7 @@ function renderScheduleWeekdays(selected){
   const box=$('schedWeekdays'); if(!box)return;
   box.replaceChildren();
   for(const [num,label] of WEEKDAYS){
-    const wrap=document.createElement('label'); wrap.style.display='inline-flex'; wrap.style.gap='6px'; wrap.style.alignItems='center'; wrap.style.marginRight='14px';
+    const wrap=document.createElement('label');
     const cb=document.createElement('input'); cb.type='checkbox'; cb.value=num; cb.checked=selected.includes(num);
     wrap.appendChild(cb); wrap.appendChild(document.createTextNode(tr(label))); box.appendChild(wrap);
   }
@@ -106,6 +106,9 @@ function showScheduleStatus(s){
   if(s.manual)lines.push(tr('Last manual attempt: ')+date(s.manual.at)+(s.manual.status==='ok'?' ✓':' ✗'));
   if(s.warnings?.length)lines.push(tr('Backup warnings: ')+s.warnings.map(tr).join(' | '));
   $('scheduleStatus').textContent=lines.join('\n');$('scheduleStatus').className='hint'+(s.lastStatus==='error'||s.notificationError?' error':'');
+  if($('backup-summary-schedule')) $('backup-summary-schedule').textContent=(s.enabled?tr('Automatic backup enabled')+' · '+s.time:tr('Automatic backup disabled'));
+  const successes=[s.lastRun,s.manual?.status==='ok'?s.manual.at:null].filter(value=>Number.isFinite(Date.parse(value)));
+  if($('backup-summary-success')) $('backup-summary-success').textContent=successes.length?date(successes.sort((a,b)=>Date.parse(b)-Date.parse(a))[0]):tr('No successful backup yet');
 }
 async function loadNotificationUsers(){
   const select=$('schedNotifyUser');select.replaceChildren();
@@ -120,7 +123,7 @@ async function loadSchedule(){
     const s=await api('GET','/schedule',null);
     renderSchedule(s);
 
-  }catch(e){ if($('scheduleStatus')){$('scheduleStatus').textContent=tr('Schema laden mislukt: ')+tr(e.message||String(e));$('scheduleStatus').className='hint error';} }
+  }catch(e){ if($('scheduleStatus')){$('scheduleStatus').textContent=tr('Schema laden mislukt: ')+tr(e.message||String(e));$('scheduleStatus').className='hint error';}for(const id of ['backup-summary-schedule','backup-summary-success'])if($(id))$(id).textContent=tr('Status unavailable'); }
 }
 async function saveSchedule(showMessage=true){
   const config={enabled:$('schedEnabled').checked,time:$('schedTime').value,weekdays:selectedWeekdays(),targetId:$('schedTarget').value,notifyUserId:$('schedNotifyUser').value};
@@ -148,13 +151,17 @@ $('file').onchange=async event=>{if(operationBusy)return;const file=event.target
 
 
 
+function renderAuthSummary(st){
+  if($('backup-summary-auth')) $('backup-summary-auth').textContent=tr(st.connected?'Key connected':st.configured?'Key not connected':'Not configured');
+}
 async function loadRestoreAuth(){
   const el=$('restoreAuthStatus'); if(!el)return;
   try{
     const st=await api('GET','/restore/auth',null);
+    renderAuthSummary(st);
     el.textContent=st.connected?tr('✓ Homey API Key is opgeslagen en de lokale Homey API-verbinding werkt.'):st.configured?tr('Homey API Key is opgeslagen, maar verbinding is niet actief')+(st.error?': '+st.error:''):tr('Nog geen Homey API Key opgeslagen; dry-run werkt wel, terugschrijven niet.');
     el.className='hint '+(st.connected?'ok':'');
-  }catch(e){el.textContent=tr('Homey API Key-status kon niet worden geladen: ')+tr(e.message||String(e));el.className='hint error';}
+  }catch(e){el.textContent=tr('Homey API Key-status kon niet worden geladen: ')+tr(e.message||String(e));el.className='hint error';if($('backup-summary-auth'))$('backup-summary-auth').textContent=tr('Status unavailable');}
 }
 async function saveRestorePat(clear=false){
   const input=$('restorePat'), el=$('restoreAuthStatus');
@@ -162,6 +169,7 @@ async function saveRestorePat(clear=false){
   if(!clear && !token){el.textContent=tr('Vul een nieuwe Homey API Key in, of gebruik “Verbinding testen” om de bestaande token te controleren.');return;}
   try{
     const st=await api('POST','/restore/auth',{token});
+    renderAuthSummary(st);
     if(input) input.value='';
     el.textContent=clear?tr('Homey API Key gewist.'):st.connected?tr('✓ Homey API Key opgeslagen en verbonden.'):tr('Homey API Key opgeslagen, maar verbinding niet actief')+(st.error?': '+st.error:'');
     el.className='hint '+(st.connected?'ok':'');
@@ -169,7 +177,7 @@ async function saveRestorePat(clear=false){
 }
 async function testRestorePat(){
   const el=$('restoreAuthStatus');
-  try{const st=await api('POST','/restore/auth/test',{});el.textContent=tr('✓ Homey API Key-authenticatie werkt. Vereiste schrijfrechten worden bij de daadwerkelijke geselecteerde restore gecontroleerd.');el.className='hint ok';}
+  try{const st=await api('POST','/restore/auth/test',{});renderAuthSummary(st);el.textContent=tr('✓ Homey API Key-authenticatie werkt. Vereiste schrijfrechten worden bij de daadwerkelijke geselecteerde restore gecontroleerd.');el.className='hint ok';}
   catch(e){el.textContent=tr('Homey API Key-test mislukt: ')+tr(e.message||String(e));el.className='hint error';}
 }
 

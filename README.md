@@ -17,6 +17,7 @@ Deutsche Dokumentation: [README.de.md](README.de.md)
 - Homey Timeline notifications, checkbox-selected direct push recipients, and an optional Homey Flow trigger.
 - Device and whole-zone exclusions (including subzones), an ignore board, local report storage, and JSON export.
 - Integrated Backup Center: manual and scheduled configuration backups, WebDAV/SMB/SFTP/FTP destinations, and explicitly confirmed selective restore.
+- Backup settings in German, English and Dutch, with blue/cream styling, dark-mode support and a compact read-only status overview.
 - Read-only analysis: the app does not repair Flows, control devices, or wake battery devices.
 
 ## Screenshots

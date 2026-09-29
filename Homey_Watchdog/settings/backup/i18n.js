@@ -1125,7 +1125,21 @@ Object.assign(dictionaries.nl,{
   "Remove destination": "Bestemming verwijderen",
   "Flow scheduling runs once per action. Use the completion/failure trigger cards for follow-up actions. The existing WebDAV schedule remains configured separately.": "Een geplande Flow voert de back-up eenmaal per actie uit. Gebruik de triggerkaarten voor geslaagde en mislukte back-ups voor vervolgacties. Het bestaande WebDAV-schema wordt apart ingesteld."
 });
-function setLanguage(value){language=String(value).toLowerCase().startsWith('nl')?'nl':'en';}
+Object.assign(dictionaries.nl,{
+  'Automatic backups':'Automatische back-ups','Last successful backup':'Laatste geslaagde back-up',
+  'Restore and push access':'Restore- en pushtoegang','Configure key':'Sleutel instellen',
+  'Schedule':'Schema','Destinations':'Bestemmingen','Restore':'Herstellen','Backup navigation':'Back-upnavigatie',
+  'Keep your smart home in safe paws.':'Je slimme huis in veilige poten.',
+  'Create, schedule and check your Homey configuration backups. You choose what is restored.':'Maak, plan en controleer back-ups van je Homey-configuratie. Jij kiest wat wordt hersteld.',
+  'Not configured':'Nog niet ingesteld','Key connected':'Sleutel verbonden','Key not connected':'Sleutel niet verbonden',
+  'No successful backup yet':'Nog geen geslaagde back-up','Status unavailable':'Status niet beschikbaar',
+  'Never restored automatically':'Nooit automatisch hersteld',
+  'can create a restore plan for apps, zones, Logic, Better Logic Library, devices and Flows. Review the plan and explicitly confirm your selection before restoring.':'kan een herstelplan opvragen voor apps, zones, Logic, Better Logic Library, apparaten en flows. Controleer het plan en bevestig je selectie expliciet voordat je herstelt.'
+});
+const german=typeof module!=='undefined'&&module.exports?require('./de'):root.BackupGerman;
+dictionaries.de={...german};
+for(const [key,english] of Object.entries(dictionaries.en))if(german[english]!==undefined)dictionaries.de[key]=german[english];
+function setLanguage(value){const locale=String(value).toLowerCase();language=locale.startsWith('de')?'de':locale.startsWith('nl')?'nl':'en';}
 function getLanguage(){return language;}
 function t(value){const text=String(value);return dictionaries[language][text] ?? text;}
 // Apply once to the static page, before user-provided names or backup data are rendered.
@@ -1135,7 +1149,7 @@ function apply(doc){
  while(walker.nextNode())nodes.push(walker.currentNode);
  for(const node of nodes){if(['SCRIPT','STYLE'].includes(node.parentElement?.tagName))continue;const key=node.textContent.trim();if(key && dictionaries[language][key]!==undefined)node.textContent=node.textContent.replace(key,t(key));}
  for(const el of doc.querySelectorAll('[placeholder],[title],[aria-label]'))for(const a of ['placeholder','title','aria-label'])if(el.hasAttribute(a))el.setAttribute(a,t(el.getAttribute(a)));
- doc.title=t('Backup Center');
+ doc.title='Dr. Wau · Backups';
 }
 const api={t,setLanguage,getLanguage,apply,dictionaries};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.BackupI18n=api;

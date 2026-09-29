@@ -17,6 +17,7 @@ English documentation: [README.md](README.md)
 - Homey-Timeline-Meldungen, direkte Push-Empfänger per Häkchen und ein optionaler Homey-Flow-Trigger.
 - Geräte- und Zonenausschlüsse samt Unterzonen, Ignorieren-Schalttafel, lokale Berichtsspeicherung und JSON-Export.
 - Integrierte Backups mit Zeitplan, Netzwerkzielen und gezielter Wiederherstellung nach ausdrücklicher Bestätigung.
+- Backup-Verwaltung in Deutsch, Englisch und Niederländisch, mit blau-cremefarbener Gestaltung, Dunkelmodus und einer kompakten Statusübersicht.
 - Rein lesende Analyse: Die App repariert keine Flows, steuert keine Geräte und weckt keine Batteriegeräte auf.
 
 ## Screenshots
