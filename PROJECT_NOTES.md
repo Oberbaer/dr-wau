@@ -30,7 +30,7 @@ Maintain the native Dr. Wau app in `Homey_Watchdog/`. It combines read-only Auto
 
 - Communication silence does not identify its cause.
 - Direct push requires an owner-supplied API Key with Flow write permission. The connection test verifies authentication, not every write scope.
-- The integrated backup settings subpage has passed static build validation but has not been exercised on a live Homey.
+- Backup settings language persistence and status endpoints have been verified on a live Homey. Live browser visual verification and selective restore remain untested.
 
 ## Test strategy
 
@@ -38,6 +38,6 @@ Run `npm.cmd ci`, `npm.cmd test`, `npm.cmd run validate:publish`, and `npx.cmd h
 
 ## Current status
 
-Integration work is on `feature/dr-wau-integrated-app` with a draft PR against the existing public repository. Version 0.5.0 is installed; 0.5.1 adds German backup settings, blue/cream styling and a status overview and still requires live installation approval. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
+Integration work is on `feature/dr-wau-integrated-app` with a draft PR against the existing public repository. Version 0.5.1 adds German backup settings, blue/cream styling and a status overview and is installed with explicit user approval. German language persistence, running app state, and unchanged backup schedule, destination settings and Watchdog configuration were verified through live read-only checks after the approved language change. The former public Watchdog and Backup Center checkouts are preserved locally in ignored `_sources/`.
 
-Local validation for 0.5.1: reproducible `npm ci`, 114 passing tests, publish-level manifest validation, and Homey build. German UI was inspected with synthetic data in a local narrow browser preview; full dark-mode visual QA was interrupted by a browser connection timeout. No live backup, push, restore or settings write was performed for this update. The existing dependency audit reports 19 vulnerabilities (2 low, 13 moderate, 4 high); no dependency versions were changed in this feature.
+Local validation for 0.5.1: reproducible `npm ci`, 114 passing tests, publish-level manifest validation, and Homey build. German UI was inspected with synthetic data in a local narrow browser preview; full dark-mode visual QA was interrupted by a browser connection timeout. The approved live update preserved existing settings and changed only the backup language to German; no manual live backup, push or restore was triggered. The existing dependency audit reports 19 vulnerabilities (2 low, 13 moderate, 4 high); no dependency versions were changed in this feature.
