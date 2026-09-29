@@ -65,6 +65,11 @@
     .watchdog { margin: 18px 0 24px; padding: 16px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 14px; background: var(--surface); }
     .watchdog-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }
     .watchdog-grid label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
+    .monitoring-wrap { overflow-x: auto; margin: 12px 0; }
+    .monitoring-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .monitoring-table th, .monitoring-table td { padding: 10px; text-align: left; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent); min-width: 130px; }
+    .monitoring-table select, .monitoring-table input { max-width: 190px; min-height: 40px; padding: 6px; background: Canvas; color: CanvasText; border: 1px solid color-mix(in srgb, CanvasText 25%, transparent); border-radius: 6px; }
+    .monitoring-table small { display: block; margin-top: 6px; }
     .watchdog-grid input[type="number"] { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); background: Canvas; color: CanvasText; }
     .checkbox-list { max-height: 190px; overflow-y: auto; margin-top: 6px; padding: 5px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 8px; background: Canvas; }
     .checkbox-row { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
@@ -132,6 +137,8 @@
       <label><span data-i18n="checkHours">Check interval (hours)</span><input id="watchdog-check" type="number" min="1" max="168"></label>
       <label><span data-i18n="staleHours">Warn after (hours)</span><input id="watchdog-stale" type="number" min="1" max="720"></label>
       <label><span data-i18n="repeatHours">Repeat after (hours)</span><input id="watchdog-repeat" type="number" min="1" max="168"></label>
+      <label><span data-i18n="batteryLow">Low battery (%)</span><input id="watchdog-battery-low" type="number" min="1" max="100"></label>
+      <label><span data-i18n="batteryCritical">Critical battery (%)</span><input id="watchdog-battery-critical" type="number" min="0" max="100"></label>
     </div>
     <div class="actions">
       <label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label>
@@ -148,9 +155,20 @@
     <p class="muted" data-i18n="ignoredZonesHelp">Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.</p>
     <div class="actions" style="margin-top:12px">
       <button id="watchdog-save" data-i18n="saveWatchdog">Save watchdog</button>
+      <button class="secondary" id="watchdog-preview" data-i18n="previewWatchdog">Preview without notifications</button>
       <button class="secondary" id="watchdog-run" data-i18n="runWatchdog">Run check now</button>
       <button class="secondary" id="watchdog-test" data-i18n="testNotification">Send test notification</button>
     </div>
+    <p id="watchdog-diagnostic-summary" role="status"></p>
+    <details id="watchdog-monitoring">
+      <summary data-i18n="monitoringTitle">Device profiles and heartbeat evidence</summary>
+      <p class="muted" data-i18n="monitoringHelp">Missing timestamps are not offline evidence. Event-only devices do not warn for lack of use. Numeric Insights buckets are not fresh reports. Profiles and individual time limits are saved with the watchdog settings.</p>
+      <label><span data-i18n="monitoringSearch">Find device</span> <input id="watchdog-monitoring-search" type="search"></label>
+      <div class="monitoring-wrap"><table class="monitoring-table">
+        <thead><tr><th data-i18n="monitoringDevice">Device / profile</th><th data-i18n="monitoringLimit">Individual limit (hours)</th><th data-i18n="monitoringSource">Evidence / age</th><th data-i18n="monitoringResult">Assessment / battery</th></tr></thead>
+        <tbody id="watchdog-monitoring-rows"></tbody>
+      </table></div>
+    </details>
   </section>
   <section class="tab-panel board" id="panel-management" role="tabpanel" aria-labelledby="tab-management" data-panel="management" hidden>
     <div class="section-heading"><h2 data-i18n="boardTitle">Ignore board & archive</h2><span class="pill" id="board-count">0</span></div>
@@ -232,7 +250,14 @@
     pushUsers: ['Direct push recipients', 'Direkte Push-Empfänger'], pushUsersHelp: ['Only checked users receive direct phone pushes. With no users checked, no direct push is sent. If your own Flow also sends pushes, disable its trigger to avoid duplicates.', 'Nur angehakte Benutzer erhalten direkte Handy-Pushs. Ohne Benutzer-Haken wird kein direkter Push gesendet. Falls dein eigener Flow ebenfalls Pushs sendet, seinen Auslöser ausschalten, um doppelte Meldungen zu vermeiden.'],
     pushKeyLink: ['Configure the shared API Key for restore and direct push', 'Gemeinsamen API Key für Wiederherstellung und direkte Pushs einrichten'], pushKeyReady: ['API Key connected. The key needs Flow write permission for direct push.', 'API Key verbunden. Für direkte Pushs braucht er das Flow-Schreibrecht.'], pushKeyMissing: ['Direct push needs a Homey API Key with Flow write permission. Configure it before saving recipients.', 'Direkte Pushs benötigen einen Homey API Key mit Flow-Schreibrecht. Bitte vor dem Speichern von Empfängern einrichten.'], pushUsersUnavailable: ['Homey users could not be loaded. Existing recipients are preserved when saving.', 'Homey-Benutzer konnten nicht geladen werden. Bestehende Empfänger bleiben beim Speichern erhalten.'], testSent: ['Selected notification channels were triggered successfully.', 'Ausgewählte Benachrichtigungskanäle wurden erfolgreich ausgelöst.'],
     ignoredZones: ['Zones out of service (including subzones)', 'Zonen außer Betrieb (einschließlich Unterzonen)'], ignoredZonesHelp: ['Devices in these zones are excluded from battery alerts and device findings.', 'Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.'],
-    saveWatchdog: ['Save watchdog', 'Watchdog speichern'], runWatchdog: ['Run check now', 'Jetzt prüfen'], testNotification: ['Send test notification', 'Testmeldung senden'], watchdogSaved: ['Watchdog settings saved.', 'Watchdog-Einstellungen gespeichert.'],
+    saveWatchdog: ['Save watchdog', 'Watchdog speichern'], runWatchdog: ['Run check with notifications', 'Jetzt prüfen und ggf. melden'], testNotification: ['Send test notification', 'Testmeldung senden'], watchdogSaved: ['Watchdog settings saved.', 'Watchdog-Einstellungen gespeichert.'],
+    previewWatchdog: ['Preview without notifications', 'Vorschau ohne Meldungen'], previewReady: ['Preview refreshed. No notifications sent.', 'Vorschau aktualisiert. Keine Meldungen gesendet.'],
+    batteryLow: ['Low battery (%)', 'Batterie niedrig (%)'], batteryCritical: ['Critical battery (%)', 'Batterie kritisch (%)'],
+    monitoringTitle: ['Device profiles and heartbeat evidence', 'Geräteprofile und Lebenszeichen-Nachweise'],
+    monitoringHelp: ['Missing timestamps are not offline evidence. Event-only devices do not warn for lack of use. Numeric Insights buckets are not fresh reports. Profiles and individual time limits are saved with the watchdog settings.', 'Fehlende Zeitstempel beweisen keinen Offline-Zustand. Kontakte und Taster warnen ohne Kommunikations-Timestamp nicht wegen Nichtbenutzung. Numerische Insights-Zeitraster zählen nicht als frische Meldung. Profile und individuelle Grenzen werden mit „Watchdog speichern“ übernommen.'],
+    monitoringSearch: ['Find device', 'Gerät suchen'], monitoringDevice: ['Device / profile', 'Gerät / Profil'], monitoringLimit: ['Individual limit (hours)', 'Eigene Grenze (Stunden)'], monitoringSource: ['Evidence / age', 'Quelle / Alter'], monitoringResult: ['Assessment / battery', 'Bewertung / Batterie'],
+    profile_auto: ['Automatic', 'Automatisch'], profile_contact: ['Contact / event sensor', 'Kontakt / Ereignissensor'], profile_button: ['Button / remote', 'Taster / Fernbedienung'], profile_sensor: ['Measurement sensor', 'Messwertsensor'], profile_vacuum: ['Vacuum cleaner', 'Staubsauger'], profile_generic: ['Generic device', 'Allgemeines Gerät'], profile_unmonitorable: ['No timestamp monitoring', 'Nicht per Timestamp überwachen'],
+    diagnosticExcluded: ['Excluded by device or zone', 'Durch Gerät oder Zone ausgeschlossen'], diagnosticPending: ['No assessment loaded', 'Keine Bewertung geladen'], diagnosticPreview: ['Current read-only preview', 'Aktuelle Vorschau (nur lesend)'], diagnosticProblems: ['devices with actionable findings', 'Geräte mit handlungsrelevanten Befunden'],
   };
   const t = (key) => translations[key]?.[de ? 1 : 0] || key;
   document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
@@ -411,6 +436,49 @@
   function checkedIds(id) {
     return [...byId(id).querySelectorAll('input[type="checkbox"]:checked')].map(checkbox => checkbox.value);
   }
+  function renderMonitoring(overview) {
+    const body = byId('watchdog-monitoring-rows'); body.replaceChildren();
+    let problems = 0;
+    for (const device of overview.batteryDevices || []) {
+      const row = document.createElement('tr'); row.dataset.deviceId = device.id; row.dataset.name = device.name.toLocaleLowerCase();
+      const assessment = device.assessment;
+      if (assessment?.heartbeat.problem || assessment?.battery.problem) problems++;
+      const profileCell = document.createElement('td');
+      const name = document.createElement('strong'); name.textContent = device.name; profileCell.append(name);
+      const select = document.createElement('select'); select.dataset.profile = device.id; select.setAttribute('aria-label', `${t('monitoringDevice')}: ${device.name}`);
+      for (const kind of ['auto', 'contact', 'button', 'sensor', 'vacuum', 'generic', 'unmonitorable']) {
+        const option = document.createElement('option'); option.value = kind; option.textContent = t(`profile_${kind}`); select.append(option);
+      }
+      const override = overview.config.deviceProfiles?.[device.id] || {};
+      select.value = override.profile || 'auto'; select.disabled = device.ignored;
+      const inferred = document.createElement('small'); inferred.textContent = assessment ? t(`profile_${assessment.heartbeat.profile.kind}`) : t('diagnosticExcluded');
+      profileCell.append(select, inferred);
+      const limitCell = document.createElement('td');
+      const input = document.createElement('input'); input.type = 'number'; input.min = '1'; input.max = '720'; input.dataset.limit = device.id;
+      input.value = override.staleHours || ''; input.placeholder = String(overview.config.staleHours); input.disabled = device.ignored; input.setAttribute('aria-label', `${t('monitoringLimit')}: ${device.name}`); limitCell.append(input);
+      const source = document.createElement('td'); const result = document.createElement('td');
+      source.textContent = assessment ? `${assessment.heartbeat.sourceLabel} · ${assessment.heartbeat.ageHours === null ? '–' : `${assessment.heartbeat.ageHours.toFixed(1)} h`}` : '–';
+      result.textContent = assessment ? `${assessment.category} · ${assessment.battery.level === null ? '–' : `${assessment.battery.level} %${assessment.battery.stale ? (de ? ' (veraltet)' : ' (stale)') : ''}`}` : t(device.ignored ? 'diagnosticExcluded' : 'diagnosticPending');
+      if (assessment) { const reason = document.createElement('small'); reason.textContent = `${assessment.heartbeat.reason}${assessment.battery.problem ? ` ${assessment.battery.problem.message}` : ''}`; result.append(reason); }
+      row.append(profileCell, limitCell, source, result); body.append(row);
+    }
+    byId('watchdog-diagnostic-summary').textContent = `${t('diagnosticPreview')}: ${problems} ${t('diagnosticProblems')}`;
+    filterMonitoring();
+  }
+  function filterMonitoring() {
+    const query = byId('watchdog-monitoring-search').value.toLocaleLowerCase().trim();
+    for (const row of byId('watchdog-monitoring-rows').children) row.hidden = !row.dataset.name.includes(query);
+  }
+  function selectedProfiles() {
+    const profiles = { ...(watchdogOverview?.config.deviceProfiles || {}) };
+    for (const row of byId('watchdog-monitoring-rows').children) {
+      const select = row.querySelector('select'); const input = row.querySelector('input');
+      if (select.disabled) continue;
+      if (select.value === 'auto' && !input.value) delete profiles[row.dataset.deviceId];
+      else profiles[row.dataset.deviceId] = { profile: select.value, ...(input.value ? { staleHours: Number(input.value) } : {}) };
+    }
+    return profiles;
+  }
   function renderWatchdog(overview) {
     if (!overview?.config) return;
     watchdogOverview = overview;
@@ -421,6 +489,9 @@
     byId('watchdog-check').value = config.checkHours;
     byId('watchdog-stale').value = config.staleHours;
     byId('watchdog-repeat').value = config.repeatHours;
+    byId('watchdog-battery-low').value = config.batteryLowPercent ?? 20;
+    byId('watchdog-battery-critical').value = config.batteryCriticalPercent ?? 5;
+    renderMonitoring(overview);
     renderCheckboxList('watchdog-ignore', overview.batteryDevices || [], new Set(config.ignoredDeviceIds || []));
     renderCheckboxList('watchdog-ignore-zones', overview.zones || [], new Set(config.ignoredZoneIds || []));
     renderCheckboxList('watchdog-users', overview.users || [], new Set(config.pushUserIds || []));
@@ -436,6 +507,7 @@
       checkHours: Number(byId('watchdog-check').value), staleHours: Number(byId('watchdog-stale').value), repeatHours: Number(byId('watchdog-repeat').value),
       ignoredDeviceIds: checkedIds('watchdog-ignore'),
       ignoredZoneIds: checkedIds('watchdog-ignore-zones'),
+      batteryLowPercent: Number(byId('watchdog-battery-low').value), batteryCriticalPercent: Number(byId('watchdog-battery-critical').value), deviceProfiles: selectedProfiles(),
     };
     renderWatchdog(await api('POST', '/watchdog', body)); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; byId('status').textContent = t('watchdogSaved');
   }
@@ -462,6 +534,8 @@
     byId('category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; byId('management-category-filter').value = activeCategory; render(latestReport, latestAnnotations); });
     byId('management-category-filter').addEventListener('change', (event) => { activeCategory = event.target.value; byId('category-filter').value = activeCategory; render(latestReport, latestAnnotations); });
     byId('watchdog-save').addEventListener('click', () => saveWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
+    byId('watchdog-preview').addEventListener('click', () => loadWatchdog().then(() => { byId('status').textContent = t('previewReady'); }).catch(error => { byId('status').textContent = error.message || String(error); }));
+    byId('watchdog-monitoring-search').addEventListener('input', filterMonitoring);
     byId('watchdog-run').addEventListener('click', () => runWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-test').addEventListener('click', () => testWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     load().catch((error) => { byId('status').textContent = error.message || String(error); });

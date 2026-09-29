@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Dr. Wau 0.6.0: layered native/capability/raw-event heartbeat evidence, editable per-device profiles and time limits, and a read-only diagnostic preview.
+- Missing timestamps no longer produce recurring fault notifications. Event-only contacts/remotes and virtual profiles do not infer an outage from unchanged state; numeric Insights buckets are never treated as fresh device reports.
+- Battery, Homey availability and stale-data findings are tracked separately. Stable per-problem/per-recipient suppression and confirmed recovery notices prevent false all-clears; legacy v1 state is preserved for rollback. New installations default to a 24-hour repeat interval; existing intervals are preserved unless changed explicitly.
 - Dr. Wau 0.5.1: German backup UI and runtime messages, blue/cream responsive styling with dark mode, and a read-only backup/access overview.
 - Keep the overview in view during initialization instead of scrolling to the network form; existing schedules and credentials remain untouched.
 - Dr. Wau 0.5.0: checkbox-based device/zone exclusions and direct push recipients using the shared restore API Key.
@@ -22,7 +25,7 @@
 
 - Updated the fork to the Homey Watchdog identity and separate `com.oberbaer.homeywatchdog` app id.
 - Battery silence checks use Homey's raw device endpoint so `lastSeenAt` reflects device communication data consistently.
-- Stale-device threshold is 24 hours; unchanged-fault notifications repeat every 6 hours.
+- The original stale-device threshold was 24 hours with a 6-hour repeat interval; 0.6.0 adds individual profiles and uses 24-hour repeats for fresh installations.
 - The repository now presents the native Homey Watchdog app as its only supported implementation.
 
 ### Removed

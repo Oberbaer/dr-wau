@@ -7,8 +7,9 @@ See the repository [English documentation](../README.md) or [German documentatio
 ## Behavior
 
 - Automation Health reports explainable scores and findings for Flows, devices, apps, and maintainability.
-- Battery Watchdog detects communication silence from Homey's existing device timestamps.
-- Recommended starting values are a 6-hour check interval, a warning after 24 hours, and a 6-hour repeat interval.
+- Battery Watchdog evaluates native heartbeat, relevant capability update times and verified raw Insights events with per-device profiles; resampled numeric buckets are not new reports. Missing timestamps and unused event devices do not automatically create fault warnings.
+- Battery, reported unavailability and stale measurement data are separate findings, with independent suppression and confirmed recovery notifications. A read-only preview and editable profiles/time limits explain each decision.
+- Recommended starting values are a 6-hour check interval, a warning after 24 hours, and a 24-hour repeat interval; existing settings are retained.
 - Timeline notifications are delivered directly by the app.
 - Direct mobile push targets only users selected by checkbox. It uses the same locally stored Homey API Key as selective restore and requires Flow write permission.
 - The optional `battery_watchdog_warning` trigger remains available for user-created notification Flows, separately from direct push.

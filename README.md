@@ -12,7 +12,7 @@ Deutsche Dokumentation: [README.de.md](README.de.md)
 - Five main views: Overview, Automation Health, Battery Watchdog, Backups, and Management.
 - Explainable overall and category scores for Flows, devices, apps, and maintainability.
 - Active findings with priority, status, notes, and persistent decisions.
-- Battery-device silence alerts based on Homey's existing `lastSeenAt` data.
+- Layered heartbeat evidence from native timestamps, capability reports and verified raw Insights events, with battery findings evaluated separately.
 - Configurable check, warning, and repeat intervals.
 - Homey Timeline notifications, checkbox-selected direct push recipients, and an optional Homey Flow trigger.
 - Device and whole-zone exclusions (including subzones), an ignore board, local report storage, and JSON export.
@@ -89,6 +89,7 @@ Battery Watchdog evaluates devices that expose a battery capability. Its control
 - Direct push recipients (checkboxes) and an optional notification Flow trigger
 - Excluded battery devices
 - Excluded zones, including all descendant zones
+- Per-device profiles and individual time limits, separate low/critical battery thresholds, and a read-only preview without notifications
 
 The same zone exclusion also suppresses device availability and battery findings in future Automation Health scans. It does not suppress unrelated Flow or app findings.
 
@@ -98,7 +99,7 @@ The Backups tab contains the integrated Backup Center by Dennis Weel. It can exp
 
 Backup Center used a different Homey app ID. Its passwords, API key, destinations, and schedule cannot move automatically into Dr. Wau; enter and test them again before switching off the former app. Existing backup files remain usable as restore inputs.
 
-Recommended defaults are **6 h / 24 h / 6 h**. A stale timestamp indicates communication silence. It does not prove whether the cause is an empty battery, radio coverage, a mesh issue, or a device fault. Missing timestamps remain an unknown monitoring state and are never presented as a fabricated battery percentage.
+Recommended defaults are **6 h / 24 h / 24 h**; existing configured intervals are preserved. Native `lastSeenAt`, relevant capability update times and verified driver-origin Insights events are evaluated in layers. Resampled numeric Insights buckets and cached values without timestamps do not prove fresh communication. Unused contacts/remotes without communication timestamps do not produce silence alarms. Old periodic measurements are review findings, not an offline claim. Battery and availability findings are separate, unchanged problems are repeated only after the configured interval, and confirmed recoveries are sent once to previously notified recipients. No timestamps or battery percentages are fabricated.
 
 ## Active Findings
 

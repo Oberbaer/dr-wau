@@ -1,6 +1,6 @@
 {
   "id": "com.oberbaer.homeywatchdog",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "platforms": [
@@ -63,6 +63,12 @@
     "runWatchdog": {
       "method": "post",
       "path": "/watchdog/run",
+      "public": false,
+      "role": "owner"
+    },
+    "previewWatchdog": {
+      "method": "GET",
+      "path": "/watchdog/preview",
       "public": false,
       "role": "owner"
     },

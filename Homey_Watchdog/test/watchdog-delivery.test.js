@@ -97,3 +97,31 @@ test('failed pushes are retried without repeating successful channels', async ()
   assert.equal((await app.performBatteryWatchdog('test')).ok, false);
   assert.deepEqual(calls, { timeline: 1, first: 1, second: 2 });
 });
+
+test('read-only live preview never saves state, notifies or triggers Flow cards', async () => {
+  const app = Object.create(App.prototype);
+  const legacy = { schema: 1, devices: { sensor: { fingerprint: 'unknown', notifiedAt: 1 } } };
+  app.homey = { app: { manifest: { version: '0.6.0' } }, settings: {
+    get: key => key === 'battery_watchdog_state_v1' ? legacy : undefined,
+    set: () => { throw Error('Preview must not write settings'); },
+  }, notifications: { createNotification: () => { throw Error('Preview must not notify'); } } };
+  app.watchdogWarningTrigger = { trigger: () => { throw Error('Preview must not run Flow'); } };
+  app.watchdogConfig = { timeline: true, flowTrigger: true, pushUserIds: ['u'] };
+  app.ensureApi = async () => ({ call: async () => ({ sensor: { id: 'sensor', class: 'remote', capabilities: ['measure_battery'], capabilitiesObj: { measure_battery: { value: 1 } } } }), zones: { getZones: async () => ({}) } });
+  const result = await app.previewBatteryWatchdog();
+  assert.equal(result.notificationMode, 'disabled');
+  assert.equal(result.assessments[0].category, 'BATTERIE_KRITISCH');
+  assert.equal(legacy.devices.sensor.fingerprint, 'unknown');
+});
+
+test('new runtime keeps legacy suppression state untouched for rollback', async () => {
+  const app = Object.create(App.prototype);
+  const legacy = { schema: 1, devices: { sensor: { fingerprint: 'unknown', notifiedAt: 1 } } };
+  const settings = new Map([['battery_watchdog_state_v1', legacy]]);
+  app.homey = { settings: { get: key => settings.get(key), set: (key, value) => { settings.set(key, value); } } };
+  app.watchdogConfig = { timeline: false };
+  app.ensureApi = async () => ({ call: async () => ({ sensor: { id: 'sensor', capabilities: ['measure_battery'], capabilitiesObj: { measure_battery: { value: 80 } } } }), zones: { getZones: async () => ({}) } });
+  await app.performBatteryWatchdog('test');
+  assert.strictEqual(settings.get('battery_watchdog_state_v1'), legacy);
+  assert.equal(settings.get('battery_watchdog_state_v2').schema, 2);
+});

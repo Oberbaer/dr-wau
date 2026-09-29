@@ -1,5 +1,6 @@
 'use strict';
 const { isZoneExcluded } = require('./zone-exclusions');
+const { evaluateHeartbeat } = require('./heartbeat');
 
 const OUTPUT_KEYS = ['outputSuccess', 'outputError', 'outputTrue', 'outputFalse'];
 const GROUPS = {
@@ -421,8 +422,9 @@ function analyzeSnapshot(snapshot) {
       if (type === 'router') zigbeeRouters += 1;
       if (type === 'enddevice') zigbeeEndDevices += 1;
 
-      const lastSeenDays = ageDays(device.lastSeenAt);
-      const staleSeverity = type === 'router'
+      const heartbeat = evaluateHeartbeat(device, { staleHours: type === 'router' ? 6 : 48 }, Date.now());
+      const lastSeenDays = heartbeat.ageHours === null ? null : heartbeat.ageHours / 24;
+      const staleSeverity = heartbeat.status !== 'stale' ? null : type === 'router'
         ? (lastSeenDays >= 1 ? 'high' : lastSeenDays >= 0.25 ? 'medium' : null)
         : (lastSeenDays >= 7 ? 'high' : lastSeenDays >= 2 ? 'medium' : null);
       if (staleSeverity) add({

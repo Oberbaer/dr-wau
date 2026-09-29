@@ -12,7 +12,7 @@ English documentation: [README.md](README.md)
 - Fünf Hauptansichten: Übersicht, Automation Health, Batterie-Watchdog, Backups und Verwaltung.
 - Nachvollziehbarer Gesamt- und Kategoriescore für Flows, Geräte, Apps und Wartbarkeit.
 - Aktive Befunde mit Priorität, Status, Notizen und dauerhaften Entscheidungen.
-- Warnung bei verstummten Batteriegeräten anhand der vorhandenen `lastSeenAt`-Daten von Homey.
+- Mehrstufige Lebenszeichenbewertung mit nativen Zeitstempeln, Capability-Meldungen und geprüften Insights-Rohereignissen; Batterieprobleme werden getrennt bewertet.
 - Einstellbare Prüf-, Warn- und Wiederholungsintervalle.
 - Homey-Timeline-Meldungen, direkte Push-Empfänger per Häkchen und ein optionaler Homey-Flow-Trigger.
 - Geräte- und Zonenausschlüsse samt Unterzonen, Ignorieren-Schalttafel, lokale Berichtsspeicherung und JSON-Export.
@@ -89,6 +89,7 @@ Der Batterie-Watchdog bewertet Geräte, die eine Batteriefunktion bereitstellen.
 - Direkte Push-Empfänger per Häkchen und optionaler Benachrichtigungs-Flow-Auslöser
 - Ausgeschlossene Batteriegeräte
 - Ausgeschlossene Zonen einschließlich aller Unterzonen
+- Geräteprofile und individuelle Zeitgrenzen, getrennte Batterieschwellen und eine Vorschau ohne Benachrichtigungen
 
 Zonenausschlüsse unterdrücken auch Geräte- und Batteriebefunde im nächsten Automation-Health-Scan. Andere Flow- und App-Befunde bleiben sichtbar.
 
@@ -98,7 +99,7 @@ Der Backup-Bereich integriert Backup Center von Dennis Weel mit dessen MIT-Lizen
 
 Die bisherige Backup-Center-App besitzt eine andere Homey-App-ID. Zugangsdaten, Ziele und Zeitplan müssen in Dr. Wau neu eingetragen und geprüft werden, bevor die alte App deaktiviert wird. Vorhandene Backup-Dateien können weiterhin zum Wiederherstellen verwendet werden.
 
-Die empfohlenen Standardwerte sind **6 h / 24 h / 6 h**. Ein veralteter Zeitstempel weist auf ausbleibende Kommunikation hin. Er beweist nicht, ob eine leere Batterie, Funkabdeckung, ein Mesh-Problem oder ein Gerätedefekt die Ursache ist. Fehlende Zeitstempel bleiben ein unbekannter Überwachungszustand und werden nie als erfundener Batteriestand dargestellt.
+Die empfohlenen Standardwerte sind **6 h / 24 h / 24 h**; bestehende Intervalle bleiben erhalten. Die Prüfung berücksichtigt natives `lastSeenAt`, relevante Capability-Zeitstempel und bestätigte Rohereignisse der Geräte-App in Insights. Numerische Insights-Zeitraster und gespeicherte Werte ohne Zeitstempel belegen keine frische Kommunikation. Kontakte und Taster ohne Kommunikations-Zeitstempel warnen nicht wegen Nichtbenutzung. Alte periodische Messwerte sind ein Prüfhinweis, kein Offline-Beweis. Batterie und Verfügbarkeit werden getrennt bewertet. Unveränderte Probleme wiederholen sich nur nach dem eingestellten Intervall; bestätigte Entwarnungen gehen einmalig an zuvor benachrichtigte Empfänger. Es werden weder Zeitstempel noch Batteriestände erfunden.
 
 ## Aktive Befunde
 
