@@ -1,16 +1,16 @@
 # Security notes
 
-Homey Watchdog requests `homey:manager:api` so it can read Homey metadata for
-health analysis and battery-device monitoring. Its settings API is private and
-restricted to the Homey owner. The app does not expose an external server.
+Dr. Wau requests `homey:manager:api` for health analysis, battery monitoring and
+configuration backups. Its settings API is private and restricted to the Homey
+owner. Restore uses a separately supplied Homey API key and requires explicit
+selection and confirmation. The app does not expose an external server.
 
 ## Dependency audit
 
-The 2026-09-12 production audit reports four moderate advisories in the legacy
-Socket.IO dependency chain bundled by Athom's `homey-api` 3.20.0. No high or
-critical production advisory is reported. npm proposes downgrading
-`homey-api`, which is not accepted because it would replace the current API
-with an older release without removing the underlying design constraint.
+The 2026-09-27 `npm audit --omit=dev` reports no runtime vulnerabilities for
+the integrated dependency tree. The full install audit reports 19 findings in
+the development toolchain (2 low, 13 moderate, 4 high). Re-run the audit before
+distribution because advisory data changes over time.
 
 The remaining high findings are in the local `homey` CLI development toolchain
 and are not application runtime dependencies. Do not process untrusted images

@@ -62,6 +62,20 @@ test('stale Zigbee timestamps are findings but do not claim a mesh defect', () =
   assert.equal(finding.severity, 'high');
   assert.match(finding.recommendation.en, /does not prove/);
 });
+test('ignores device and flow availability findings from an excluded zone and its children', () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  const report = analyzeSnapshot(snapshot({
+    ignoredZoneIds: ['off'],
+    zones: { off: { id: 'off' }, child: { id: 'child', parent: 'off' } },
+    devices: { [id]: { id, name: 'Stored sensor', zone: 'child', available: false,
+      capabilitiesObj: { measure_battery: { value: 3 } } } },
+    normalFlows: { f1: { id: 'f1', name: 'Stored sensor flow', enabled: true,
+      trigger: { id: `homey:device:${id}:trigger` }, actions: [{ id: 'action' }] } },
+  }));
+  assert.equal(report.findings.filter(finding => [
+    'device_unavailable', 'battery_critical', 'flow_uses_unavailable_device',
+  ].includes(finding.code)).length, 0);
+});
 
 test('null battery values are unknown and never converted to zero', () => {
   const report = analyzeSnapshot(snapshot({

@@ -3,14 +3,18 @@
 const Homey = require('homey');
 const { HomeyAPI } = require('homey-api');
 const { analyzeSnapshot, applyFindingAnnotations, findingId } = require('./lib/analyzer');
-const { evaluateBatteryDevices, markDelivered, normalizeConfig } = require('./lib/battery-watchdog');
+const { evaluateBatteryDevices, isBatteryDevice, markDelivered, normalizeConfig, notificationRoutes } = require('./lib/battery-watchdog');
+const { isZoneExcluded, zoneMap } = require('./lib/zone-exclusions');
+const { collectHeartbeatInsights } = require('./lib/heartbeat-insights');
+const BackupApp = require('./backup/app');
 
 const REPORT_SETTING = 'latest_report_v1';
 const ANNOTATIONS_SETTING = 'finding_annotations_v1';
 const PRIORITIES = new Set(['auto', 'critical', 'high', 'medium', 'low', 'unimportant']);
 const STATUSES = new Set(['open', 'acknowledged', 'expected', 'resolved']);
 const WATCHDOG_CONFIG_SETTING = 'battery_watchdog_config_v1';
-const WATCHDOG_STATE_SETTING = 'battery_watchdog_state_v1';
+const LEGACY_WATCHDOG_STATE_SETTING = 'battery_watchdog_state_v1';
+const WATCHDOG_STATE_SETTING = 'battery_watchdog_state_v2';
 const WATCHDOG_STATUS_SETTING = 'battery_watchdog_status_v1';
 
 function restoreBaseReport(report) {
@@ -56,8 +60,7 @@ class HomeyWatchdogApp extends Homey.App {
     });
 
     this.homey.flow.getActionCard('run_battery_watchdog').registerRunListener(async () => {
-      await this.runBatteryWatchdog('flow');
-      return true;
+      return (await this.runBatteryWatchdog('flow')).ok;
     });
 
     this.watchdogWarningTrigger = this.homey.flow.getTriggerCard('battery_watchdog_warning');
@@ -68,7 +71,13 @@ class HomeyWatchdogApp extends Homey.App {
     });
 
     this.scheduleBatteryWatchdog();
-    this.log('Homey Watchdog initialized');
+    await BackupApp.prototype.onInit.call(this);
+    this.log('Dr. Wau initialized');
+  }
+
+  onUninit() {
+    if (this.watchdogTimer) this.homey.clearInterval(this.watchdogTimer);
+    BackupApp.prototype.onUninit.call(this);
   }
 
   scheduleBatteryWatchdog() {
@@ -82,18 +91,38 @@ class HomeyWatchdogApp extends Homey.App {
 
   async getWatchdogOverview() {
     const api = await this.ensureApi();
-    const devices = await api.call({ method: 'GET', path: '/api/manager/devices/device/' });
+    const [devices, zonesRaw] = await Promise.all([
+      api.call({ method: 'GET', path: '/api/manager/devices/device/' }),
+      api.zones.getZones({ $cache: false }),
+    ]);
     const ignored = new Set(this.watchdogConfig.ignoredDeviceIds);
-    const batteryDevices = Object.values(devices || {}).filter(device => {
-      const capabilities = Array.isArray(device.capabilities) ? device.capabilities : Object.keys(device.capabilitiesObj || {});
-      return capabilities.some(id => id === 'measure_battery' || id === 'alarm_battery');
-    }).map(device => ({ id: device.id, name: device.name || device.id, ignored: ignored.has(device.id) }))
+    const ignoredZones = new Set(this.watchdogConfig.ignoredZoneIds);
+    const zones = zoneMap(zonesRaw);
+    const evaluation = await this.evaluateWatchdogSnapshot(devices, zonesRaw);
+    const assessments = new Map(evaluation.assessments.map(item => [item.id, item]));
+    const batteryDevices = Object.values(devices || {}).filter(isBatteryDevice).map(device => ({ id: device.id, name: device.name || device.id,
+      ignored: ignored.has(device.id) || isZoneExcluded(device.zone, zones, ignoredZones),
+      assessment: assessments.get(device.id) || null }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    return { config: this.watchdogConfig, status: this.watchdogStatus, batteryDevices };
+    const availableZones = Object.values(zones).map(zone => ({ id: zone.id, name: zone.name || zone.id,
+      parent: zone.parent?.id || zone.parent || null,
+      ignored: isZoneExcluded(zone.id, zones, ignoredZones) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    let users = [], pushUsersError = false;
+    try { users = (await this.notificationUsers()).map(({ id, name }) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)); }
+    catch (_) { pushUsersError = true; }
+    return { config: this.watchdogConfig, status: this.watchdogStatus, batteryDevices, zones: availableZones,
+      users, pushUsersError, pushAuthReady: Boolean(this.writeClient), insightsSummary: evaluation.insightsSummary };
   }
 
   async updateWatchdogConfig(input = {}) {
-    this.watchdogConfig = normalizeConfig(input);
+    const config = normalizeConfig({ ...this.watchdogConfig, ...input });
+    if (config.pushUserIds.length) {
+      if (!this.writeClient) throw new Error('Für direkte Pushs zuerst den Homey API Key in der Backup-Verwaltung einrichten (Flow-Recht erforderlich).');
+      const knownUsers = new Set((await this.notificationUsers()).map(user => user.id));
+      if (config.pushUserIds.some(id => !knownUsers.has(id))) throw new Error('Ein ausgewählter Push-Empfänger ist auf diesem Homey nicht verfügbar.');
+    }
+    this.watchdogConfig = config;
     await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
     this.scheduleBatteryWatchdog();
     return this.getWatchdogOverview();
@@ -114,7 +143,7 @@ class HomeyWatchdogApp extends Homey.App {
     this.watchdogConfig = normalizeConfig(input.watchdogConfig || {});
     await this.homey.settings.set(REPORT_SETTING, report);
     await this.homey.settings.set(ANNOTATIONS_SETTING, annotations);
-    await this.homey.settings.set(WATCHDOG_STATE_SETTING, state);
+    await this.homey.settings.set(LEGACY_WATCHDOG_STATE_SETTING, state);
     await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
     this.scheduleBatteryWatchdog();
     return {
@@ -126,16 +155,38 @@ class HomeyWatchdogApp extends Homey.App {
     };
   }
 
+  async prepareWatchdogPush() {
+    const client = this.getWriteClient();
+    const users = new Map((await this.notificationUsers()).map(user => [user.id, user]));
+    const cardId = 'homey:manager:mobile:push_text';
+    await client.flow.getFlowCardAction({ id: cardId });
+    return { client, users, cardId };
+  }
+
+  async deliverWatchdogRoute(route, text, context = {}) {
+    if (route === 'timeline') return this.homey.notifications.createNotification({ excerpt: text });
+    if (route === 'flow') return this.watchdogWarningTrigger.trigger({ text });
+    if (!route.startsWith('push:')) throw new Error('Unknown watchdog notification channel.');
+    context.push ||= this.prepareWatchdogPush();
+    const { client, users, cardId } = await context.push;
+    const user = users.get(route.slice(5));
+    if (!user) throw new Error('Ein ausgewählter Push-Empfänger ist nicht mehr verfügbar.');
+    return client.flow.runFlowCardAction({ id: cardId, args: { user: { id: user.id, name: user.name }, text } });
+  }
+
   async deliverWatchdogMessage(text) {
-    if (!this.watchdogConfig.timeline && !this.watchdogConfig.pushAll) throw new Error('No notification channel enabled');
-    if (this.watchdogConfig.timeline) await this.homey.notifications.createNotification({ excerpt: text });
-    if (this.watchdogConfig.pushAll) {
-      await this.watchdogWarningTrigger.trigger({ text });
-    }
+    const routes = notificationRoutes(this.watchdogConfig);
+    if (!routes.length) return false;
+    const context = {};
+    const results = await Promise.allSettled(routes.map(route => this.deliverWatchdogRoute(route, text, context)));
+    if (results.some(result => result.status === 'rejected')) throw new Error('Mindestens ein Benachrichtigungskanal konnte nicht zustellen. API Key und Empfänger prüfen.');
+    return true;
   }
 
   async sendWatchdogTestNotification() {
-    await this.deliverWatchdogMessage('✅ Homey Watchdog: Testbenachrichtigung erfolgreich ausgelöst.');
+    if (!await this.deliverWatchdogMessage('✅ Dr. Wau: Testbenachrichtigung erfolgreich ausgelöst.')) {
+      throw new Error('Kein Benachrichtigungskanal ausgewählt.');
+    }
     return { ok: true };
   }
 
@@ -149,19 +200,34 @@ class HomeyWatchdogApp extends Homey.App {
     const startedAt = Date.now();
     try {
       const api = await this.ensureApi();
-      const devices = await api.call({ method: 'GET', path: '/api/manager/devices/device/' });
-      const previous = this.homey.settings.get(WATCHDOG_STATE_SETTING) || {};
-      const evaluation = evaluateBatteryDevices(devices, previous, this.watchdogConfig, startedAt);
-      for (let offset = 0; offset < evaluation.pending.length; offset += 2) {
-        const batch = evaluation.pending.slice(offset, offset + 2);
-        await this.deliverWatchdogMessage(`⚠️ Homey Watchdog: ${batch.map(item => item.message).join('; ')}`);
-        markDelivered(evaluation.state, batch.map(item => item.id), startedAt);
-        await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
+      const [devices, zones] = await Promise.all([
+        api.call({ method: 'GET', path: '/api/manager/devices/device/' }),
+        api.zones.getZones({ $cache: false }),
+      ]);
+      const evaluation = await this.evaluateWatchdogSnapshot(devices, zones);
+      const context = {};
+      let deliveryFailures = 0;
+      for (const route of notificationRoutes(evaluation.config)) {
+        for (const kind of ['problem', 'recovery']) {
+          const pending = evaluation.pending.filter(item => item.kind === kind && item.routes.includes(route));
+          for (let offset = 0; offset < pending.length; offset += 2) {
+            const batch = pending.slice(offset, offset + 2);
+            try {
+              await this.deliverWatchdogRoute(route, `${kind === 'recovery' ? '✅' : '⚠️'} Dr. Wau: ${batch.map(item => item.message).join('; ')}`, context);
+              markDelivered(evaluation.state, batch.map(item => item.key), startedAt, [route]);
+            } catch (_) { deliveryFailures += 1; }
+            await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
+          }
+        }
       }
       await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
       this.watchdogStatus = {
-        ok: true, source, checkedAt: new Date(startedAt).toISOString(),
-        checkedDevices: evaluation.checkedDevices, warnings: evaluation.pending.length,
+        ok: deliveryFailures === 0, source, checkedAt: new Date(startedAt).toISOString(),
+        checkedDevices: evaluation.checkedDevices, warnings: evaluation.activeProblems, deliveryFailures,
+        pendingNotifications: evaluation.pending.length, recoveries: evaluation.pending.filter(item => item.kind === 'recovery').length,
+        nativeTimestampMissing: evaluation.assessments.filter(item => !item.heartbeat.nativeTimestampAvailable).length,
+        insightsSummary: evaluation.insightsSummary,
+        ...(deliveryFailures ? { error: 'Benachrichtigung konnte nicht vollständig zugestellt werden. API Key und Empfänger prüfen.' } : {}),
       };
       await this.homey.settings.set(WATCHDOG_STATUS_SETTING, this.watchdogStatus);
       return this.watchdogStatus;
@@ -170,6 +236,22 @@ class HomeyWatchdogApp extends Homey.App {
       await this.homey.settings.set(WATCHDOG_STATUS_SETTING, this.watchdogStatus);
       throw error;
     }
+  }
+
+  async evaluateWatchdogSnapshot(devices, zones, now = Date.now()) {
+    const { evidence, summary } = await collectHeartbeatInsights(await this.ensureApi(), devices, this.watchdogConfig, now, zones);
+    const previous = this.homey.settings.get(WATCHDOG_STATE_SETTING) || this.homey.settings.get(LEGACY_WATCHDOG_STATE_SETTING) || {};
+    return { ...evaluateBatteryDevices(devices, previous, this.watchdogConfig, now, zones, evidence), insightsSummary: summary };
+  }
+
+  async previewBatteryWatchdog() {
+    const api = await this.ensureApi();
+    const [devices, zones] = await Promise.all([
+      api.call({ method: 'GET', path: '/api/manager/devices/device/' }), api.zones.getZones({ $cache: false }),
+    ]);
+    const evaluation = await this.evaluateWatchdogSnapshot(devices, zones);
+    return { version: this.homey.app.manifest.version, notificationMode: 'disabled', checkedAt: new Date().toISOString(),
+      checkedDevices: evaluation.checkedDevices, warnings: evaluation.activeProblems, assessments: evaluation.assessments, insightsSummary: evaluation.insightsSummary };
   }
 
   async ensureApi() {
@@ -312,6 +394,7 @@ class HomeyWatchdogApp extends Homey.App {
       variables,
       apps,
       zones,
+      ignoredZoneIds: this.watchdogConfig.ignoredZoneIds,
       coverage,
       source,
       generatedAt: new Date().toISOString(),
@@ -323,6 +406,14 @@ class HomeyWatchdogApp extends Homey.App {
     await this.homey.settings.set(REPORT_SETTING, managedReport);
     return managedReport;
   }
+}
+
+for (const [name, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(BackupApp.prototype))) {
+  if (['constructor', 'onInit', 'onUninit'].includes(name)) continue;
+  if (Object.prototype.hasOwnProperty.call(HomeyWatchdogApp.prototype, name)) {
+    throw new Error(`Backup integration method conflict: ${name}`);
+  }
+  Object.defineProperty(HomeyWatchdogApp.prototype, name, descriptor);
 }
 
 module.exports = HomeyWatchdogApp;

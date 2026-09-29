@@ -1,25 +1,30 @@
-# Homey Watchdog
+# Dr. Wau app
 
-Homey Watchdog combines the diagnostics inherited from Automation Health with scheduled monitoring for battery-capable devices. It runs locally on Homey Pro.
+This directory contains the supported native Dr. Wau app (`com.oberbaer.homeywatchdog`). It combines read-only Automation Health diagnostics, scheduled battery monitoring, and integrated configuration backups on Homey Pro.
 
-## Features
+See the repository [English documentation](../README.md) or [German documentation](../README.de.md) for features, installation, first setup, notifications, and privacy details.
 
-- Explainable health score for Flows, devices, apps and dependencies.
-- Battery-device silence warning after a configurable period (default: 24 hours).
-- Configurable scan and repeat intervals (default: every 6 hours).
-- Homey Timeline notifications and optional mobile push to Homey's native `All` recipient through the app's warning trigger.
-- Device exclusions, persistent finding annotations and a local settings dashboard.
-- Manual scan, watchdog run and test notification.
+## Behavior
 
-The watchdog reads Homey's existing device state; it does not wake or poll battery devices. A stale timestamp indicates communication silence, not its cause.
+- Automation Health reports explainable scores and findings for Flows, devices, apps, and maintainability.
+- Battery Watchdog evaluates native heartbeat, relevant capability update times and verified raw Insights events with per-device profiles; resampled numeric buckets are not new reports. Missing timestamps and unused event devices do not automatically create fault warnings.
+- Battery, reported unavailability and stale measurement data are separate findings, with independent suppression and confirmed recovery notifications. A read-only preview and editable profiles/time limits explain each decision.
+- Recommended starting values are a 6-hour check interval, a warning after 24 hours, and a 24-hour repeat interval; existing settings are retained.
+- Timeline notifications are delivered directly by the app.
+- Direct mobile push targets only users selected by checkbox. It uses the same locally stored Homey API Key as selective restore and requires Flow write permission.
+- The optional `battery_watchdog_warning` trigger remains available for user-created notification Flows, separately from direct push.
+- Repeat suppression is tracked per channel and recipient so failed deliveries do not repeat successful ones.
+- Device exclusions, finding annotations, reports, and delivery state are stored locally on Homey.
+- Out-of-service zones exclude their devices and all descendant-zone devices from battery alerts and device findings.
+- Backup Center source is included under `backup/`, with its original MIT license and credits. Restore requires an explicit user choice and confirmation.
 
-Automatic battery checks are disabled after installation until the owner enables them in the app settings. This avoids duplicate alerts while an existing Advanced Flow watchdog is still active.
+Automatic checks are disabled on a fresh installation until the owner reviews and enables them in the app settings. The owner-only migration endpoint exists for controlled imports from an earlier Automation Health installation.
 
-The owner-only migration endpoint can import an existing Automation Health report and annotations during a controlled local upgrade.
-
-Mobile push uses the `A battery watchdog warning is sent` trigger and a small Homey Flow that forwards its warning-text token to Homey's native push action. This follows Homey's permission model while the scheduling, device evaluation, and repeat suppression remain inside the app.
+The app ID is retained for Watchdog upgrades. A separate Backup Center installation has a different app ID, so its credentials and backup schedule must be configured again in Dr. Wau.
 
 ## Development
+
+Node.js 22 or newer is required.
 
 ```powershell
 npm.cmd ci
@@ -28,6 +33,4 @@ npm.cmd run validate:publish
 npx.cmd homey app build
 ```
 
-The app is a fork of the locally developed Automation Health 0.2.1 codebase. Version 0.3.0 introduces the Homey Watchdog identity and battery monitoring. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [PRIVACY.md](PRIVACY.md).
-
-No live Homey installation or Store publication is performed by these commands. The app uses its own `com.oberbaer.homeywatchdog` id and can therefore be reviewed separately from an existing Automation Health installation.
+These commands do not install the app on Homey and do not publish it. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [PRIVACY.md](PRIVACY.md), and [SECURITY.md](SECURITY.md).

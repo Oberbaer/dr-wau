@@ -1,4 +1,12 @@
 {
+  "0.4.0": {
+    "en": "Introducing Dr. Wau with integrated configuration backups and whole-zone exclusions for battery alerts and device findings.",
+    "de": "Dr. Wau vereint Konfigurationsbackups mit Zonenausnahmen für Batteriemeldungen und Gerätebefunde."
+  },
+  "0.3.1": {
+    "en": "Organize the settings into responsive Overview, Automation Health, Battery Watchdog and Management tabs.",
+    "de": "Die Einstellungen sind jetzt in die responsiven Reiter \"\u00dcbersicht\", \"Automation Health\", \"Batterie-Watchdog\" und \"Verwaltung\" gegliedert."
+  },
   "0.3.0": {
     "en": "Combine Automation Health with scheduled battery-device silence alerts, owner-only migration, Timeline notifications and optional push to all Homey users.",
     "de": "Automation Health mit geplanten Ausfallwarnungen für Batteriegeräte, geschützter Migration, Timeline-Meldungen und optionalem Push an alle Homey-Benutzer kombiniert."

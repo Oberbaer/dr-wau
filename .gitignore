@@ -19,7 +19,9 @@ pnpm-debug.log*
 
 # Lokal erzeugte Homey-Artefakte
 artifacts/
+.homeybuild/
 PROJECT_NOTES.local.md
+_sources/
 
 # Tests / Coverage
 coverage/

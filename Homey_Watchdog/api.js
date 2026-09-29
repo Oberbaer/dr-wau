@@ -38,4 +38,9 @@ module.exports = {
   async importAutomationHealth({ homey, body }) {
     return homey.app.importLegacyData(body);
   },
+
+  async previewWatchdog({ homey }) {
+    return homey.app.previewBatteryWatchdog();
+  },
+  ...require('./backup/api'),
 };

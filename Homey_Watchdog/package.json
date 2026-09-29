@@ -1,10 +1,10 @@
 {
   "name": "com.oberbaer.homeywatchdog",
-  "version": "0.3.0",
-  "description": "Health scoring and battery-device silence alerts for Homey Pro.",
+  "version": "0.6.0",
+  "description": "Dr. Wau: Homey health checks, battery alerts and backups.",
   "main": "app.js",
   "scripts": {
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/*.test.js backup/test/*.test.js",
     "build": "homey app build",
     "validate": "homey app validate",
     "validate:publish": "homey app validate --level publish"
@@ -13,10 +13,15 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "homey-api": "3.20.0"
+    "basic-ftp": "6.2.1",
+    "homey-api": "3.20.0",
+    "node-smb2": "1.3.5",
+    "saxes": "6.0.0",
+    "ssh2-sftp-client": "12.1.1"
   },
   "devDependencies": {
-    "homey": "4.5.0"
+    "homey": "4.5.0",
+    "jsdom": "26.1.0"
   },
   "license": "MIT",
   "private": true

@@ -3,5 +3,5 @@
   <rect width="1000" height="700" rx="40" fill="url(#g)"/>
   <circle cx="500" cy="300" r="190" fill="none" stroke="#8EE6D8" stroke-width="32" opacity=".38"/>
   <path fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" d="m237 335 134-2 65-145 105 294 70-149h152"/>
-  <text x="500" y="595" fill="#fff" font-family="Arial, sans-serif" font-size="72" font-weight="700" text-anchor="middle">Homey Watchdog</text>
+  <text x="500" y="595" fill="#fff" font-family="Arial, sans-serif" font-size="84" font-weight="700" text-anchor="middle">Dr. Wau</text>
 </svg>
