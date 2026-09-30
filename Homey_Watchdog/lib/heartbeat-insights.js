@@ -15,7 +15,7 @@ function rawInsightEvidence(response, log, device, profile, now) {
     .map(entry => ({ capability, timestamp: timestamp(entry.t, now), verifiedRawEvent: true }));
 }
 
-async function collectHeartbeatInsights(api, devices, config, now, zonesRaw = {}, maxRequests = 24) {
+async function collectHeartbeatInsights(api, devices, config, now, zonesRaw = {}, maxRequests = 24, learningState = null) {
   const evidence = {};
   const summary = { requests: 0, errors: 0, skipped: 0, aggregatedIgnored: 0 };
   if (!api.insights?.getLogs || !api.insights?.getLogEntries) return { evidence, summary: { ...summary, unavailable: true } };
@@ -23,7 +23,7 @@ async function collectHeartbeatInsights(api, devices, config, now, zonesRaw = {}
   const candidates = Object.values(devices || {}).filter(device => (device.capabilities || Object.keys(device.capabilitiesObj || {})).some(id => /^(measure_battery|alarm_battery)(\.|$)/.test(id))
     && !(config.ignoredDeviceIds || []).includes(device.id)
     && !isZoneExcluded(device.zone, zones, config.ignoredZoneIds)
-    && evaluateHeartbeat(device, config, now).status !== 'active');
+    && (learningState !== null || evaluateHeartbeat(device, config, now).status !== 'active'));
   if (!candidates.length) return { evidence, summary };
   let logs;
   try { logs = await api.insights.getLogs({ $cache: false }); }
@@ -37,6 +37,10 @@ async function collectHeartbeatInsights(api, devices, config, now, zonesRaw = {}
       const cap = log.ownerId || String(log.id).slice(`homey:device:${device.id}:`.length);
       if (relevantCapability(cap, device.capabilitiesObj?.[cap], profile)) queries.push({ log, device, profile });
     }
+  }
+  if (learningState !== null && queries.length > maxRequests) {
+    const offset = Math.floor(now / Math.max(1, (config.checkHours || 6) * 3600000)) * maxRequests % queries.length;
+    queries.push(...queries.splice(0, offset));
   }
   summary.skipped = Math.max(0, queries.length - maxRequests);
   let cursor = 0;

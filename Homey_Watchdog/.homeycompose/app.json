@@ -1,6 +1,6 @@
 {
   "id": "com.oberbaer.homeywatchdog",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "platforms": [
@@ -69,6 +69,18 @@
     "previewWatchdog": {
       "method": "GET",
       "path": "/watchdog/preview",
+      "public": false,
+      "role": "owner"
+    },
+    "setVacation": {
+      "method": "post",
+      "path": "/watchdog/vacation",
+      "public": false,
+      "role": "owner"
+    },
+    "updateDeviceProfile": {
+      "method": "post",
+      "path": "/watchdog/profile",
       "public": false,
       "role": "owner"
     },

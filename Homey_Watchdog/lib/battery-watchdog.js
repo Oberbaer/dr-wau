@@ -1,11 +1,13 @@
 'use strict';
 const { isZoneExcluded, zoneMap } = require('./zone-exclusions');
 const { PROFILES, evaluateHeartbeat, evaluateBattery } = require('./heartbeat');
+const { profileDecision } = require('./device-learning');
+const { normalizeVacation, vacationDecision } = require('./vacation');
 
 const DEFAULT_CONFIG = Object.freeze({
   enabled: false, checkHours: 6, staleHours: 24, repeatHours: 24,
   timeline: true, flowTrigger: false, pushUserIds: [], ignoredDeviceIds: [], ignoredZoneIds: [],
-  batteryLowPercent: 20, batteryCriticalPercent: 5, deviceProfiles: {},
+  batteryLowPercent: 20, batteryCriticalPercent: 5, deviceProfiles: {}, vacation: { enabled: false, until: null },
 });
 
 function clampNumber(value, fallback, min, max) {
@@ -28,9 +30,15 @@ function normalizeConfig(input = {}) {
     ignoredZoneIds: [...new Set(Array.isArray(input.ignoredZoneIds) ? input.ignoredZoneIds.map(String).filter(Boolean) : [])],
     batteryLowPercent: low,
     batteryCriticalPercent: clampNumber(input.batteryCriticalPercent, DEFAULT_CONFIG.batteryCriticalPercent, 0, low),
+    vacation: normalizeVacation(input.vacation),
     deviceProfiles: Object.fromEntries(Object.entries(profiles).slice(0, 2000).filter(([id, value]) => !['__proto__', 'constructor', 'prototype'].includes(id) && value && typeof value === 'object')
       .map(([id, value]) => [id, { profile: PROFILES.includes(value.profile) ? value.profile : 'auto',
-        ...(value.staleHours !== undefined && value.staleHours !== null && value.staleHours !== '' ? { staleHours: clampNumber(value.staleHours, DEFAULT_CONFIG.staleHours, 1, 720) } : {}) }])),
+        ...(value.staleHours !== undefined && value.staleHours !== null && value.staleHours !== '' ? { staleHours: clampNumber(value.staleHours, DEFAULT_CONFIG.staleHours, 1, 720) } : {}),
+        ...(value.warningAfterHours !== undefined && value.warningAfterHours !== null && value.warningAfterHours !== '' ? { warningAfterHours: clampNumber(value.warningAfterHours, DEFAULT_CONFIG.staleHours, 1, 720) } : {}),
+        ...(['manual', 'event_only', 'disabled'].includes(value.mode) ? { mode: value.mode } : !value.mode && (value.profile && value.profile !== 'auto' || value.staleHours) ? { mode: 'manual' } : {}),
+        confirmation: value.confirmation === 'confirmed' || (!value.mode && (value.profile && value.profile !== 'auto' || value.staleHours)) ? 'confirmed' : 'unconfirmed',
+        vacationMode: ['auto', 'normal', 'extend', 'pause'].includes(value.vacationMode) ? value.vacationMode : 'auto',
+        vacationFactor: clampNumber(value.vacationFactor, 2, 1, 8) }])),
   };
 }
 
@@ -47,7 +55,7 @@ function isBatteryDevice(device) {
   return capabilities.some(id => /^(measure_battery|alarm_battery)(\.|$)/.test(id));
 }
 
-function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(), zonesRaw = {}, insightsRaw = {}) {
+function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(), zonesRaw = {}, insightsRaw = {}, learningRaw = {}) {
   const config = normalizeConfig(configRaw);
   const previous = [1, 2].includes(stateRaw?.schema) && stateRaw.devices && typeof stateRaw.devices === 'object' ? stateRaw.devices : {};
   const ignored = new Set(config.ignoredDeviceIds);
@@ -60,13 +68,15 @@ function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(
   const assessments = [];
   const state = { schema: 2, lastCheckedAt: now, checkedDevices: devices.length, devices: {} };
   for (const device of devices) {
-    const heartbeat = evaluateHeartbeat(device, config, now, insightsRaw[device.id] || []);
+    const decision = profileDecision(device, config, learningRaw?.devices?.[device.id]);
+    const vacation = vacationDecision(device, decision, config, now);
+    const heartbeat = evaluateHeartbeat(device, config, now, insightsRaw[device.id] || [], { decision, vacation });
     const battery = evaluateBattery(device, config, now);
     const problems = [heartbeat.problem, battery.problem].filter(Boolean);
     const old = previous[device.id] || {};
     const entry = { problems: {}, unresolved: { ...(old.unresolved || {}) }, recoveries: { ...(old.recoveries || {}) } };
     const name = String(device.name || device.id).slice(0, 120);
-    assessments.push({ id: device.id, name, heartbeat, battery,
+    assessments.push({ id: device.id, name, heartbeat, battery, profile: decision, vacation,
       category: battery.status === 'critical' ? 'BATTERIE_KRITISCH' : heartbeat.category });
     for (const problem of problems) {
       delete entry.recoveries[problem.type];
@@ -82,6 +92,7 @@ function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(
         ...(problem.type === 'battery' ? { alarmActive: battery.alarm === true, numericLow: battery.level !== null && battery.level <= config.batteryLowPercent } : {}) };
       const pendingRoutes = routes.filter(route => !deliveryTimes[route] || now - deliveryTimes[route] >= config.repeatHours * 3600000);
       if (pendingRoutes.length) pending.push({ id: device.id, name, type: problem.type, kind: 'problem',
+        severity: problem.type === 'availability' || problem.type === 'battery' && battery.status === 'critical' ? 'critical' : 'warning',
         key: `${device.id}|${problem.type}|problem`, message: `${name}: ${problem.message}${problem.type !== 'battery' && battery.level !== null ? ` · Batterie zuletzt ${battery.level} %` : ''}`, routes: pendingRoutes });
     }
     for (const [type, prior] of Object.entries({ ...(old.unresolved || {}), ...(old.problems || {}) })) {

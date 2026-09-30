@@ -31,6 +31,21 @@
     .module-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
     .module-card h2 { margin-bottom: 9px; }
     .module-card .module-state { display: block; margin-top: 16px; color: var(--accent); font-size: 13px; font-weight: 800; }
+    .hero { padding: 22px; margin-bottom: 16px; border-radius: 18px; background: color-mix(in srgb, var(--accent) 12%, Canvas); }
+    .hero h2 { font-size: 24px; margin-bottom: 8px; }
+    .device-list { display: grid; gap: 8px; margin: 14px 0; }
+    .device-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 16px; text-align: left; background: Canvas; color: CanvasText; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); }
+    .device-item strong, .device-item span { overflow-wrap: anywhere; }
+    .device-item span { max-width: 150px; text-align: right; }
+    .device-item small { grid-column: 1 / -1; opacity: .75; font-weight: 400; }
+    .device-item.needs-attention { border-left: 4px solid var(--medium); }
+    .device-detail { margin: 16px 0; padding: 18px; border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 14px; background: Canvas; }
+    .device-detail pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .detail-grid label { display: grid; gap: 5px; }
+    .detail-grid input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 22%, transparent); background: Canvas; color: CanvasText; }
+    .watchdog-filter-row { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+    .watchdog-filter-row input { min-width: 0; padding: 9px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); background: Canvas; color: CanvasText; }
     .notice { margin: 18px 0; padding: 13px 15px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 12px; background: var(--surface); }
     .score-grid { display: grid; grid-template-columns: 1.25fr repeat(4, minmax(100px, 1fr)); gap: 10px; margin: 18px 0; }
     .score-card { min-height: 112px; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; padding: 15px; background: var(--surface); }
@@ -78,7 +93,7 @@
     .checkbox-row span { overflow-wrap: anywhere; }
     .board-description { margin: 8px 0 14px; }
     .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
-    @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid, .detail-grid, .watchdog-filter-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -101,6 +116,8 @@
   <div class="notice" id="status" data-i18n="privacy">The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.</div>
 
   <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
+    <div class="hero"><h2 id="overview-headline">🐾 Dr. Waus Revier</h2><p id="overview-summary">Dr. Wau prüft Geräte, Automationen und Backups.</p></div>
+    <div class="notice" id="watchdog-onboarding" hidden><strong>🐶 Neu im Revier</strong><p>Ich lerne, wie oft sich deine Geräte normalerweise melden. Unsichere Profile kannst du jederzeit korrigieren.</p><button type="button" id="onboarding-ok">Alles klar</button> <button type="button" class="secondary" id="onboarding-review">Unsichere Profile ansehen</button></div>
     <div class="panel-heading">
       <h2 data-i18n="overviewTitle">System overview</h2>
       <p class="muted" data-i18n="overviewDescription">Choose a module or check its latest status at a glance.</p>
@@ -119,8 +136,13 @@
       <button class="module-card" type="button" data-open-tab="backup">
         <h2 data-i18n="tabBackup">Backups</h2>
         <span class="muted" data-i18n="backupDescription">Create, schedule and selectively restore Homey configuration backups.</span>
+        <span class="module-state" id="overview-backup-state">Status wird geladen …</span>
+      </button>
+      <button class="module-card" type="button" data-open-tab="watchdog">
+        <h2>🏖 Urlaubsmodus</h2><span class="muted">Gerätebezogene Regeln bleiben aktiv.</span><span class="module-state" id="overview-vacation-state">Aus</span>
       </button>
     </div>
+    <div class="notice"><h2>Heute wichtig</h2><div id="overview-important">Keine aktuellen Gerätebefunde.</div></div>
   </section>
 
   <section class="tab-panel" id="panel-backup" role="tabpanel" aria-labelledby="tab-backup" data-panel="backup" hidden>
@@ -131,8 +153,15 @@
   </section>
 
   <section class="tab-panel watchdog" id="panel-watchdog" role="tabpanel" aria-labelledby="tab-watchdog" data-panel="watchdog" hidden>
-    <div class="section-heading"><h2 data-i18n="watchdogTitle">Battery watchdog</h2><span class="pill" id="watchdog-state">Loading…</span></div>
+    <div class="section-heading"><h2>Gerätewache</h2><span class="pill" id="watchdog-state">Loading…</span></div>
     <p class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</p>
+    <div class="actions"><label class="check"><input id="vacation-enabled" type="checkbox">🏖 Urlaubsmodus</label><label>Ende (optional) <input id="vacation-until" type="datetime-local"></label><button type="button" class="secondary" id="vacation-save">Urlaubsmodus speichern</button></div>
+    <div class="actions"><label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label><label class="check"><input id="watchdog-timeline" type="checkbox"><span data-i18n="timeline">Homey Timeline</span></label></div>
+    <p id="device-watch-summary" role="status"></p>
+    <div class="watchdog-filter-row"><input id="device-search" type="search" placeholder="Gerät suchen" aria-label="Gerät suchen"><select id="device-zone-filter" aria-label="Zone"><option value="all">Alle Zonen</option></select><select id="device-status-filter" aria-label="Status"><option value="all">Alle</option><option value="attention">Handlungsbedarf</option><option value="ok">OK</option><option value="ignored">Ignoriert</option></select><select id="device-profile-filter" aria-label="Profilstatus"><option value="all">Alle Profile</option><option value="unconfirmed">Bitte bestätigen</option><option value="learning">Lernphase</option><option value="learned">Gelernt</option></select></div>
+    <div id="device-list" class="device-list"></div>
+    <section id="device-detail" class="device-detail" hidden aria-live="polite"><div class="section-heading"><h3 id="detail-name"></h3><button type="button" class="secondary" id="detail-close">Schließen</button></div><p id="detail-status"></p><p id="detail-simple"></p><div class="actions"><button type="button" id="detail-confirm">Profil bestätigen</button><button type="button" class="secondary" id="detail-auto">Zurück auf automatisch</button><button type="button" class="secondary" id="detail-ignore">Gerät ignorieren</button></div><details><summary>Mehr Einstellungen</summary><div class="detail-grid"><label>Profil<select id="detail-profile"><option value="auto">Automatisch lernen</option><option value="contact">Kontakt</option><option value="motion">Bewegungsmelder</option><option value="safety">Rauch-/Wassermelder</option><option value="sensor">Messsensor</option><option value="button">Taster</option><option value="vacuum">Staubsauger</option><option value="generic">Allgemein</option><option value="event_only">Nur Ereignisse</option><option value="disabled">Funkstille nicht überwachen</option></select></label><label>Eigene Warnschwelle (Stunden)<input id="detail-threshold" type="number" min="1" max="720"></label><label>Im Urlaub<select id="detail-vacation"><option value="auto">Automatisch</option><option value="normal">Normal überwachen</option><option value="extend">Schwelle verlängern</option><option value="pause">Funkstille pausieren</option></select></label><label>Verlängerung ×<input id="detail-factor" type="number" min="1" max="8" step="0.5" value="2"></label></div><button type="button" id="detail-save">Eigene Einstellungen speichern</button><button type="button" class="danger" id="detail-reset-learning">Lernhistorie neu beginnen</button></details><details><summary>Warum glaubt Dr. Wau das?</summary><pre id="detail-expert"></pre></details></section>
+    <details id="watchdog-advanced"><summary>Erweiterte Einstellungen</summary>
     <div class="watchdog-grid">
       <label><span data-i18n="checkHours">Check interval (hours)</span><input id="watchdog-check" type="number" min="1" max="168"></label>
       <label><span data-i18n="staleHours">Warn after (hours)</span><input id="watchdog-stale" type="number" min="1" max="720"></label>
@@ -141,8 +170,6 @@
       <label><span data-i18n="batteryCritical">Critical battery (%)</span><input id="watchdog-battery-critical" type="number" min="0" max="100"></label>
     </div>
     <div class="actions">
-      <label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label>
-      <label class="check"><input id="watchdog-timeline" type="checkbox"><span data-i18n="timeline">Homey Timeline</span></label>
       <label class="check"><input id="watchdog-flow-trigger" type="checkbox"><span data-i18n="flowTrigger">Trigger my Homey notification Flow</span></label>
     </div>
     <p class="muted" data-i18n="channelHelp">Timeline saves a warning in Homey. The Flow option only starts your own Flow; it does not send a push by itself. Both are independent of the direct recipients below.</p>
@@ -168,6 +195,7 @@
         <thead><tr><th data-i18n="monitoringDevice">Device / profile</th><th data-i18n="monitoringLimit">Individual limit (hours)</th><th data-i18n="monitoringSource">Evidence / age</th><th data-i18n="monitoringResult">Assessment / battery</th></tr></thead>
         <tbody id="watchdog-monitoring-rows"></tbody>
       </table></div>
+    </details>
     </details>
   </section>
   <section class="tab-panel board" id="panel-management" role="tabpanel" aria-labelledby="tab-management" data-panel="management" hidden>
@@ -221,7 +249,7 @@
 (() => {
   const de = navigator.language.toLowerCase().startsWith('de');
   const translations = {
-    tabOverview: ['Overview', '\u00dcbersicht'], tabHealth: ['Automation Health', 'Automation Health'], tabWatchdog: ['Battery watchdog', 'Batterie-Watchdog'], tabManagement: ['Management', 'Verwaltung'],
+    tabOverview: ['Overview', '\u00dcbersicht'], tabHealth: ['Automation Health', 'Automation Health'], tabWatchdog: ['Device watch', 'Gerätewache'], tabManagement: ['Management', 'Verwaltung'],
     overviewTitle: ['System overview', 'System\u00fcbersicht'], overviewDescription: ['Choose a module or check its latest status at a glance.', 'W\u00e4hle eine Hauptfunktion oder pr\u00fcfe ihren letzten Status auf einen Blick.'],
     healthDescription: ['Analyzes flows, devices, apps and maintenance without making changes.', 'Analysiert Flows, Ger\u00e4te, Apps und Wartbarkeit, ohne \u00c4nderungen vorzunehmen.'], overviewNoScan: ['No scan available yet', 'Noch kein Scan vorhanden'], overviewLoading: ['Loading status...', 'Status wird geladen...'], overviewScore: ['Overall score', 'Gesamtscore'],
     subtitle: ['Read-only check with persistent finding management.', 'Rein lesende Prüfung mit dauerhafter Befundverwaltung.'],
@@ -241,7 +269,7 @@
     current: ['Currently detected', 'Aktuell erkannt'], historical: ['Not detected in latest scan', 'Im letzten Scan nicht erkannt'], lastSeen: ['Last seen', 'Zuletzt gesehen'], ignored: ['Ignored', 'Ignoriert'], original: ['original', 'ursprünglich'],
     pAuto: ['Automatic', 'Automatisch'], pCritical: ['Critical', 'Kritisch'], pHigh: ['High', 'Hoch'], pMedium: ['Normal', 'Normal'], pLow: ['Low', 'Niedrig'], pUnimportant: ['Unimportant', 'Unwichtig'],
     sOpen: ['Open', 'Offen'], sAcknowledged: ['Acknowledged', 'Bestätigt'], sExpected: ['Expected / intentional', 'Erwartet / absichtlich'], sResolved: ['Resolved', 'Erledigt'],
-    watchdogTitle: ['Battery watchdog', 'Batterie-Watchdog'], watchdogDescription: ['Checks battery-capable devices and warns when they stop reporting.', 'Prüft batteriefähige Geräte und warnt, wenn sie sich nicht mehr melden.'],
+    watchdogTitle: ['Device watch', 'Gerätewache'], watchdogDescription: ['Watches battery-capable devices, their reporting behavior and battery state.', 'Überwacht batteriefähige Geräte, ihr Meldeverhalten und ihren Batteriezustand.'],
     tabBackup: ['Backups', 'Backups'], backupDescription: ['Create, schedule and selectively restore Homey configuration backups.', 'Homey-Konfiguration sichern, planen und gezielt wiederherstellen.'],
     backupMigration: ['Existing Backup Center credentials and schedules must be entered again in Dr. Wau; app settings do not transfer between Homey app IDs.', 'Zugangsdaten und Zeitpläne aus Backup Center müssen in Dr. Wau erneut eingetragen werden; Homey überträgt App-Einstellungen nicht zwischen App-IDs.'],
     openBackup: ['Open backup management', 'Backup-Verwaltung öffnen'],
@@ -256,7 +284,7 @@
     monitoringTitle: ['Device profiles and heartbeat evidence', 'Geräteprofile und Lebenszeichen-Nachweise'],
     monitoringHelp: ['Missing timestamps are not offline evidence. Event-only devices do not warn for lack of use. Numeric Insights buckets are not fresh reports. Profiles and individual time limits are saved with the watchdog settings.', 'Fehlende Zeitstempel beweisen keinen Offline-Zustand. Kontakte und Taster warnen ohne Kommunikations-Timestamp nicht wegen Nichtbenutzung. Numerische Insights-Zeitraster zählen nicht als frische Meldung. Profile und individuelle Grenzen werden mit „Watchdog speichern“ übernommen.'],
     monitoringSearch: ['Find device', 'Gerät suchen'], monitoringDevice: ['Device / profile', 'Gerät / Profil'], monitoringLimit: ['Individual limit (hours)', 'Eigene Grenze (Stunden)'], monitoringSource: ['Evidence / age', 'Quelle / Alter'], monitoringResult: ['Assessment / battery', 'Bewertung / Batterie'],
-    profile_auto: ['Automatic', 'Automatisch'], profile_contact: ['Contact / event sensor', 'Kontakt / Ereignissensor'], profile_button: ['Button / remote', 'Taster / Fernbedienung'], profile_sensor: ['Measurement sensor', 'Messwertsensor'], profile_vacuum: ['Vacuum cleaner', 'Staubsauger'], profile_generic: ['Generic device', 'Allgemeines Gerät'], profile_unmonitorable: ['No timestamp monitoring', 'Nicht per Timestamp überwachen'],
+    profile_auto: ['Automatic', 'Automatisch'], profile_contact: ['Contact / event sensor', 'Kontakt / Ereignissensor'], profile_motion: ['Motion sensor', 'Bewegungsmelder'], profile_safety: ['Smoke / water sensor', 'Rauch-/Wassermelder'], profile_button: ['Button / remote', 'Taster / Fernbedienung'], profile_sensor: ['Measurement sensor', 'Messwertsensor'], profile_vacuum: ['Vacuum cleaner', 'Staubsauger'], profile_generic: ['Generic device', 'Allgemeines Gerät'], profile_unmonitorable: ['No timestamp monitoring', 'Nicht per Timestamp überwachen'],
     diagnosticExcluded: ['Excluded by device or zone', 'Durch Gerät oder Zone ausgeschlossen'], diagnosticPending: ['No assessment loaded', 'Keine Bewertung geladen'], diagnosticPreview: ['Current read-only preview', 'Aktuelle Vorschau (nur lesend)'], diagnosticProblems: ['devices with actionable findings', 'Geräte mit handlungsrelevanten Befunden'],
   };
   const t = (key) => translations[key]?.[de ? 1 : 0] || key;
@@ -267,6 +295,7 @@
   let latestAnnotations = [];
   let activeCategory = 'all';
   let watchdogOverview;
+  let selectedDeviceId = null;
   const byId = (id) => document.getElementById(id);
 
   function activateTab(name, focus = false) {
@@ -446,7 +475,7 @@
       const profileCell = document.createElement('td');
       const name = document.createElement('strong'); name.textContent = device.name; profileCell.append(name);
       const select = document.createElement('select'); select.dataset.profile = device.id; select.setAttribute('aria-label', `${t('monitoringDevice')}: ${device.name}`);
-      for (const kind of ['auto', 'contact', 'button', 'sensor', 'vacuum', 'generic', 'unmonitorable']) {
+      for (const kind of ['auto', 'contact', 'motion', 'safety', 'button', 'sensor', 'vacuum', 'generic', 'unmonitorable']) {
         const option = document.createElement('option'); option.value = kind; option.textContent = t(`profile_${kind}`); select.append(option);
       }
       const override = overview.config.deviceProfiles?.[device.id] || {};
@@ -474,10 +503,82 @@
     for (const row of byId('watchdog-monitoring-rows').children) {
       const select = row.querySelector('select'); const input = row.querySelector('input');
       if (select.disabled) continue;
+      const old = profiles[row.dataset.deviceId] || {};
+      if (select.value === (old.profile || 'auto') && input.value === String(old.staleHours || '')) continue;
       if (select.value === 'auto' && !input.value) delete profiles[row.dataset.deviceId];
-      else profiles[row.dataset.deviceId] = { profile: select.value, ...(input.value ? { staleHours: Number(input.value) } : {}) };
+      else profiles[row.dataset.deviceId] = { ...old, profile: select.value, mode: 'manual', confirmation: 'confirmed', ...(input.value ? { staleHours: Number(input.value) } : { staleHours: null }) };
     }
     return profiles;
+  }
+  function profileBadge(item) {
+    const status = item.assessment?.profile?.profileStatus;
+    if (item.ignored) return 'Ignoriert';
+    return ({ learned_confirmed: '✓ Gelernt & bestätigt', learned: '🐾 Automatisch gelernt', manual: '✓ Manuell bestätigt', learning: '🐶 Lernphase', event_only: 'Nur Ereignisse', disabled: 'Überwachung deaktiviert', assumed: '? Annahme – bitte prüfen' })[status] || '? Annahme – bitte prüfen';
+  }
+  function renderDeviceList() {
+    if (!watchdogOverview) return;
+    const list = byId('device-list'); list.replaceChildren();
+    const query = byId('device-search').value.toLocaleLowerCase().trim();
+    const zone = byId('device-zone-filter').value;
+    const status = byId('device-status-filter').value;
+    const profile = byId('device-profile-filter').value;
+    const devices = watchdogOverview.batteryDevices || [];
+    let learned = 0, learning = 0, unconfirmed = 0, attention = 0, critical = 0;
+    for (const device of devices) {
+      const assessment = device.assessment;
+      const problem = Boolean(assessment?.heartbeat.problem || assessment?.battery.problem);
+      const profileStatus = assessment?.profile?.profileStatus;
+      if (problem) attention++;
+      if (assessment?.battery.status === 'critical' || assessment?.heartbeat.problem?.type === 'availability') critical++;
+      if (profileStatus?.startsWith('learned')) learned++;
+      if (profileStatus === 'learning') learning++;
+      if (assessment?.profile?.confirmation === 'unconfirmed' && !device.ignored) unconfirmed++;
+      if (!device.name.toLocaleLowerCase().includes(query) || zone !== 'all' && device.zone !== zone) continue;
+      if (status === 'attention' && !problem || status === 'ok' && (problem || device.ignored) || status === 'ignored' && !device.ignored) continue;
+      if (profile === 'unconfirmed' && assessment?.profile?.confirmation !== 'unconfirmed' || profile === 'learning' && profileStatus !== 'learning' || profile === 'learned' && !profileStatus?.startsWith('learned')) continue;
+      const button = document.createElement('button'); button.type = 'button'; button.className = `device-item${problem ? ' needs-attention' : ''}`;
+      const name = document.createElement('strong'); name.textContent = device.name;
+      const badge = document.createElement('span'); badge.textContent = profileBadge(device);
+      const zoneName = watchdogOverview.zones?.find(item => item.id === device.zone)?.name || 'Ohne Zone';
+      const detail = document.createElement('small'); detail.textContent = `${zoneName} · ${assessment?.heartbeat.profile.label || 'Gerät'} · ${assessment?.heartbeat.ageHours === null || !assessment ? 'letzte Meldung unbekannt' : `letzte bestätigte Meldung vor ${assessment.heartbeat.ageHours.toFixed(1)} h`} · ${problem ? 'Bitte prüfen' : 'Kein akuter Befund'}`;
+      button.append(name, badge, detail); button.addEventListener('click', () => openDeviceDetail(device.id)); list.append(button);
+    }
+    byId('device-watch-summary').textContent = `${learned} Geräte gelernt · ${learning} in Lernphase · ${unconfirmed} Profile bitte bestätigen · ${attention} Dinge prüfen`;
+    byId('overview-headline').textContent = critical ? '🚨 Einsatz! Hier brauche ich deine Aufmerksamkeit.' : attention ? attention > 2 ? '⚠️ Chef, hier solltest du nachsehen.' : '🐶 Ein paar Dinge brauchen Aufmerksamkeit.' : '🐾 Alles ruhig im Revier.';
+    byId('overview-summary').textContent = `Ich passe auf ${devices.length} Geräte, deine Automationen und Backups auf.`;
+    byId('overview-important').textContent = devices.filter(device => device.assessment?.heartbeat.problem || device.assessment?.battery.problem).slice(0, 3).map(device => `${device.name}: ${device.assessment.battery.problem?.message || device.assessment.heartbeat.problem?.message}`).join(' · ') || 'Keine aktuellen Gerätebefunde.';
+  }
+  function openDeviceDetail(id) {
+    selectedDeviceId = id;
+    const device = watchdogOverview?.batteryDevices?.find(item => item.id === id);
+    if (!device) return;
+    const assessment = device.assessment;
+    const override = watchdogOverview.config.deviceProfiles?.[id] || {};
+    byId('device-detail').hidden = false;
+    byId('detail-name').textContent = device.name;
+    byId('detail-status').textContent = profileBadge(device);
+    byId('detail-ignore').textContent = device.ignored ? 'Gerät wieder überwachen' : 'Gerät ignorieren';
+    byId('detail-simple').textContent = `${assessment?.heartbeat.reason || 'Noch keine Bewertung'} Letztes Lebenszeichen: ${assessment?.heartbeat.ageHours === null || !assessment ? 'unbekannt' : `vor ${assessment.heartbeat.ageHours.toFixed(1)} h`}. Warnung vorgesehen nach: ${assessment?.profile?.warningAfterHours ?? 'keine Funkstillewarnung'} h.`;
+    byId('detail-profile').value = override.mode === 'event_only' || override.mode === 'disabled' ? override.mode : override.profile || 'auto';
+    byId('detail-threshold').value = override.warningAfterHours || override.staleHours || '';
+    byId('detail-vacation').value = override.vacationMode || 'auto';
+    byId('detail-factor').value = override.vacationFactor || 2;
+    const learning = assessment?.profile?.learning;
+    byId('detail-expert').textContent = `Klasse: ${assessment?.profile?.deviceClass || '?'}\nModus: ${assessment?.profile?.mode || '?'}\nQuelle: ${learning?.source || assessment?.heartbeat.sourceLabel || '?'}\nKonfidenz: ${learning?.confidence || 'insufficient'}\nMeldungen: ${learning?.reportCount || 0} · Intervalle: ${learning?.sampleCount || 0}\nBeobachtungszeit: ${learning?.observationDays?.toFixed(1) || 0} Tage\nMedian: ${learning?.medianIntervalHours?.toFixed(1) || '–'} h · P90: ${learning?.p90IntervalHours?.toFixed(1) || '–'} h · P95: ${learning?.p95IntervalHours?.toFixed(1) || '–'} h\nLängste normale Pause: ${learning?.maxNormalIntervalHours?.toFixed(1) || '–'} h\nLetzte verarbeitete Meldung: ${learning?.lastObservedAt || '–'}\nZuletzt gelernt: ${learning?.lastLearnedAt || '–'}\nNatives lastSeenAt: ${assessment?.heartbeat.nativeTimestampAvailable ? 'ja' : 'nein'}\nTatsächliche Schwelle: ${assessment?.vacation?.warningAfterHours ?? 'pausiert'} h\nEntscheidung: ${assessment?.heartbeat.reason || '–'}`;
+    byId('detail-close').focus();
+  }
+  async function saveDeviceProfile(changes) {
+    const id = selectedDeviceId;
+    if (!id) return;
+    renderWatchdog(await api('POST', '/watchdog/profile', { id, changes }));
+    openDeviceDetail(id);
+  }
+  function renderZoneFilter(overview) {
+    const select = byId('device-zone-filter');
+    const selected = select.value;
+    select.replaceChildren(); select.append(option('all', 'Alle Zonen', selected));
+    for (const zone of overview.zones || []) select.append(option(zone.id, zone.name, selected));
+    if (![...select.options].some(item => item.value === selected)) select.value = 'all';
   }
   function renderWatchdog(overview) {
     if (!overview?.config) return;
@@ -491,7 +592,12 @@
     byId('watchdog-repeat').value = config.repeatHours;
     byId('watchdog-battery-low').value = config.batteryLowPercent ?? 20;
     byId('watchdog-battery-critical').value = config.batteryCriticalPercent ?? 5;
+    byId('vacation-enabled').checked = config.vacation?.enabled === true && (!config.vacation.until || Date.parse(config.vacation.until) > Date.now());
+    byId('vacation-until').value = config.vacation?.until ? new Date(config.vacation.until).toISOString().slice(0, 16) : '';
+    byId('overview-vacation-state').textContent = byId('vacation-enabled').checked ? config.vacation?.until ? `Aktiv bis ${new Date(config.vacation.until).toLocaleString()}` : 'Aktiv' : 'Aus';
     renderMonitoring(overview);
+    renderZoneFilter(overview);
+    renderDeviceList();
     renderCheckboxList('watchdog-ignore', overview.batteryDevices || [], new Set(config.ignoredDeviceIds || []));
     renderCheckboxList('watchdog-ignore-zones', overview.zones || [], new Set(config.ignoredZoneIds || []));
     renderCheckboxList('watchdog-users', overview.users || [], new Set(config.pushUserIds || []));
@@ -500,6 +606,13 @@
     byId('watchdog-state').textContent = status ? `${status.ok ? '✓' : '⚠'} ${new Date(status.checkedAt).toLocaleString()} · ${status.checkedDevices ?? '?'} Geräte · ${status.warnings ?? '?'} Warnungen${status.error ? ' · ' + status.error : ''}` : 'Noch nicht ausgeführt';
   }
   async function loadWatchdog() { renderWatchdog(await api('GET', '/watchdog')); byId('overview-watchdog-state').textContent = byId('watchdog-state').textContent; }
+  async function loadBackupStatus() {
+    try {
+      const schedule = await api('GET', '/schedule');
+      byId('overview-backup-state').textContent = schedule?.lastStatus === 'ok' && schedule.lastRun ? `Letztes Backup: ${new Date(schedule.lastRun).toLocaleString()}`
+        : schedule?.lastStatus && schedule.lastStatus !== 'ok' ? `Letzter Versuch: ${schedule.lastStatus}` : schedule?.enabled ? 'Zeitplan aktiv' : 'Kein aktiver Zeitplan';
+    } catch (_) { byId('overview-backup-state').textContent = 'Backup-Status nicht verfügbar'; }
+  }
   async function saveWatchdog() {
     const body = {
       enabled: byId('watchdog-enabled').checked, timeline: byId('watchdog-timeline').checked, flowTrigger: byId('watchdog-flow-trigger').checked,
@@ -536,10 +649,38 @@
     byId('watchdog-save').addEventListener('click', () => saveWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-preview').addEventListener('click', () => loadWatchdog().then(() => { byId('status').textContent = t('previewReady'); }).catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-monitoring-search').addEventListener('input', filterMonitoring);
+    for (const id of ['device-search', 'device-zone-filter', 'device-status-filter', 'device-profile-filter']) byId(id).addEventListener(id === 'device-search' ? 'input' : 'change', renderDeviceList);
+    byId('detail-close').addEventListener('click', () => { byId('device-detail').hidden = true; selectedDeviceId = null; });
+    byId('detail-confirm').addEventListener('click', () => saveDeviceProfile({ confirmation: 'confirmed' }).catch(error => { byId('status').textContent = String(error); }));
+    byId('detail-auto').addEventListener('click', () => saveDeviceProfile({ reset: true }).catch(error => { byId('status').textContent = String(error); }));
+    byId('detail-ignore').addEventListener('click', () => {
+      if (!selectedDeviceId) return;
+      const ignored = new Set(watchdogOverview.config.ignoredDeviceIds || []);
+      if (ignored.has(selectedDeviceId)) ignored.delete(selectedDeviceId); else ignored.add(selectedDeviceId);
+      const id = selectedDeviceId;
+      api('POST', '/watchdog', { ignoredDeviceIds: [...ignored] }).then(renderWatchdog).then(() => openDeviceDetail(id)).catch(error => { byId('status').textContent = String(error); });
+    });
+    byId('detail-save').addEventListener('click', () => {
+      const profile = byId('detail-profile').value;
+      const threshold = byId('detail-threshold').value;
+      const mode = profile === 'event_only' || profile === 'disabled' ? profile : profile === 'auto' && !threshold ? undefined : 'manual';
+      saveDeviceProfile({ profile: ['event_only', 'disabled'].includes(profile) ? 'auto' : profile, mode, confirmation: 'confirmed',
+        warningAfterHours: threshold ? Number(threshold) : null, vacationMode: byId('detail-vacation').value, vacationFactor: Number(byId('detail-factor').value) }).catch(error => { byId('status').textContent = String(error); });
+    });
+    byId('detail-reset-learning').addEventListener('click', () => saveDeviceProfile({ resetLearning: true }).catch(error => { byId('status').textContent = String(error); }));
+    byId('vacation-save').addEventListener('click', () => {
+      const raw = byId('vacation-until').value;
+      const until = raw ? new Date(raw).toISOString() : null;
+      api('POST', '/watchdog/vacation', { enabled: byId('vacation-enabled').checked, until }).then(loadWatchdog).catch(error => { byId('status').textContent = String(error); });
+    });
+    byId('onboarding-ok').addEventListener('click', () => { byId('watchdog-onboarding').hidden = true; try { localStorage.setItem('dr-wau-onboarding-070', 'seen'); } catch (_) {} });
+    byId('onboarding-review').addEventListener('click', () => { byId('watchdog-onboarding').hidden = true; activateTab('watchdog', true); byId('device-profile-filter').value = 'unconfirmed'; renderDeviceList(); try { localStorage.setItem('dr-wau-onboarding-070', 'seen'); } catch (_) {} });
+    try { byId('watchdog-onboarding').hidden = localStorage.getItem('dr-wau-onboarding-070') === 'seen'; } catch (_) {}
     byId('watchdog-run').addEventListener('click', () => runWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     byId('watchdog-test').addEventListener('click', () => testWatchdog().catch(error => { byId('status').textContent = error.message || String(error); }));
     load().catch((error) => { byId('status').textContent = error.message || String(error); });
     loadWatchdog().catch((error) => { byId('watchdog-state').textContent = error.message || String(error); });
+    loadBackupStatus();
   };
 })();
 </script>

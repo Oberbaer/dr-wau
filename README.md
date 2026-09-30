@@ -13,6 +13,8 @@ Deutsche Dokumentation: [README.de.md](README.de.md)
 - Explainable overall and category scores for Flows, devices, apps, and maintainability.
 - Active findings with priority, status, notes, and persistent decisions.
 - Layered heartbeat evidence from native timestamps, capability reports and verified raw Insights events, with battery findings evaluated separately.
+- Adaptive per-device learning from confirmed reports, bounded local history, explainable confidence and warning thresholds, plus user-confirmed or manual profiles.
+- Vacation mode with per-device silence rules and Homey Flow action/condition cards; critical battery and explicit unavailability remain active.
 - Configurable check, warning, and repeat intervals.
 - Homey Timeline notifications, checkbox-selected direct push recipients, and an optional Homey Flow trigger.
 - Device and whole-zone exclusions (including subzones), an ignore board, local report storage, and JSON export.

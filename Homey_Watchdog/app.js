@@ -6,6 +6,9 @@ const { analyzeSnapshot, applyFindingAnnotations, findingId } = require('./lib/a
 const { evaluateBatteryDevices, isBatteryDevice, markDelivered, normalizeConfig, notificationRoutes } = require('./lib/battery-watchdog');
 const { isZoneExcluded, zoneMap } = require('./lib/zone-exclusions');
 const { collectHeartbeatInsights } = require('./lib/heartbeat-insights');
+const { updateLearningState } = require('./lib/device-learning');
+const { isVacationActive } = require('./lib/vacation');
+const { notificationPrefix } = require('./lib/watchdog-messages');
 const BackupApp = require('./backup/app');
 
 const REPORT_SETTING = 'latest_report_v1';
@@ -16,6 +19,7 @@ const WATCHDOG_CONFIG_SETTING = 'battery_watchdog_config_v1';
 const LEGACY_WATCHDOG_STATE_SETTING = 'battery_watchdog_state_v1';
 const WATCHDOG_STATE_SETTING = 'battery_watchdog_state_v2';
 const WATCHDOG_STATUS_SETTING = 'battery_watchdog_status_v1';
+const LEARNING_SETTING = 'device_learning_state_v1';
 
 function restoreBaseReport(report) {
   if (!report) return null;
@@ -46,6 +50,8 @@ class HomeyWatchdogApp extends Homey.App {
     this.watchdogPromise = null;
     this.watchdogConfig = normalizeConfig(this.homey.settings.get(WATCHDOG_CONFIG_SETTING) || {});
     this.watchdogStatus = this.homey.settings.get(WATCHDOG_STATUS_SETTING) || null;
+    this.learningState = this.homey.settings.get(LEARNING_SETTING) || { schema: 1, devices: {} };
+    this.scheduleVacationExpiry();
 
     try {
       this.api = await HomeyAPI.createAppAPI({ homey: this.homey });
@@ -62,6 +68,9 @@ class HomeyWatchdogApp extends Homey.App {
     this.homey.flow.getActionCard('run_battery_watchdog').registerRunListener(async () => {
       return (await this.runBatteryWatchdog('flow')).ok;
     });
+    this.homey.flow.getActionCard('watchdog_vacation_on').registerRunListener(async () => { await this.setVacation(true); return true; });
+    this.homey.flow.getActionCard('watchdog_vacation_off').registerRunListener(async () => { await this.setVacation(false); return true; });
+    this.homey.flow.getConditionCard('watchdog_vacation_active').registerRunListener(async () => isVacationActive(this.watchdogConfig.vacation));
 
     this.watchdogWarningTrigger = this.homey.flow.getTriggerCard('battery_watchdog_warning');
 
@@ -77,6 +86,7 @@ class HomeyWatchdogApp extends Homey.App {
 
   onUninit() {
     if (this.watchdogTimer) this.homey.clearInterval(this.watchdogTimer);
+    if (this.vacationTimer) this.homey.clearTimeout(this.vacationTimer);
     BackupApp.prototype.onUninit.call(this);
   }
 
@@ -87,6 +97,16 @@ class HomeyWatchdogApp extends Homey.App {
     this.watchdogTimer = this.homey.setInterval(() => {
       this.runBatteryWatchdog('schedule').catch(error => this.error('Battery watchdog failed:', error));
     }, this.watchdogConfig.checkHours * 3600000);
+  }
+
+  scheduleVacationExpiry() {
+    if (this.vacationTimer) this.homey.clearTimeout(this.vacationTimer);
+    this.vacationTimer = null;
+    const until = Date.parse(this.watchdogConfig.vacation?.until || '');
+    if (!this.watchdogConfig.vacation?.enabled || !Number.isFinite(until)) return;
+    const delay = until - Date.now();
+    if (delay <= 0) { this.setVacation(false).catch(error => this.error(error)); return; }
+    this.vacationTimer = this.homey.setTimeout(() => this.setVacation(false).catch(error => this.error(error)), Math.min(delay, 2147483647));
   }
 
   async getWatchdogOverview() {
@@ -100,7 +120,7 @@ class HomeyWatchdogApp extends Homey.App {
     const zones = zoneMap(zonesRaw);
     const evaluation = await this.evaluateWatchdogSnapshot(devices, zonesRaw);
     const assessments = new Map(evaluation.assessments.map(item => [item.id, item]));
-    const batteryDevices = Object.values(devices || {}).filter(isBatteryDevice).map(device => ({ id: device.id, name: device.name || device.id,
+    const batteryDevices = Object.values(devices || {}).filter(isBatteryDevice).map(device => ({ id: device.id, name: device.name || device.id, zone: device.zone || null,
       ignored: ignored.has(device.id) || isZoneExcluded(device.zone, zones, ignoredZones),
       assessment: assessments.get(device.id) || null }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -125,6 +145,7 @@ class HomeyWatchdogApp extends Homey.App {
     this.watchdogConfig = config;
     await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
     this.scheduleBatteryWatchdog();
+    this.scheduleVacationExpiry();
     return this.getWatchdogOverview();
   }
 
@@ -146,6 +167,7 @@ class HomeyWatchdogApp extends Homey.App {
     await this.homey.settings.set(LEGACY_WATCHDOG_STATE_SETTING, state);
     await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
     this.scheduleBatteryWatchdog();
+    this.scheduleVacationExpiry();
     return {
       ok: true,
       reportImported: true,
@@ -161,6 +183,29 @@ class HomeyWatchdogApp extends Homey.App {
     const cardId = 'homey:manager:mobile:push_text';
     await client.flow.getFlowCardAction({ id: cardId });
     return { client, users, cardId };
+  }
+
+  async setVacation(enabled, until = null) {
+    this.watchdogConfig = normalizeConfig({ ...this.watchdogConfig, vacation: { enabled, until } });
+    await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
+    this.scheduleVacationExpiry();
+    return { vacation: this.watchdogConfig.vacation, active: isVacationActive(this.watchdogConfig.vacation) };
+  }
+
+  async updateDeviceProfile(id, changes = {}) {
+    if (!id || typeof id !== 'string' || id.length > 120) throw new Error('Invalid device');
+    const current = this.watchdogConfig.deviceProfiles[id] || {};
+    const profiles = { ...this.watchdogConfig.deviceProfiles };
+    if (changes.reset === true) delete profiles[id];
+    else profiles[id] = { ...current, ...changes };
+    this.watchdogConfig = normalizeConfig({ ...this.watchdogConfig, deviceProfiles: profiles });
+    if (changes.resetLearning === true) {
+      this.learningState = { schema: 1, devices: { ...(this.learningState.devices || {}) } };
+      delete this.learningState.devices[id];
+      await this.homey.settings.set(LEARNING_SETTING, this.learningState);
+    }
+    await this.homey.settings.set(WATCHDOG_CONFIG_SETTING, this.watchdogConfig);
+    return this.getWatchdogOverview();
   }
 
   async deliverWatchdogRoute(route, text, context = {}) {
@@ -204,7 +249,8 @@ class HomeyWatchdogApp extends Homey.App {
         api.call({ method: 'GET', path: '/api/manager/devices/device/' }),
         api.zones.getZones({ $cache: false }),
       ]);
-      const evaluation = await this.evaluateWatchdogSnapshot(devices, zones);
+      const evaluation = await this.evaluateWatchdogSnapshot(devices, zones, startedAt, true);
+      await this.homey.settings.set(LEARNING_SETTING, this.learningState);
       const context = {};
       let deliveryFailures = 0;
       for (const route of notificationRoutes(evaluation.config)) {
@@ -213,7 +259,7 @@ class HomeyWatchdogApp extends Homey.App {
           for (let offset = 0; offset < pending.length; offset += 2) {
             const batch = pending.slice(offset, offset + 2);
             try {
-              await this.deliverWatchdogRoute(route, `${kind === 'recovery' ? '✅' : '⚠️'} Dr. Wau: ${batch.map(item => item.message).join('; ')}`, context);
+              await this.deliverWatchdogRoute(route, `${notificationPrefix(kind, batch.some(item => item.severity === 'critical') ? 'critical' : 'warning')}${batch.map(item => item.message).join('; ')}`, context);
               markDelivered(evaluation.state, batch.map(item => item.key), startedAt, [route]);
             } catch (_) { deliveryFailures += 1; }
             await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
@@ -238,10 +284,17 @@ class HomeyWatchdogApp extends Homey.App {
     }
   }
 
-  async evaluateWatchdogSnapshot(devices, zones, now = Date.now()) {
-    const { evidence, summary } = await collectHeartbeatInsights(await this.ensureApi(), devices, this.watchdogConfig, now, zones);
+  async evaluateWatchdogSnapshot(devices, zones, now = Date.now(), learn = false) {
+    const { evidence, summary } = await collectHeartbeatInsights(await this.ensureApi(), devices, this.watchdogConfig, now, zones, 24, learn ? this.learningState : null);
+    if (learn) {
+      const mappedZones = zoneMap(zones);
+      const eligible = Object.values(devices || {}).filter(device => isBatteryDevice(device)
+        && !(this.watchdogConfig.ignoredDeviceIds || []).includes(device.id)
+        && !isZoneExcluded(device.zone, mappedZones, new Set(this.watchdogConfig.ignoredZoneIds || [])));
+      this.learningState = updateLearningState(this.learningState, eligible, this.watchdogConfig, evidence, now, isVacationActive(this.watchdogConfig.vacation, now));
+    }
     const previous = this.homey.settings.get(WATCHDOG_STATE_SETTING) || this.homey.settings.get(LEGACY_WATCHDOG_STATE_SETTING) || {};
-    return { ...evaluateBatteryDevices(devices, previous, this.watchdogConfig, now, zones, evidence), insightsSummary: summary };
+    return { ...evaluateBatteryDevices(devices, previous, this.watchdogConfig, now, zones, evidence, this.learningState), insightsSummary: summary };
   }
 
   async previewBatteryWatchdog() {

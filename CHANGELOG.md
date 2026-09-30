@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Dr. Wau 0.7.0: adaptive per-device reporting profiles with bounded local learning history, confidence levels and conservative learned warning thresholds.
+- Device Watch with profile confirmation, manual overrides, a compact overview and expert evidence; vacation mode with per-device rules and Homey Flow cards.
+- Existing 0.6.0 settings and notification suppression remain compatible. Missing timestamps, cached values and aggregated numeric Insights still do not fabricate reports.
+
 - Dr. Wau 0.6.0: layered native/capability/raw-event heartbeat evidence, editable per-device profiles and time limits, and a read-only diagnostic preview.
 - Missing timestamps no longer produce recurring fault notifications. Event-only contacts/remotes and virtual profiles do not infer an outage from unchanged state; numeric Insights buckets are never treated as fresh device reports.
 - Battery, Homey availability and stale-data findings are tracked separately. Stable per-problem/per-recipient suppression and confirmed recovery notices prevent false all-clears; legacy v1 state is preserved for rollback. New installations default to a 24-hour repeat interval; existing intervals are preserved unless changed explicitly.

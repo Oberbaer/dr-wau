@@ -42,5 +42,11 @@ module.exports = {
   async previewWatchdog({ homey }) {
     return homey.app.previewBatteryWatchdog();
   },
+  async setVacation({ homey, body }) {
+    return homey.app.setVacation(body?.enabled === true, body?.until || null);
+  },
+  async updateDeviceProfile({ homey, body }) {
+    return homey.app.updateDeviceProfile(body?.id, body?.changes || {});
+  },
   ...require('./backup/api'),
 };

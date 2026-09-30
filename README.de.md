@@ -9,10 +9,13 @@ English documentation: [README.md](README.md)
 
 ## Funktionen
 
-- Fünf Hauptansichten: Übersicht, Automation Health, Batterie-Watchdog, Backups und Verwaltung.
+- Fünf Hauptansichten: Dr. Waus Revier, Automation Health, Gerätewache, Backups und Verwaltung.
 - Nachvollziehbarer Gesamt- und Kategoriescore für Flows, Geräte, Apps und Wartbarkeit.
 - Aktive Befunde mit Priorität, Status, Notizen und dauerhaften Entscheidungen.
 - Mehrstufige Lebenszeichenbewertung mit nativen Zeitstempeln, Capability-Meldungen und geprüften Insights-Rohereignissen; Batterieprobleme werden getrennt bewertet.
+- Gerätebezogene Lernhistorie ab 0.7.0 mit höchstens 96 bestätigten Meldezeitpunkten pro Gerät, nachvollziehbarer Konfidenz und individueller Warnschwelle. Für mittlere Sicherheit braucht Dr. Wau mindestens 10 Intervalle über 3 Tage, für hohe Sicherheit 20 über 7 Tage. Eine einzelne lange Stille wird nicht als normal gelernt.
+- Annahmen und Lernphase bleiben sichtbar. Manuelle Profile und Bestätigungen haben Vorrang; vorhandene 0.6.0-Einstellungen werden erhalten. Aggregierte Insights, gespeicherte Werte und `available:true` gelten weiterhin nicht als neue Meldung.
+- Urlaubsmodus mit optionalem Enddatum und Regeln pro Gerät. Batterieprobleme und eine ausdrückliche Nichtverfügbarkeit bleiben aktiv. Flow-Karten schalten den Modus ein oder aus und prüfen seinen Status.
 - Einstellbare Prüf-, Warn- und Wiederholungsintervalle.
 - Homey-Timeline-Meldungen, direkte Push-Empfänger per Häkchen und ein optionaler Homey-Flow-Trigger.
 - Geräte- und Zonenausschlüsse samt Unterzonen, Ignorieren-Schalttafel, lokale Berichtsspeicherung und JSON-Export.
