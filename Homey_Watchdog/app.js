@@ -7,7 +7,7 @@ const { evaluateBatteryDevices, isBatteryDevice, markDelivered, normalizeConfig,
 const { isZoneExcluded, zoneMap } = require('./lib/zone-exclusions');
 const { collectHeartbeatInsights } = require('./lib/heartbeat-insights');
 const { updateLearningState } = require('./lib/device-learning');
-const { isVacationActive } = require('./lib/vacation');
+const { isVacationActive, vacationExpiryDelay } = require('./lib/vacation');
 const { notificationPrefix } = require('./lib/watchdog-messages');
 const BackupApp = require('./backup/app');
 
@@ -51,6 +51,8 @@ class HomeyWatchdogApp extends Homey.App {
     this.watchdogConfig = normalizeConfig(this.homey.settings.get(WATCHDOG_CONFIG_SETTING) || {});
     this.watchdogStatus = this.homey.settings.get(WATCHDOG_STATUS_SETTING) || null;
     this.learningState = this.homey.settings.get(LEARNING_SETTING) || { schema: 1, devices: {} };
+    this.vacationExpiryStopped = false;
+    await this.expireVacationIfDue();
     this.scheduleVacationExpiry();
 
     try {
@@ -85,8 +87,10 @@ class HomeyWatchdogApp extends Homey.App {
   }
 
   onUninit() {
+    this.vacationExpiryStopped = true;
     if (this.watchdogTimer) this.homey.clearInterval(this.watchdogTimer);
     if (this.vacationTimer) this.homey.clearTimeout(this.vacationTimer);
+    this.vacationTimer = null;
     BackupApp.prototype.onUninit.call(this);
   }
 
@@ -102,11 +106,21 @@ class HomeyWatchdogApp extends Homey.App {
   scheduleVacationExpiry() {
     if (this.vacationTimer) this.homey.clearTimeout(this.vacationTimer);
     this.vacationTimer = null;
-    const until = Date.parse(this.watchdogConfig.vacation?.until || '');
-    if (!this.watchdogConfig.vacation?.enabled || !Number.isFinite(until)) return;
-    const delay = until - Date.now();
-    if (delay <= 0) { this.setVacation(false).catch(error => this.error(error)); return; }
-    this.vacationTimer = this.homey.setTimeout(() => this.setVacation(false).catch(error => this.error(error)), Math.min(delay, 2147483647));
+    if (this.vacationExpiryStopped) return;
+    const delay = vacationExpiryDelay(this.watchdogConfig.vacation, Date.now());
+    if (delay === null) return;
+    const timer = this.homey.setTimeout(async () => {
+      if (this.vacationExpiryStopped || this.vacationTimer !== timer) return;
+      this.vacationTimer = null;
+      try { await this.expireVacationIfDue(); }
+      catch (error) { this.error('Vacation expiry failed:', error); }
+      this.scheduleVacationExpiry();
+    }, delay);
+    this.vacationTimer = timer;
+  }
+
+  async expireVacationIfDue(now = Date.now()) {
+    if (vacationExpiryDelay(this.watchdogConfig.vacation, now) === 0) await this.setVacation(false);
   }
 
   async getWatchdogOverview() {
@@ -244,6 +258,7 @@ class HomeyWatchdogApp extends Homey.App {
   async performBatteryWatchdog(source) {
     const startedAt = Date.now();
     try {
+      await this.expireVacationIfDue(startedAt);
       const api = await this.ensureApi();
       const [devices, zones] = await Promise.all([
         api.call({ method: 'GET', path: '/api/manager/devices/device/' }),

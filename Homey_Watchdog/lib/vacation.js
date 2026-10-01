@@ -11,6 +11,12 @@ function isVacationActive(vacation, now = Date.now()) {
   return vacation?.enabled === true && (!vacation.until || Date.parse(vacation.until) > now);
 }
 
+function vacationExpiryDelay(vacation, now = Date.now()) {
+  const until = Date.parse(vacation?.until || '');
+  if (!vacation?.enabled || !Number.isFinite(until)) return null;
+  return Math.max(0, Math.min(HOUR, until - now));
+}
+
 function vacationDecision(device, profile, config, now = Date.now()) {
   const active = isVacationActive(config.vacation, now);
   const setting = config.deviceProfiles?.[device.id] || {};
@@ -20,11 +26,12 @@ function vacationDecision(device, profile, config, now = Date.now()) {
   if (capabilities.some(id => /^(alarm_smoke|alarm_water|alarm_co)(\.|$)/.test(id))) {
     return { active: true, rule: 'normal', warningAfterHours: profile.warningAfterHours };
   }
-  const technical = ['sensor', 'vacuum'].includes(profile.deviceClass) || (profile.mode === 'learned' && profile.learning?.confidence !== 'low');
+  const technical = profile.learningModel === 'periodic' || (!profile.learningModel && (['sensor', 'vacuum'].includes(profile.deviceClass)
+    || (profile.mode === 'learned' && profile.learning?.confidence !== 'low')));
   const chosen = rule === 'auto' ? technical ? 'normal' : 'pause' : rule;
   const factor = Number(setting.vacationFactor) >= 1 && Number(setting.vacationFactor) <= 8 ? Number(setting.vacationFactor) : 2;
   return { active: true, rule: chosen, warningAfterHours: chosen === 'pause' ? null : chosen === 'extend'
     ? Math.min(720, (profile.warningAfterHours || config.staleHours || 24) * factor) : profile.warningAfterHours };
 }
 
-module.exports = { normalizeVacation, isVacationActive, vacationDecision, HOUR };
+module.exports = { normalizeVacation, isVacationActive, vacationDecision, vacationExpiryDelay, HOUR };

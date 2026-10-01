@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Dr. Wau 0.7.1: separate contact activity learning from periodic communication, group short bursts into fixed 30-minute blocks and assess active-day coverage and upper pauses. Keep automatic recommendations visible beside manual thresholds; contacts without enough activity remain event-only, and vacation pauses activity by default.
+- Dr. Wau 0.7.1: merge older verified learning history independently of a fresh native heartbeat; retain deduplication and bounded compatible state.
+- Calculate median and P90/P95 from one conservative interval population, with explicit event/interval counts, confidence reasons and documented outlier boundaries in the existing expert panel.
+- Recheck persisted vacation deadlines at startup, Watchdog runs and short timer wakeups; long vacations no longer end at the JavaScript timer limit.
+
 - Dr. Wau 0.7.0: adaptive per-device reporting profiles with bounded local learning history, confidence levels and conservative learned warning thresholds.
 - Device Watch with profile confirmation, manual overrides, a compact overview and expert evidence; vacation mode with per-device rules and Homey Flow cards.
 - Existing 0.6.0 settings and notification suppression remain compatible. Missing timestamps, cached values and aggregated numeric Insights still do not fabricate reports.

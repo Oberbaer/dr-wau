@@ -564,7 +564,32 @@
     byId('detail-vacation').value = override.vacationMode || 'auto';
     byId('detail-factor').value = override.vacationFactor || 2;
     const learning = assessment?.profile?.learning;
-    byId('detail-expert').textContent = `Klasse: ${assessment?.profile?.deviceClass || '?'}\nModus: ${assessment?.profile?.mode || '?'}\nQuelle: ${learning?.source || assessment?.heartbeat.sourceLabel || '?'}\nKonfidenz: ${learning?.confidence || 'insufficient'}\nMeldungen: ${learning?.reportCount || 0} · Intervalle: ${learning?.sampleCount || 0}\nBeobachtungszeit: ${learning?.observationDays?.toFixed(1) || 0} Tage\nMedian: ${learning?.medianIntervalHours?.toFixed(1) || '–'} h · P90: ${learning?.p90IntervalHours?.toFixed(1) || '–'} h · P95: ${learning?.p95IntervalHours?.toFixed(1) || '–'} h\nLängste normale Pause: ${learning?.maxNormalIntervalHours?.toFixed(1) || '–'} h\nLetzte verarbeitete Meldung: ${learning?.lastObservedAt || '–'}\nZuletzt gelernt: ${learning?.lastLearnedAt || '–'}\nNatives lastSeenAt: ${assessment?.heartbeat.nativeTimestampAvailable ? 'ja' : 'nein'}\nTatsächliche Schwelle: ${assessment?.vacation?.warningAfterHours ?? 'pausiert'} h\nEntscheidung: ${assessment?.heartbeat.reason || '–'}`;
+    const activity = learning?.activity;
+    const recommendation = Number.isFinite(assessment?.profile?.automaticWarningAfterHours)
+      ? `${assessment.profile.automaticWarningAfterHours} h` : 'keine automatische Schweigewarnung';
+    const recommendationText = `Dr.-Wau-Empfehlung: ${recommendation}.${assessment?.profile?.mode === 'manual' ? ` Deine Einstellung: ${assessment.profile.warningAfterHours} h.` : ''}`;
+    byId('detail-simple').textContent += ` ${assessment?.profile?.activityDescription || ''} ${recommendationText}`;
+    const reason = ({ irregular_intervals: `Unregelmäßige Intervalle: P90/P10 = ${learning?.regularityRatio?.toFixed(1) || '–'} (höchstens 12 für ein gelerntes Profil).`,
+      too_few_intervals: `Zu wenige Intervalle: ${learning?.sampleCount || 0}; mindestens 4 für die Lernphase, 10 für ein gelerntes Profil.`,
+      too_short_observation: 'Weniger als 1 Tag verwertbare Beobachtung; mindestens 3 Tage für ein gelerntes Profil.',
+      limited_history: 'Lernphase: mindestens 10 Intervalle über 3 verwertbare Tage für ein gelerntes Profil.',
+      sufficient_medium: 'Mindestens 10 Intervalle über 3 verwertbare Tage, keine übermäßige Streuung.',
+      sufficient_high: 'Mindestens 20 Intervalle über 7 verwertbare Tage, keine übermäßige Streuung.',
+      activity_too_few_blocks: 'Weniger als 4 bestätigte Aktivitätsblöcke.',
+      activity_too_few_days: 'Weniger als 3 beobachtete Kalendertage.',
+      activity_sparse_days: 'Aktivität an weniger als 50 % der beobachteten Tage; stille Tage bleiben enthalten.',
+      activity_unstable_pauses: 'Obere Ruhephasen streuen zu stark: P95/P90 > 1,75 oder längste normale Pause/P95 > 2.',
+      activity_low: 'Aktivitätsmuster sichtbar; für ein gelerntes Profil fehlen mindestens 7 Tage, 7 Blöcke oder 60 % aktive Tage.',
+      activity_medium: 'Mindestens 7 Tage, 7 Blöcke, 60 % aktive Tage und stabile obere Ruhephasen.',
+      activity_high: 'Mindestens 14 Tage, 14 Blöcke, 80 % aktive Tage und stabile obere Ruhephasen.',
+      event_only: 'Ereignisgerät ohne automatische Kommunikationspflicht.' })[learning?.confidenceReason] || 'Noch keine gespeicherte Lernbegründung.';
+    const duration = days => days >= 1 ? `${days.toFixed(1)} Tage` : `${((days || 0) * 24).toFixed(1)} h`;
+    const outlierBoundary = Number.isFinite(learning?.outlierUpperHours) ? `${learning.outlierUpperHours.toFixed(1)} h`
+      : learning?.intervalCount !== undefined ? 'keine Entfernung bei weniger als 8 Intervallen' : 'noch nicht gespeichert';
+    byId('detail-expert').textContent = `Klasse: ${assessment?.profile?.deviceClass || '?'}\nModus: ${assessment?.profile?.mode || '?'}\nQuelle: ${learning?.source || assessment?.heartbeat.sourceLabel || '?'}\nKonfidenz: ${learning?.confidence || 'insufficient'}\nBegründung: ${reason}\nRohereignisse (ohne exakte Wiederholungen): ${learning?.rawEventCount ?? learning?.reportCount ?? 0}\nEindeutige Meldungen: ${learning?.uniqueEventCount ?? learning?.reportCount ?? 0}\nGebildete Intervalle: ${learning?.intervalCount ?? '–'}\nFür Statistik verwendet: ${learning?.usedIntervalCount ?? learning?.sampleCount ?? 0}\nAusreißer ausgeschlossen: ${learning?.excludedIntervalCount ?? '–'}\nAusreißergrenze: ${outlierBoundary}\nZeitspanne: ${duration(learning?.observationSpanDays)}\nBeobachtungszeit (verwendete Intervalle): ${duration(learning?.observationDays)}\nMedian: ${learning?.medianIntervalHours?.toFixed(1) || '–'} h · P90: ${learning?.p90IntervalHours?.toFixed(1) || '–'} h · P95: ${learning?.p95IntervalHours?.toFixed(1) || '–'} h\nLängste normale Pause: ${learning?.maxNormalIntervalHours?.toFixed(1) || '–'} h\nLetzte verarbeitete Meldung: ${learning?.lastObservedAt || '–'}\nZuletzt gelernt: ${learning?.lastLearnedAt || '–'}\nNatives lastSeenAt: ${assessment?.heartbeat.nativeTimestampAvailable ? 'ja' : 'nein'}\nTatsächliche Schwelle: ${assessment?.vacation?.warningAfterHours ?? 'pausiert'} h\nEntscheidung: ${assessment?.heartbeat.reason || '–'}`;
+    const modelLabel = ({ activity: 'Aktivitätsbasiert', periodic: 'Periodisch', event_only: 'Nur Ereignisse' })[assessment?.profile?.learningModel] || 'noch nicht gespeichert';
+    const activityText = activity ? `\nKontakt-Rohereignisse: ${activity.rawEventCount}\nAktivitätsblöcke (${activity.blockMinutes} Minuten): ${activity.blockCount}\nBeobachtungstage (UTC, einschließlich stiller Tage): ${activity.observedDays}\nTage mit Aktivität: ${activity.activeDays}\nAktive Tage: ${activity.activeDayPercent.toFixed(1)} %\nPausen zwischen Blöcken: ${activity.pauseCount}\nNormale Pausen verwendet: ${activity.usedPauseCount}\nPausenausreißer ausgeschlossen: ${activity.excludedPauseCount}\nMedian Ruhephase: ${activity.medianPauseHours?.toFixed(1) ?? '–'} h · P90: ${activity.p90PauseHours?.toFixed(1) ?? '–'} h · P95: ${activity.p95PauseHours?.toFixed(1) ?? '–'} h\nLängste normale Aktivitätspause: ${activity.maxNormalPauseHours?.toFixed(1) ?? '–'} h` : '';
+    byId('detail-expert').textContent = `Lernmodell: ${modelLabel}\n${byId('detail-expert').textContent}${activityText}\nAutomatische Empfehlung: ${recommendation}${assessment?.profile?.mode === 'manual' ? `\nDeine Einstellung: ${assessment.profile.warningAfterHours} h` : ''}`;
     byId('detail-close').focus();
   }
   async function saveDeviceProfile(changes) {

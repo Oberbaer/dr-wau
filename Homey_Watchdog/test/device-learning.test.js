@@ -10,7 +10,7 @@ const cap = (value, at) => ({ value, lastUpdated: at, getable: true, setable: fa
 const contact = (age = 25) => ({ id: 'contact-1', name: 'Synthetic Kitchen Contact', class: 'sensor', available: true,
   capabilities: ['alarm_contact', 'measure_battery'], capabilitiesObj: { alarm_contact: cap(false, NOW - age * HOUR), measure_battery: cap(77, NOW - age * HOUR) } });
 const reports = (count, intervalHours, lastAge = 25) => Array.from({ length: count }, (_, i) => ({ at: NOW - (lastAge + (count - i - 1) * intervalHours) * HOUR, source: 'insights' }));
-const learned = learnDevice({}, reports(85, 4), NOW);
+const learned = learnDevice({}, reports(85, 4).map(item => ({ ...item, source: 'interaction' })), NOW, false, 'activity');
 const learnedState = { schema: 1, devices: { 'contact-1': learned } };
 
 test('frequent contact learns 24-hour warning without claiming offline and recovers once', () => {
@@ -50,7 +50,7 @@ test('contradictory intervals stay unconfirmed', () => {
 test('sparse contact, button and virtual device do not gain a learned silence alarm', () => {
   const sparse = learnDevice({}, reports(3, 72), NOW);
   assert.equal(sparse.confidence, 'insufficient');
-  assert.equal(profileDecision(contact(), {}, sparse).mode, 'assumed');
+  assert.equal(profileDecision(contact(), {}, sparse).mode, 'event_only');
   const button = { ...contact(200), id: 'button-1', class: 'remote', capabilities: ['measure_battery'], capabilitiesObj: { measure_battery: cap(55, NOW - 200 * HOUR) } };
   assert.equal(profileDecision(button, {}, null).mode, 'event_only');
   assert.equal(evaluateBatteryDevices([button], {}, {}, NOW).assessments[0].heartbeat.problem, null);

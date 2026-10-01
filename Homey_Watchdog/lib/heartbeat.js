@@ -93,7 +93,9 @@ function evaluateHeartbeat(device, config, now = Date.now(), insights = [], adap
   const configuredHours = config.deviceProfiles?.[device.id]?.warningAfterHours;
   if ((adaptive?.decision?.mode === 'learned' || adaptive?.decision?.mode === 'manual' && configuredHours) && adaptive.decision.warningAfterHours && chosen) return { ...base,
     category: 'UNGEWOEHNLICH_STILL', status: 'stale',
-    reason: adaptive.decision.mode === 'learned' ? `Dieses Gerät meldete sich bisher normalerweise etwa alle ${adaptive.decision.expectedReportHours?.toFixed(1)} h. Seit der gelernten Grenze fehlt ein bestätigtes Ereignis; ein Offline-Zustand ist nicht bewiesen.`
+    reason: adaptive.decision.mode === 'learned' ? adaptive.decision.learningModel === 'activity'
+      ? `${adaptive.decision.activityDescription} Seit der gelernten Grenze fehlt ein bestätigtes Lebenszeichen; ein Offline-Zustand ist nicht bewiesen.`
+      : `Dieses Gerät meldete sich bisher normalerweise etwa alle ${adaptive.decision.expectedReportHours?.toFixed(1)} h. Seit der gelernten Grenze fehlt ein bestätigtes Ereignis; ein Offline-Zustand ist nicht bewiesen.`
       : 'Die selbst gesetzte Warnschwelle wurde überschritten. Ein Offline-Zustand ist nicht bewiesen.',
     problem: { type: 'communication', fingerprint: adaptive.decision.mode === 'learned' ? 'learned_silence' : 'manual_silence',
       message: problemMessage(adaptive.decision.mode === 'learned' ? 'learned_silence' : 'manual_silence', { ageHours }) } };

@@ -68,7 +68,7 @@ function evaluateBatteryDevices(devicesRaw, stateRaw, configRaw, now = Date.now(
   const assessments = [];
   const state = { schema: 2, lastCheckedAt: now, checkedDevices: devices.length, devices: {} };
   for (const device of devices) {
-    const decision = profileDecision(device, config, learningRaw?.devices?.[device.id]);
+    const decision = profileDecision(device, config, learningRaw?.devices?.[device.id], now);
     const vacation = vacationDecision(device, decision, config, now);
     const heartbeat = evaluateHeartbeat(device, config, now, insightsRaw[device.id] || [], { decision, vacation });
     const battery = evaluateBattery(device, config, now);
