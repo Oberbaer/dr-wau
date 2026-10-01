@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Start a clean Dr. Wau identity for fresh Homey installs: new app ID `com.oberbaer.drwau`. The previous `com.oberbaer.homeywatchdog` ID remains the legacy/test identity and is not overwritten by this branch.
 - Dr. Wau 0.7.1: separate contact activity learning from periodic communication, group short bursts into fixed 30-minute blocks and assess active-day coverage and upper pauses. Keep automatic recommendations visible beside manual thresholds; contacts without enough activity remain event-only, and vacation pauses activity by default.
 - Dr. Wau 0.7.1: merge older verified learning history independently of a fresh native heartbeat; retain deduplication and bounded compatible state.
 - Calculate median and P90/P95 from one conservative interval population, with explicit event/interval counts, confidence reasons and documented outlier boundaries in the existing expert panel.
@@ -19,7 +20,7 @@
 - Dr. Wau 0.5.0: checkbox-based device/zone exclusions and direct push recipients using the shared restore API Key.
 - Clarified the legacy notification Flow trigger and suppress successful deliveries separately per channel and recipient.
 - Fixed v5 backup files being rejected by the integrated backup import; Dr. Wau 0.4.1.
-- Renamed the app to Dr. Wau while retaining the existing Homey app ID.
+- Renamed the app to Dr. Wau while retaining the then-existing Homey app ID. A later clean-install identity changes this to `com.oberbaer.drwau`.
 - Integrated Backup Center with manual/scheduled backups and explicitly confirmed selective restore.
 - Added whole-zone exclusions, including subzones, for battery alerts and device health findings.
 
@@ -32,7 +33,7 @@
 
 ### Changed
 
-- Updated the fork to the Homey Watchdog identity and separate `com.oberbaer.homeywatchdog` app id.
+- Historical 0.x step: updated the fork to the Homey Watchdog identity with `com.oberbaer.homeywatchdog`; the clean Dr. Wau install now uses `com.oberbaer.drwau`.
 - Battery silence checks use Homey's raw device endpoint so `lastSeenAt` reflects device communication data consistently.
 - The original stale-device threshold was 24 hours with a 6-hour repeat interval; 0.6.0 adds individual profiles and uses 24-hour repeats for fresh installations.
 - The repository now presents the native Homey Watchdog app as its only supported implementation.
