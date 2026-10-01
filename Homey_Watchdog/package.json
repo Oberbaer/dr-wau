@@ -1,5 +1,5 @@
 {
-  "name": "com.oberbaer.homeywatchdog",
+  "name": "com.oberbaer.drwau",
   "version": "0.7.1",
   "description": "Dr. Wau: Homey health checks, battery alerts and backups.",
   "main": "app.js",
