@@ -1,6 +1,6 @@
 # Dr. Wau app
 
-This directory contains the supported native Dr. Wau app (`com.oberbaer.homeywatchdog`). It combines read-only Automation Health diagnostics, scheduled battery monitoring, and integrated configuration backups on Homey Pro.
+This directory contains the supported native Dr. Wau app (`com.oberbaer.drwau`). It combines read-only Automation Health diagnostics, scheduled battery monitoring, and integrated configuration backups on Homey Pro.
 
 See the repository [English documentation](../README.md) or [German documentation](../README.de.md) for features, installation, first setup, notifications, and privacy details.
 
