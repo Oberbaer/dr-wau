@@ -3,7 +3,7 @@
 [![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Dr. Wau is a native Homey Pro app for automation health checks, battery monitoring, and configuration backups. The supported implementation lives in [`Homey_Watchdog/`](Homey_Watchdog/README.md). Its Homey app ID remains `com.oberbaer.homeywatchdog` so existing Watchdog settings can survive an update.
+Dr. Wau is a native Homey Pro app for automation health checks, battery monitoring, and configuration backups. The supported implementation lives in [`Homey_Watchdog/`](Homey_Watchdog/README.md). Its Homey app ID remains `com.oberbaer.drwau` so existing Watchdog settings can survive an update.
 
 Deutsche Dokumentation: [README.de.md](README.de.md)
 
