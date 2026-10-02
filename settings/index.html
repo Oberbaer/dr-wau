@@ -18,7 +18,7 @@
     .brand-heading h1::after { content: ''; display: block; width: 36px; height: 3px; margin-top: 6px; border-radius: 2px; background: var(--brand-highlight); }
     h2 { font-size: 18px; margin: 0; }
     .muted { opacity: .7; }
-    button { appearance: none; border: 0; border-radius: 10px; padding: 10px 14px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
+    button { appearance: none; border: 0; border-radius: 10px; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; padding: 10px 14px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
     button.secondary { background: transparent; color: CanvasText; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
     button.danger { background: transparent; color: var(--critical); border: 1px solid color-mix(in srgb, var(--critical) 35%, transparent); }
     button:disabled { opacity: .55; cursor: wait; }
@@ -94,9 +94,16 @@
     .checkbox-row:hover { background: var(--surface); }
     .checkbox-row input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; }
     .checkbox-row span { overflow-wrap: anywhere; }
+    input:not([type="checkbox"]), select, textarea { min-width: 0; max-width: 100%; min-height: 44px; }
+    input[type="file"] { width: 100%; }
+    .check, .checkbox-row, summary { min-height: 44px; }
+    .check { gap: 8px; }
+    summary { padding: 10px 0; }
+    .notice, .hero, .module-card, .finding, .pill, .badge, #migration-summary { overflow-wrap: anywhere; }
     .board-description { margin: 8px 0 14px; }
     .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
-    @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; } .score-grid { grid-template-columns: repeat(2, 1fr); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid, .detail-grid, .watchdog-filter-row { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; min-width: 0; white-space: normal; } .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid, .detail-grid, .watchdog-filter-row { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .filters select { max-width: 100%; } }
+    @media (max-width: 480px) { .device-item { grid-template-columns: minmax(0, 1fr); } .device-item span { max-width: none; text-align: left; } .device-detail { padding: 12px; } .brand-mark { width: 56px; height: 56px; flex-basis: 56px; } }
   </style>
 </head>
 <body>
