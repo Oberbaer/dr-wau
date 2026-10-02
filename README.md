@@ -1,9 +1,9 @@
-# Dr. Wau 🐶🔧⚙️👀
+# Dr. Wau
 
 [![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Dr. Wau is a native Homey Pro app for automation health checks, battery monitoring, and configuration backups. The supported implementation lives in [`Homey_Watchdog/`](Homey_Watchdog/README.md). Its Homey app ID remains `com.oberbaer.drwau` so existing Watchdog settings can survive an update.
+Dr. Wau is a native Homey Pro app for automation health checks, battery monitoring, and configuration backups. The repository root is the Homey app project. Version 1.0.0 uses `com.oberbaer.drwau` and installs alongside the legacy app. Settings transfer requires an explicit migration import; see [migration](docs/migration.md).
 
 Deutsche Dokumentation: [README.de.md](README.de.md)
 
@@ -43,8 +43,8 @@ Requirements:
 - npm and a Homey account with permission to install developer apps.
 
 ```sh
-git clone https://github.com/Oberbaer/homey-battery-watchdog.git
-cd homey-battery-watchdog/Homey_Watchdog
+git clone https://github.com/Oberbaer/dr-wau.git
+cd dr-wau
 npm install
 npx homey login
 npx homey app install
@@ -97,7 +97,7 @@ The same zone exclusion also suppresses device availability and battery findings
 
 ## Backups
 
-The Backups tab contains the integrated Backup Center by Dennis Weel. It can export Homey configuration, schedule uploads, and build an explicit selective restore plan. Restore changes Homey objects only after the owner chooses items and confirms execution. Source license and contributor notices are preserved in [`Homey_Watchdog/backup/`](Homey_Watchdog/backup/).
+The Backups tab contains the integrated Backup Center by Dennis Weel. It can export Homey configuration, schedule uploads, and build an explicit selective restore plan. Restore changes Homey objects only after the owner chooses items and confirms execution. Source license and contributor notices are preserved in [`backup/`](backup/).
 
 Backup Center used a different Homey app ID. Its passwords, API key, destinations, and schedule cannot move automatically into Dr. Wau; enter and test them again before switching off the former app. Existing backup files remain usable as restore inputs.
 
@@ -131,7 +131,7 @@ Timeline notifications are created directly by the app when enabled. For direct 
 
 The separate **Trigger my Homey notification Flow** option supports existing custom Flows:
 
-1. **When:** Homey Watchdog ? a battery watchdog warning is sent.
+1. **When:** Dr. Wau ? a battery watchdog warning is sent.
 2. **Then:** send a mobile push notification to the desired Homey users.
 3. Use the trigger's `text` token as the notification text.
 
@@ -139,14 +139,14 @@ The app suppresses unchanged repeat alerts separately per channel and recipient.
 
 ## Privacy & Security
 
-Analysis and persistent state stay on the owner's Homey. The app does not require an external service and does not include Homey tokens, device inventories, or production exports in the repository. Owner APIs are private. See [Privacy](Homey_Watchdog/PRIVACY.md), [Security](Homey_Watchdog/SECURITY.md), and [third-party notices](Homey_Watchdog/THIRD_PARTY_NOTICES.md).
+Analysis and persistent state stay on the owner's Homey. The app does not require an external service and does not include Homey tokens, device inventories, or production exports in the repository. Owner APIs are private. See [Privacy](PRIVACY.md), [Security](SECURITY.md), and [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Development
 
 Run development commands from the app directory:
 
 ```powershell
-cd Homey_Watchdog
+# Run from the repository root
 npm.cmd ci
 npm.cmd test
 npm.cmd run validate:publish

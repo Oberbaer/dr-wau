@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
+
+- Clean Dr. Wau identity: `com.oberbaer.drwau`, repository `Oberbaer/dr-wau`, Homey app directly at the repository root.
+- Explicit versioned configuration export/import from legacy 0.7.1, read-only preview and file-bound confirmation; preserve learning, profiles, annotations and backup preferences.
+- Exclude credentials and retain activation choices separately; imported warning channels, vacation and backup schedules stay disabled.
+- New turquoise doctor-puppy branding without a pendant; magenta tongue.
+- No automatic uninstall of the legacy app, no Flow rewrites and no production activation.
+
+## Historical / Legacy 0.7.x and earlier
 
 - Start a clean Dr. Wau identity for fresh Homey installs: new app ID `com.oberbaer.drwau`. The previous `com.oberbaer.homeywatchdog` ID remains the legacy/test identity and is not overwritten by this branch.
 - Dr. Wau 0.7.1: separate contact activity learning from periodic communication, group short bursts into fixed 30-minute blocks and assess active-day coverage and upper pauses. Keep automatic recommendations visible beside manual thresholds; contacts without enough activity remain event-only, and vacation pauses activity by default.

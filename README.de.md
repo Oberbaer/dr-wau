@@ -1,9 +1,9 @@
-# Dr. Wau 🐶🔧⚙️👀
+# Dr. Wau
 
 [![Node.js >=22](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
 
-Dr. Wau ist eine native Homey-Pro-App für Automationsprüfungen, Batterieüberwachung und Konfigurationsbackups. Die unterstützte Implementierung liegt unter [`Homey_Watchdog/`](Homey_Watchdog/README.md). Die bisherige Watchdog-App-ID bleibt erhalten, damit Einstellungen bei einem Update erhalten bleiben.
+Dr. Wau ist eine native Homey-Pro-App für Automationsprüfungen, Batterieüberwachung und Konfigurationsbackups. Das Repository-Hauptverzeichnis ist das Homey-App-Projekt. Version 1.0.0 mit `com.oberbaer.drwau` wird parallel zur Legacy-App installiert. Einstellungen werden ausdrücklich importiert; siehe [Migration](docs/migration.md).
 
 English documentation: [README.md](README.md)
 
@@ -44,8 +44,8 @@ Voraussetzungen:
 - npm und ein Homey-Konto mit Berechtigung zur Installation von Entwickler-Apps.
 
 ```sh
-git clone https://github.com/Oberbaer/homey-battery-watchdog.git
-cd homey-battery-watchdog/Homey_Watchdog
+git clone https://github.com/Oberbaer/dr-wau.git
+cd dr-wau
 npm install
 npx homey login
 npx homey app install
@@ -132,7 +132,7 @@ Timeline-Meldungen werden bei aktivierter Option direkt von der App erstellt. F�
 
 Die getrennte Option **Meinen Homey-Benachrichtigungs-Flow auslösen** unterstützt bestehende eigene Flows:
 
-1. **Wenn:** Homey Watchdog — eine Batterie-Watchdog-Warnung wird gesendet.
+1. **Wenn:** Dr. Wau — eine Batterie-Watchdog-Warnung wird gesendet.
 2. **Dann:** Handy-Push an die gewünschten Homey-Benutzer senden.
 3. Das `text`-Token des Triggers als Meldungstext verwenden.
 
@@ -140,14 +140,14 @@ Die App unterdrückt unveränderte Wiederholungswarnungen getrennt pro Kanal und
 
 ## Datenschutz & Sicherheit
 
-Analyse und dauerhafter Zustand verbleiben auf dem Homey des Eigentümers. Die App benötigt keinen externen Dienst. Das Repository enthält keine Homey-Tokens, Geräteinventare oder produktiven Exporte. Die App-APIs sind nur für den Eigentümer zugänglich. Weitere Informationen: [Datenschutz](Homey_Watchdog/PRIVACY.md), [Sicherheit](Homey_Watchdog/SECURITY.md) und [Hinweise zu Drittsoftware](Homey_Watchdog/THIRD_PARTY_NOTICES.md).
+Analyse und dauerhafter Zustand verbleiben auf dem Homey des Eigentümers. Die App benötigt keinen externen Dienst. Das Repository enthält keine Homey-Tokens, Geräteinventare oder produktiven Exporte. Die App-APIs sind nur für den Eigentümer zugänglich. Weitere Informationen: [Datenschutz](PRIVACY.md), [Sicherheit](SECURITY.md) und [Hinweise zu Drittsoftware](THIRD_PARTY_NOTICES.md).
 
 ## Entwicklung
 
 Entwicklungsbefehle werden im App-Verzeichnis ausgeführt:
 
 ```powershell
-cd Homey_Watchdog
+# Run from the repository root
 npm.cmd ci
 npm.cmd test
 npm.cmd run validate:publish

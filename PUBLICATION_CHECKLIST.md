@@ -1,10 +1,10 @@
 # Publication checklist
 
-Last local review: 2026-09-27
+Last local review: 2026-10-01
 
 ## Repository scope
 
-- The current tree presents `Homey_Watchdog/` as the only supported Dr. Wau implementation, including its integrated backup module.
+- The repository root is the only supported Dr. Wau implementation, including its integrated backup module.
 - Legacy Advanced Flow watchdog scripts, their root tests, and the root npm configuration have been removed from the current tree.
 - Historical implementations remain available through normal Git history; no history was rewritten for the App-only cleanup.
 - Future screenshot paths are documented, but no screenshot files have been created.
@@ -22,13 +22,13 @@ Last local review: 2026-09-27
 - Runtime dependencies are permissively licensed, except `homey-api`, whose Athom license permits use with Homey products.
 - Older transitive dependencies with missing lockfile license fields were resolved from bundled licenses, README files, or upstream repositories as MIT.
 - LGPL Sharp/libvips packages belong only to the local Homey CLI development toolchain and are not app runtime dependencies.
-- Detailed dependency notes are in `Homey_Watchdog/THIRD_PARTY_NOTICES.md`.
+- Detailed dependency notes are in `THIRD_PARTY_NOTICES.md`.
 
 ## Security
 
 - Owner API routes are private.
 - Publish-level manifest validation must pass before release preparation is considered complete.
-- The current runtime audit (`npm audit --omit=dev`) reports zero vulnerabilities. Re-run it before release and see `Homey_Watchdog/SECURITY.md`.
+- The current runtime audit reports four moderate affected packages in the known `parseuri` dependency chain. See `SECURITY.md`; no automatic forced fix was applied.
 
 ## History
 

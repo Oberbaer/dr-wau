@@ -4,7 +4,7 @@ This file contains project-specific rules only. All global Codex rules remain ap
 
 ## Scope
 
-This repository supports the native Dr. Wau app in `Homey_Watchdog/`.
+This repository supports the native Dr. Wau app in the repository root.
 
 Keep work limited to:
 
@@ -40,7 +40,7 @@ Homey is production. Do not install, run, or publish the app without explicit au
 
 ## Validation
 
-After meaningful app changes, run from `Homey_Watchdog/`:
+After meaningful app changes, run from the repository root:
 
 ```powershell
 npm.cmd ci
