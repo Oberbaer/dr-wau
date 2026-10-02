@@ -125,3 +125,34 @@ test('new runtime keeps legacy suppression state untouched for rollback', async 
   assert.strictEqual(settings.get('battery_watchdog_state_v1'), legacy);
   assert.equal(settings.get('battery_watchdog_state_v2').schema, 2);
 });
+
+test('disabling a route during a running watchdog stops later batches without marking them delivered', async () => {
+  const app = Object.create(App.prototype), settings = new Map(), sent = [];
+  app.watchdogConfig = { timeline: true, flowTrigger: true, pushUserIds: [] };
+  app.homey = { settings: { get: key => settings.get(key), set: (key, value) => settings.set(key, structuredClone(value)) },
+    notifications: { createNotification: async () => {
+      sent.push('timeline'); app.watchdogConfig = { timeline: false, flowTrigger: false, pushUserIds: [] };
+    } } };
+  app.watchdogWarningTrigger = { trigger: async () => { sent.push('flow'); } };
+  const devices = Object.fromEntries(['one','two','three'].map(id => [id, { id, name: 'Synthetic ' + id,
+    capabilities: ['measure_battery'], capabilitiesObj: { measure_battery: { value: 1 } } }]));
+  app.ensureApi = async () => ({ call: async () => devices, zones: { getZones: async () => ({}) } });
+  await app.performBatteryWatchdog('synthetic');
+  assert.deepEqual(sent, ['timeline']);
+  const state = settings.get('battery_watchdog_state_v2');
+  assert.ok(state.devices.one.problems.battery.deliveryTimes.timeline > 0);
+  assert.deepEqual(state.devices.three.problems.battery.deliveryTimes, {});
+  assert.equal(state.devices.one.problems.battery.deliveryTimes.flow, undefined);
+});
+
+test('removing a push recipient during preparation prevents the outgoing action', async () => {
+  const app = Object.create(App.prototype), calls = [];
+  app.watchdogConfig = { timeline: false, flowTrigger: false, pushUserIds: ['synthetic-recipient'] };
+  app.prepareWatchdogPush = async () => {
+    app.watchdogConfig.pushUserIds = [];
+    return { client: { flow: { runFlowCardAction: async () => calls.push('push') } },
+      users: new Map([['synthetic-recipient', {id:'synthetic-recipient'}]]), cardId: 'synthetic' };
+  };
+  assert.equal(await app.deliverWatchdogRoute('push:synthetic-recipient', 'synthetic'), false);
+  assert.deepEqual(calls, []);
+});

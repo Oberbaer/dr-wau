@@ -257,11 +257,14 @@ class DrWauApp extends Homey.App {
   }
 
   async deliverWatchdogRoute(route, text, context = {}) {
+    // Settings may change while a scan or a previous batch is awaiting I/O.
+    if (!notificationRoutes(this.watchdogConfig).includes(route)) return false;
     if (route === 'timeline') return this.homey.notifications.createNotification({ excerpt: text });
     if (route === 'flow') return this.watchdogWarningTrigger.trigger({ text });
     if (!route.startsWith('push:')) throw new Error('Unknown watchdog notification channel.');
     context.push ||= this.prepareWatchdogPush();
     const { client, users, cardId } = await context.push;
+    if (!notificationRoutes(this.watchdogConfig).includes(route)) return false;
     const user = users.get(route.slice(5));
     if (!user) throw new Error('Ein ausgewählter Push-Empfänger ist nicht mehr verfügbar.');
     return client.flow.runFlowCardAction({ id: cardId, args: { user: { id: user.id, name: user.name }, text } });
@@ -308,8 +311,8 @@ class DrWauApp extends Homey.App {
           for (let offset = 0; offset < pending.length; offset += 2) {
             const batch = pending.slice(offset, offset + 2);
             try {
-              await this.deliverWatchdogRoute(route, `${notificationPrefix(kind, batch.some(item => item.severity === 'critical') ? 'critical' : 'warning')}${batch.map(item => item.message).join('; ')}`, context);
-              markDelivered(evaluation.state, batch.map(item => item.key), startedAt, [route]);
+              const delivered = await this.deliverWatchdogRoute(route, `${notificationPrefix(kind, batch.some(item => item.severity === 'critical') ? 'critical' : 'warning')}${batch.map(item => item.message).join('; ')}`, context);
+              if (delivered !== false) markDelivered(evaluation.state, batch.map(item => item.key), startedAt, [route]);
             } catch (_) { deliveryFailures += 1; }
             await this.homey.settings.set(WATCHDOG_STATE_SETTING, evaluation.state);
           }
