@@ -106,6 +106,52 @@ test('active notification routes block import before any settings write', async 
   await assert.rejects(app.importMigration({ document, confirmed: true, previewToken: preview.previewToken }), /Stop automatic/);
   assert.equal(settings.size, 0);
 });
+test('malformed nested state and unsupported config fields reject before import', () => {
+  const mutations = [
+    d => d.settings[m.CONFIG].unexpected = true,
+    d => d.settings[m.CONFIG].staleHours = 721,
+    d => d.settings[m.CONFIG].deviceProfiles['synthetic-contact'].vacationFactor = -1,
+    d => d.settings[m.CONFIG].deviceProfiles['synthetic-contact'].confirmation = 'yes',
+    d => d.settings[m.CONFIG].vacation.until = 123,
+    d => d.settings.device_learning_state_v1.devices['synthetic-contact'].medianIntervalHours = 'invalid',
+    d => d.settings.device_learning_state_v1.devices['synthetic-contact'].activity.pausesHours = [null],
+    d => d.settings.finding_annotations_v1['synthetic-finding'].ignored = 'false',
+    d => d.settings.battery_watchdog_state_v2.devices.synthetic = { recoveries: { battery: null } },
+    d => d.settings.battery_watchdog_state_v2.devices.synthetic = { problems: { battery: { deliveryTimes: { timeline: 'yesterday' } } } },
+    d => d.settings.networkTargets[0].port = 65536,
+    d => d.settings.networkTargets.push(structuredClone(d.settings.networkTargets[0])),
+  ];
+  for (const mutate of mutations) {
+    const document = exported(); mutate(document);
+    assert.throws(() => m.planMigration(document), /Invalid Dr. Wau/);
+  }
+});
+test('empty and partial imports preserve omitted settings and keep activation off', async () => {
+  for (const settingsSource of [{}, { finding_annotations_v1: {} }]) {
+    const { app, settings } = runtime();
+    settings.set('device_learning_state_v1', { schema: 1, devices: { synthetic: { events: [] } } });
+    const before = structuredClone(settings.get('device_learning_state_v1'));
+    const document = m.createExport(settingsSource), preview = app.previewMigration(document);
+    await app.importMigration({ document, previewToken: preview.previewToken, confirmed: true });
+    assert.deepEqual(settings.get('device_learning_state_v1'), before);
+    assert.equal(app.watchdogConfig.enabled, false);
+    assert.deepEqual(notificationRoutes(app.watchdogConfig), []);
+  }
+});
+test('expired preview and running jobs block import, completed restore does not', async () => {
+  const { app, settings } = runtime(), document = exported();
+  let preview = app.previewMigration(document);
+  app.migrationPreview.expiresAt = Date.now() - 1;
+  await assert.rejects(app.importMigration({ document, previewToken: preview.previewToken, confirmed: true }), /explicitly confirm/);
+  assert.equal(settings.size, 0);
+  preview = app.previewMigration(document);
+  app.restoreJobId = 'synthetic-job';
+  app.jobs = { items: new Map([[app.restoreJobId, { status: 'running' }]]) };
+  await assert.rejects(app.importMigration({ document, previewToken: preview.previewToken, confirmed: true }), /running jobs/);
+  assert.equal(settings.size, 0);
+  app.jobs.items.get(app.restoreJobId).status = 'done';
+  assert.equal((await app.importMigration({ document, previewToken: preview.previewToken, confirmed: true })).imported, true);
+});
 test('new migration endpoints are owner-only', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.homeycompose/app.json')));
   for (const key of ['exportMigration', 'previewMigration', 'importMigration']) { assert.equal(manifest.api[key].public, false); assert.equal(manifest.api[key].role, 'owner'); }

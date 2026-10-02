@@ -111,7 +111,8 @@ class DrWauApp extends Homey.App {
       || this.migrationPreview.token !== plan.previewToken || body.previewToken !== plan.previewToken)
       throw Error('Preview this file and explicitly confirm the import first.');
     if (this.migrationImportBusy || this.watchdogPromise || this.scanPromise || this.scheduler?.busy
-      || this.restoreJobId || this.watchdogConfig.enabled || notificationRoutes(this.watchdogConfig).length
+      || [...(this.jobs?.items?.values() || [])].some(job => job.status === 'running')
+      || this.watchdogConfig.enabled || notificationRoutes(this.watchdogConfig).length
       || this.watchdogConfig.vacation.enabled || this.homey.settings.get('schedule')?.enabled)
       throw Error('Stop automatic checks, notifications, vacation, backup schedules and running jobs before importing.');
     this.migrationImportBusy = true;
