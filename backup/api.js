@@ -1,5 +1,6 @@
 'use strict';
 module.exports = {
+  async getBackupDiagnostics({homey}) {return homey.app.getBackupDiagnostics();},
   async getNetwork({homey}) {return homey.app.network.list();},
   async saveNetwork({homey,body}) {return homey.app.network.save(body.target);},
   async removeNetwork({homey,body}) {return homey.app.removeNetworkTarget(body.id);},

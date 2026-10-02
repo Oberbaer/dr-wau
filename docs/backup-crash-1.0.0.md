@@ -2,6 +2,22 @@
 
 ## Freigabestatus
 
+### Vorbereitung des kontrollierten Live-Tests
+
+Der Crashfix ist auf dem Feature-Branch committed und als Development-App
+installiert. Die dreiminütige Leerlaufbeobachtung zeigte keinen Absturz;
+Development- und Legacy-Einstellungen blieben unverändert. Die offizielle
+Devkit-Verbindung lieferte jedoch weder Stdout-Ereignisse noch eine Loghistorie.
+Deshalb wurde vor dem freigegebenen Export eine zusätzliche Diagnose vorbereitet:
+`GET /backup/diagnostics`, ausschließlich für den Owner, mit höchstens 128
+inhaltsfreien Phasen-/Speichereinträgen, Warnzähler und aktuellen Job-/Transfer-
+Zuständen. Dieselben Einträge werden über das dokumentierte
+[SDK-Realtime-Ereignis](https://apps-sdk-v3.developer.homey.app/ManagerApi.html#realtime)
+an einen lokalen Collector gespiegelt. Transportfehler verändern das Ergebnis
+eines Backups nicht. Zugangsdaten, Namen, Objekt-IDs und Fehlermeldungen werden
+über diesen Kanal nicht ausgegeben. Er ersetzt keinen historischen Stacktrace.
+Der echte Export ist zu diesem Vorbereitungsstand noch nicht gestartet.
+
 **RELEASE BLOCKED.** Der gemeldete reale Absturz ist historisch nicht eindeutig
 zugeordnet. Die unten beschriebenen Fehler sind lokal nachgewiesen und korrigiert;
 das ersetzt den Nachweis der tatsächlichen Homey-Crashursache nicht.

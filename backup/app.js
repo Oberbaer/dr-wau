@@ -7,6 +7,7 @@ const {webdavAdapter}=require('./lib/webdav-retention');
 const {Scheduler} = require('./lib/scheduler');
 const Jobs = require('./lib/jobs');
 const BoundedJSON = require('./lib/bounded-json');
+const Diagnostics = require('./lib/diagnostics');
 const I18n = require('./settings/i18n');
 const tr = I18n.t;
 const { HomeyAPI } = require('homey-api');
@@ -164,8 +165,10 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
   async onInit() {
     I18n.setLanguage(this.homey.settings.get('language') || this.homey.i18n.getLanguage());
     this.transfers = new Transfers(); this.jobs = new Jobs();
+    this.backupDiagnostics=new Diagnostics(row=>this.homey.api.realtime?.('backup-diagnostic',row));
+    this.backupDiagnostics.record('initialized');
     this.memoryWarnings=0;
-    this.backupMemoryWarning=()=>{this.memoryWarnings++;};
+    this.backupMemoryWarning=()=>{this.memoryWarnings++;this.backupDiagnostics.record('memory-warning');};
     this.homey.on?.('memwarn',this.backupMemoryWarning);
     this.network = new NetworkDestinations({settings:this.homey.settings,exportBackup:()=>this.exportBackup(),
       emit:(id,tokens,state)=>this.homey.flow.getTriggerCard(id).trigger(tokens,state),
@@ -193,6 +196,12 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     if(this.scheduleTimer)this.homey.clearInterval(this.scheduleTimer);
     if(this.backupMemoryWarning)this.homey.removeListener?.('memwarn',this.backupMemoryWarning);
     this.transfers?.clear();
+  }
+  getBackupDiagnostics(){
+    return {...this.backupDiagnostics.snapshot(),memoryWarnings:this.memoryWarnings,
+      exportRunning:Boolean(this.exportBusy),runningJobs:[...this.jobs.items.values()].filter(x=>x.status==='running').length,
+      transferCount:this.transfers.items.size,transferBytes:[...this.transfers.items.values()].reduce((n,x)=>n+x.buffer.length,0),
+      networkRunning:Boolean(this.network.busy),scheduleRunning:Boolean(this.scheduler.busy)};
   }
   registerNetworkFlows(){
     const autocomplete=async query=>{
@@ -395,6 +404,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     this.exportBusy=true;
     const started=Date.now();
     const phase=(name,counts={})=>{
+      this.backupDiagnostics.record(name,{elapsedMs:Date.now()-started,...counts});
       const memory=typeof process!=='undefined'?process.memoryUsage():{};
       try{this.log('backup-metrics',JSON.stringify({phase:name,elapsedMs:Date.now()-started,
         heapUsed:memory.heapUsed,heapTotal:memory.heapTotal,rss:memory.rss,...counts}));}catch(_){/* Diagnostics must not reject the operation. */}

@@ -373,6 +373,12 @@
       "path": "/migration/import",
       "public": false,
       "role": "owner"
+    },
+    "getBackupDiagnostics": {
+      "method": "get",
+      "path": "/backup/diagnostics",
+      "public": false,
+      "role": "owner"
     }
   }
 }
