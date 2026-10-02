@@ -16,4 +16,6 @@ test('SMB adapter authenticates and publishes only after temporary file write',a
 test('SMB probe cleans its own file; failed write never publishes final backup',async()=>{
  const a=adapter();assert.equal((await a.transfer({target})).ok,true);assert.match(a.calls.find(c=>c[0]==='remove')[1],/\.partial\.probe$/);
  const b=adapter(true),result=await b.transfer({target,filename:'backup.json',body:Buffer.from('data')});assert.equal(result.ok,false);assert.equal(result.code,'IO');assert(!b.calls.some(c=>c[0]==='rename'));assert(b.calls.some(c=>c[0]==='remove'));assert.equal(b.calls.at(-1)[0],'close');
+ assert.equal(result.detail,'SMB failed during write-probe.');
+ assert(!JSON.stringify(result).includes('secret server error'));
 });

@@ -69,16 +69,14 @@ async function transfer({target:t,filename,body,operation,entry}){
   return {ok:true};
  }catch(e){
   const message=String(e&&e.message||''),name=String(e&&e.name||''),codeValue=e&&e.code,statusValue=e&&e.status;
-  const raw=String(codeValue||statusValue||message||'');
   const combined=[name,codeValue,statusValue,message].filter(v=>v!==undefined&&v!==null&&String(v)).join(' ');
-  // Diagnostic text is allow-listed and truncated. Credentials/target data are never included.
-  const safe=v=>String(v??'').replace(/[\r\n\t]/g,' ').replace(/[^A-Za-z0-9_ .:()-]/g,'?').slice(0,180);
-  const diagnostic=[name&&('name='+safe(name)),codeValue!==undefined&&('code='+safe(codeValue)),statusValue!==undefined&&('status='+safe(statusValue)),message&&('message='+safe(message))].filter(Boolean).join('; ');
+  // Remote errors can contain credentials, hostnames and paths. Use them only
+  // for classification; expose the local transfer stage, never remote text.
   const code=hostMismatch?'HOST_KEY':/auth|logon|password|STATUS_LOGON_FAILURE|3221225581|3221225485/i.test(combined)?'AUTH':/ECONN|ENOTFOUND|EHOST|ETIMEDOUT|STATUS_BAD_NETWORK_NAME/i.test(combined)?'CONNECTION':'IO';
   let detail='';
   if(code==='CONNECTION'&&/STATUS_BAD_NETWORK_NAME/i.test(combined)) detail='The SMB share name was not found. Enter only the share name.';
-  else if(t.type==='smb') detail='SMB failed during '+stage+'.'+(diagnostic?' Diagnostic: '+diagnostic+'.':'');
-  else if(t.type==='ftp') detail='FTP failed during '+stage+'.'+(diagnostic?' Diagnostic: '+diagnostic+'.':'');
+  else if(t.type==='smb') detail='SMB failed during '+stage+'.';
+  else if(t.type==='ftp') detail='FTP failed during '+stage+'.';
   return {ok:false,code,detail};
  }finally{
   // Parent applies a hard wall-clock limit and closes sockets on every outcome.

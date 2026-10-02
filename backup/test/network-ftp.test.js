@@ -29,7 +29,7 @@ function adapter(fail=false){
    const chunks=[];
    for await(const chunk of stream)chunks.push(Buffer.from(chunk));
    calls.push(['write',remote,Buffer.concat(chunks)]);
-   if(fail)throw Error('FTP write failed');
+   if(fail)throw (fail instanceof Error ? fail : Error('FTP write failed'));
   }
 
   async rename(from,to){
@@ -138,4 +138,15 @@ test('FTP errors report the failing FTP stage without exposing the password',asy
  assert.equal(result.ok,false);
  assert.match(result.detail,/FTP failed during write-probe/);
  assert(!result.detail.includes('secret'));
+});
+test('remote error fields cannot expose synthetic credentials or target metadata',async()=>{
+ const error=Object.assign(Error('synthetic-password at ftp://synthetic-user@nas.invalid/private-folder'),
+  {name:'synthetic-private-name',code:'synthetic-private-code',status:'synthetic-private-status'});
+ const a=adapter(error);
+ const result=await a.transfer({target,filename:'backup.json',body:Buffer.from('data')});
+ assert.equal(result.ok,false);
+ assert.equal(result.code,'AUTH');
+ assert.equal(result.detail,'FTP failed during write-probe.');
+ assert(!JSON.stringify(result).includes('synthetic-'));
+ assert(!JSON.stringify(result).includes('nas.invalid'));
 });

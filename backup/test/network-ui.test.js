@@ -31,13 +31,13 @@ test('settings form saves a destination and polls a single backup job',async()=>
 
 test('settings restores a saved destination while keeping its password hidden',async()=>{
  const dom=new JSDOM(fs.readFileSync(require.resolve('../settings/index.html'),'utf8'),{runScripts:'outside-only',url:'https://homey.local/settings'});const w=dom.window;browserMocks(w);w.BackupI18n={getLanguage:()=> 'en'};
- const saved={id:'smb-id',name:'Ubuntu SMB',type:'smb',host:'192.168.50.41',port:445,share:'homey-backups',directory:'',domain:'',username:'dennis',timeoutMs:30000,hasPassword:true};
+ const saved={id:'smb-id',name:'Synthetic SMB',type:'smb',host:'nas.invalid',port:445,share:'homey-backups',directory:'',domain:'',username:'synthetic-user',timeoutMs:30000,hasPassword:true};
  w.api=async(method,path)=>method==='GET'&&path==='/network'?[saved]:[];
  w.eval(fs.readFileSync(require.resolve('../settings/network'),'utf8')+';window.networkUi=NetworkUi');await w.networkUi.init();
  assert.equal(w.document.getElementById('net-select').value,'smb-id');
- assert.equal(w.document.getElementById('net-host').value,'192.168.50.41');
+ assert.equal(w.document.getElementById('net-host').value,'nas.invalid');
  assert.equal(w.document.getElementById('net-share').value,'homey-backups');
- assert.equal(w.document.getElementById('net-username').value,'dennis');
+ assert.equal(w.document.getElementById('net-username').value,'synthetic-user');
  assert.equal(w.document.getElementById('net-password').value,'');
  assert.match(w.document.getElementById('net-password').placeholder,/Saved/);
  dom.window.close();
