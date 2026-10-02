@@ -13,7 +13,7 @@ English documentation: [README.md](README.md)
 - Nachvollziehbarer Gesamt- und Kategoriescore für Flows, Geräte, Apps und Wartbarkeit.
 - Aktive Befunde mit Priorität, Status, Notizen und dauerhaften Entscheidungen.
 - Mehrstufige Lebenszeichenbewertung mit nativen Zeitstempeln, Capability-Meldungen und geprüften Insights-Rohereignissen; Batterieprobleme werden getrennt bewertet.
-- Gerätebezogene Lernhistorie ab 0.7.0 mit höchstens 96 bestätigten Meldezeitpunkten pro Gerät, nachvollziehbarer Konfidenz und individueller Warnschwelle. Für mittlere Sicherheit braucht Dr. Wau mindestens 10 Intervalle über 3 Tage, für hohe Sicherheit 20 über 7 Tage. Eine einzelne lange Stille wird nicht als normal gelernt.
+- Gerätebezogene Lernhistorie mit höchstens 96 bestätigten Meldezeitpunkten und 384 Rohereignissen pro Gerät. Periodische Geräte benötigen für mittlere Sicherheit mindestens 10 Intervalle über 3 Tage, für hohe Sicherheit 20 über 7 Tage. Kontakte lernen aus 30-Minuten-Aktivitätsblöcken, aktiven Tagen und normalen Pausen; mittlere/hohe Sicherheit erfordert mindestens 7/14 Kalendertage und weitere Aktivitätskriterien. Seltene Kontakte und Taster bleiben ohne automatische Schweigewarnung. Siehe [Lernmodell](docs/learning.md).
 - Annahmen und Lernphase bleiben sichtbar. Manuelle Profile und Bestätigungen haben Vorrang; vorhandene 0.6.0-Einstellungen werden erhalten. Aggregierte Insights, gespeicherte Werte und `available:true` gelten weiterhin nicht als neue Meldung.
 - Urlaubsmodus mit optionalem Enddatum und Regeln pro Gerät. Batterieprobleme und eine ausdrückliche Nichtverfügbarkeit bleiben aktiv. Flow-Karten schalten den Modus ein oder aus und prüfen seinen Status.
 - Einstellbare Prüf-, Warn- und Wiederholungsintervalle.
@@ -58,10 +58,10 @@ Der letzte Befehl installiert die App auf dem in der Homey CLI ausgewählten Hom
 1. In Homey **Apps > Dr. Wau > Einstellungen** öffnen.
 2. Die Übersicht prüfen und den ersten Automation-Health-Scan starten.
 3. Den Batterie-Watchdog öffnen und die erkannten Batteriegeräte kontrollieren.
-4. Als empfohlene Startwerte **6 h** Prüfintervall, **24 h** bis zur Warnung und **6 h** bis zur Wiederholung verwenden.
-5. Automatische Prüfungen und die gewünschten Benachrichtigungskanäle aktivieren.
+4. Als empfohlene Startwerte **6 h** Prüfintervall, **24 h** bis zur Warnung und **24 h** bis zur Wiederholung verwenden. Gelernte oder manuelle Geräteschwellen können abweichen.
+5. Die Vorschau ohne Benachrichtigungen prüfen, bevor automatische Prüfungen und gewünschte Warnkanäle aktiviert werden.
 6. Bei Bedarf Geräte oder ganze Zonen außer Betrieb nehmen und anschließend speichern.
-7. Einmal manuell prüfen. Dabei steuert die App kein Gerät.
+7. Eine manuelle Prüfung verwendet die ausgewählten Warnkanäle. Für eine Prüfung ohne echte Warnung die Vorschau verwenden.
 
 ## Übersicht
 

@@ -1,4 +1,7 @@
-# Device learning in 0.7.1
+# Device learning in Dr. Wau 1.0.0
+
+The learning model introduced in 0.7.1 remains compatible in 1.0.0. The new
+app identity requires the explicit [configuration migration](migration.md).
 
 ## Current evidence and historical learning
 

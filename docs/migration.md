@@ -42,6 +42,12 @@ Unbekannte Settings, falsche Schemas, unpassende Herkunft und erkennbare
 Credential-Felder werden zurückgewiesen. Die Bestätigung gilt nur für die
 unveränderte, innerhalb von zehn Minuten geprüfte Datei.
 
+Leere und teilweise Exporte sind zulässig: ausgelassene Bereiche bleiben
+unverändert, ausdrücklich enthaltene leere Bereiche ersetzen ihre bisherigen
+Werte. Verschachtelte Statistik-, Profil- und Suppression-Werte werden vor
+jedem Schreibzugriff geprüft. Laufende Scans, Watchdog- und Backup-/Restore-Jobs
+blockieren den Import; ein bereits beendeter Restore blockiert ihn nicht.
+
 | Bereich | Transfer |
 |---|---|
 | Intervalle, Batteriegrenzen, manuelle Profile/Overrides | Aktive Werte erhalten |

@@ -57,10 +57,10 @@ The last command installs the app on the Homey selected through the Homey CLI. I
 1. Open **Apps > Dr. Wau > Settings** in Homey.
 2. Review the Overview and run the first Automation Health scan.
 3. Open Battery Watchdog and review the detected battery devices.
-4. Use the recommended starting values: check every **6 h**, warn after **24 h**, and repeat after **6 h**.
-5. Enable automatic checks and the desired notification channels.
+4. Use the recommended starting values: check every **6 h**, warn after **24 h**, and repeat after **24 h**. Per-device learned or manual thresholds can differ.
+5. Review the preview without notifications before enabling automatic checks and the desired notification channels.
 6. Optionally exclude devices or entire out-of-service zones, then save the settings.
-7. Run one manual check to confirm the configuration without controlling any device.
+7. A manual check uses the selected notification channels. Use the preview when no real warning should be delivered.
 
 ## Overview
 

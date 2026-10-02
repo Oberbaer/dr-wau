@@ -7,6 +7,11 @@
 - Exclude credentials and retain activation choices separately; imported warning channels, vacation and backup schedules stay disabled.
 - New turquoise doctor-puppy branding without a pendant; magenta tongue.
 - No automatic uninstall of the legacy app, no Flow rewrites and no production activation.
+- Recheck notification routes during delivery; skipped channels are not recorded as successful deliveries.
+- Validate nested migration statistics, profiles and suppression state before writing settings; retain omitted areas in partial imports.
+- Clean up timers after failed initialization and reject non-numeric/out-of-range health battery percentages.
+- Keep remote error text out of SMB/FTP diagnostics and improve narrow settings layout and touch targets.
+- Add read-only GitHub CI for tests, publish validation and local builds; no installation or publishing workflow.
 
 ## Historical / Legacy 0.7.x and earlier
 

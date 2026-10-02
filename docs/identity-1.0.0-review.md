@@ -1,5 +1,9 @@
 # Dr. Wau 1.0.0 – Prüfung der Identitätsmigration
 
+Historischer Prüfstand vom 2026-10-01. Commit-/Push-Freigabe und weitere
+Prüfungen erfolgten am Folgetag; aktuell gilt der
+[Qualitätsbericht vom 2026-10-02](quality-day-1.0.0.md).
+
 Stand: 2026-10-01. Lokale Prüfungen und der kontrollierte Owner-API-Livetest
 sind getrennt aufgeführt. Private Exporte und Geräteansichten liegen nur unter
 ignorierten lokalen Artefakten.
