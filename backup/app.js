@@ -6,6 +6,7 @@ const Retention=require('./lib/retention');
 const {webdavAdapter}=require('./lib/webdav-retention');
 const {Scheduler} = require('./lib/scheduler');
 const Jobs = require('./lib/jobs');
+const BoundedJSON = require('./lib/bounded-json');
 const I18n = require('./settings/i18n');
 const tr = I18n.t;
 const { HomeyAPI } = require('homey-api');
@@ -14,15 +15,6 @@ const http = require('http');
 const https = require('https');
 const { URL } = require('url');
 
-function plain(obj) {
-  if (!obj || typeof obj !== 'object') return obj;
-  const out = {};
-  for (const [id, value] of Object.entries(obj)) {
-    const v = value || {};
-    out[id] = v;
-  }
-  return out;
-}
 function pick(obj, keys) {
   const out = {};
   for (const k of keys) if (obj && obj[k] !== undefined) out[k] = obj[k];
@@ -172,6 +164,9 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
   async onInit() {
     I18n.setLanguage(this.homey.settings.get('language') || this.homey.i18n.getLanguage());
     this.transfers = new Transfers(); this.jobs = new Jobs();
+    this.memoryWarnings=0;
+    this.backupMemoryWarning=()=>{this.memoryWarnings++;};
+    this.homey.on?.('memwarn',this.backupMemoryWarning);
     this.network = new NetworkDestinations({settings:this.homey.settings,exportBackup:()=>this.exportBackup(),
       emit:(id,tokens,state)=>this.homey.flow.getTriggerCard(id).trigger(tokens,state),
       log:(message,report)=>this.log(message,JSON.stringify(report))});
@@ -196,6 +191,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
   }
   onUninit() {
     if(this.scheduleTimer)this.homey.clearInterval(this.scheduleTimer);
+    if(this.backupMemoryWarning)this.homey.removeListener?.('memwarn',this.backupMemoryWarning);
     this.transfers?.clear();
   }
   registerNetworkFlows(){
@@ -285,7 +281,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
   startBackupTransfer(bytes,kind='backup'){if(!['backup','selection'].includes(kind))throw Error('Invalid backup chunk.');return this.transfers.create(bytes,kind);}
   appendBackupTransfer(body){return this.transfers.append(body.id,body.offset,body.data);}
   finishBackupTransfer(id){return this.transfers.finish(id,(data,kind)=>{if(kind==='backup')this.validateRestoreBackup(data);else this.validateSelection(data);});}
-  startExport(){return this.jobs.start(async()=>this.transfers.publish(await this.exportBackup()));}
+  startExport(){return this.jobs.start(progress=>this.exportBackup(progress,true));}
   startRestorePlan(id){return this.jobs.start(()=>this.transfers.withBackup(id,async data=>this.transfers.publish(await this.buildRestorePlan(data))));}
   validateSelection(selection){
     if(!selection || typeof selection!=='object' || Array.isArray(selection))throw Error('Invalid restore selection.');
@@ -356,18 +352,22 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     return this.writeClient;
   }
 
-  async getBetterLogicVariables() {
+  async getBetterLogicVariables(onCall=()=>{}) {
     const appId = 'net.i-dev.betterlogic';
 
     // /ALL is the canonical BLL source and can also contain non-persistent variables.
-    const bllApp = await this.client.apps.getApp({id: appId});
-    const all = await bllApp.get({path: '/ALL'});
+    onCall();
+    const bllApp = await this.client.apps.getApp({id: appId,$cache:false,$updateCache:false,$timeout:8000});
+    // App.get() ignores $timeout in homey-api; use the underlying read request.
+    onCall();const all = this.client.call
+      ? await this.client.call({method:'GET',path:'/api/app/'+appId+'/ALL',$timeout:8000})
+      : await bllApp.get({path: '/ALL'});
     if (!Array.isArray(all)) throw new Error('Better Logic Library /ALL returned invalid data.');
 
     // The app setting contains the variables that BLL persists permanently.
-    const stored = await this.client.apps.getAppSetting({
+    onCall();const stored = await this.client.apps.getAppSetting({
       id: appId,
-      name: 'variables'
+      name: 'variables', $cache:false, $timeout:8000
     });
     const persistentNames = new Set(
       (Array.isArray(stored) ? stored : [])
@@ -390,51 +390,95 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
       }));
   }
 
-  async exportBackup() {
-    if (!this.client) throw new Error(tr('De app start nog op. Probeer het zo opnieuw.'));
-    const jobs = {
-      folders: this.client.flow.getFlowFolders(),
-      standard: this.client.flow.getFlows(),
-      advanced: this.client.flow.getAdvancedFlows(),
-      devices: this.client.devices.getDevices(),
-      zones: this.client.zones.getZones(),
-      variables: this.client.logic.getVariables(),
-      apps: this.client.apps.getApps(),
+  async exportBackup(progress=()=>{},publish=false) {
+    if(this.exportBusy)throw Error(tr('A backup is already running. Try again when it has finished.'));
+    this.exportBusy=true;
+    const started=Date.now();
+    const phase=(name,counts={})=>{
+      const memory=typeof process!=='undefined'?process.memoryUsage():{};
+      try{this.log('backup-metrics',JSON.stringify({phase:name,elapsedMs:Date.now()-started,
+        heapUsed:memory.heapUsed,heapTotal:memory.heapTotal,rss:memory.rss,...counts}));}catch(_){/* Diagnostics must not reject the operation. */}
     };
-    const keys = Object.keys(jobs);
-    const settled = await Promise.allSettled(Object.values(jobs));
+    try {
+      phase('start');
+      const data=await this.collectBackup(progress,phase,started);
+      progress('serializing');phase('before-serialization',{devices:data.stats.devices,standardFlows:data.stats.standardFlows,advancedFlows:data.stats.advancedFlows});
+      if(!publish){BoundedJSON.measure(data);phase('complete');return data;}
+      const meta=this.transfers.publish(data);
+      phase('complete',{bytes:meta.bytes});return meta;
+    }catch(error){phase('failed');throw error;}
+    finally{this.exportBusy=false;}
+  }
+
+  async collectBackup(progress,phase,started) {
+    if (!this.client) throw new Error(tr('De app start nog op. Probeer het zo opnieuw.'));
+    const initialWarnings=this.memoryWarnings;
+    const checkDeadline=()=>{
+      if(Date.now()-started>180000)throw Error(tr('Backup creation timed out safely. Try again later.'));
+      if(this.memoryWarnings>initialWarnings)throw Error(tr(BoundedJSON.TOO_LARGE));
+    };
+    const opts={$cache:false,$updateCache:false,$timeout:8000};
+    progress('reading');
+    const jobs = {
+      folders: () => this.client.flow.getFlowFolders(opts),
+      standard: () => this.client.flow.getFlows(opts),
+      advanced: () => this.client.flow.getAdvancedFlows(opts),
+      devices: () => this.client.devices.getDevices(opts),
+      zones: () => this.client.zones.getZones(opts),
+      variables: () => this.client.logic.getVariables(opts),
+      apps: () => this.client.apps.getApps(opts),
+    };
     const result = {};
     const warnings = [];
-    settled.forEach((entry, i) => {
-      if (entry.status === 'fulfilled') result[keys[i]] = entry.value;
-      else { result[keys[i]] = {}; warnings.push(keys[i] + ': ' + (entry.reason?.message || entry.reason)); }
-    });
+    let snapshotBytes=0,apiCalls=0;
+    // Read one manager at a time. Do not launch seven large API responses together.
+    // Devices are reduced immediately, before the other collections are read.
+    for(const [key,read] of Object.entries(jobs)){
+      checkDeadline();
+      try{apiCalls++;result[key]=await read();}
+      catch(_){result[key]={};warnings.push(key+': data could not be read.');}
+      if(key==='devices')result.devices=safeCollection(result.devices,(d,id)=>({
+        id:d.id||id,...pick(d,['name','class','zone','driverId','virtualClass','available','capabilities','settings'])
+      }));
+      // Bound sections before deep copies or accumulation; runtime capability,
+      // energy and icon objects have no role in selective restore.
+      snapshotBytes+=BoundedJSON.measure(result[key],BoundedJSON.EXPORT_BYTES-snapshotBytes);
+      checkDeadline();phase(key,{count:Object.keys(result[key]||{}).length,apiCalls});
+    }
+    phase('snapshot');progress('flows');
     let betterLogicVariables = [];
     try {
-      betterLogicVariables = await this.getBetterLogicVariables();
+      betterLogicVariables = await this.getBetterLogicVariables(()=>apiCalls++);
     } catch (error) {
       const message = String(error?.message || error);
       // BLL is optional. Its absence or unavailability must never abort a normal backup.
       if (!/not found|404|not installed/i.test(message)) {
-        warnings.push('better-logic-library: ' + message);
+        warnings.push('better-logic-library: data could not be read.');
       }
     }
     if (!Object.keys(result.standard).length && !Object.keys(result.advanced).length) {
       throw new Error(tr('Flows konden niet worden opgehaald. Back-up is afgebroken.'));
     }
+    BoundedJSON.measure(betterLogicVariables,BoundedJSON.EXPORT_BYTES-snapshotBytes);checkDeadline();
     const flows = Backup.buildFlows(result.folders || {}, result.standard || {}, result.advanced || {});
+    delete result.standard;delete result.advanced;
+    phase('flows',{count:flows.length});
     const devices = safeCollection(result.devices, (d, id) => ({
       id: d.id || id,
-      ...pick(d, ['name','class','zone','driverId','virtualClass','available','unavailableMessage','capabilities','capabilitiesObj','energy','iconObj','color'])
+      ...pick(d, ['name','class','zone','driverId','virtualClass','available','capabilities'])
     }));
     // Homey exposes settings through getDeviceSettingsObj(). Convert the UI-shaped
     // settings tree to the flat { settingId: value } format expected by setDeviceSettings().
     // Devices without readable settings are silently left without a settings payload.
+    const totalDevices=Object.keys(devices).length;let processed=0,maxSettingsBytes=0,maxDeviceBytes=0,settingsFailures=0;
+    progress('devices',0,totalDevices);
     for (const [id, d] of Object.entries(devices)) {
+      checkDeadline();
       try {
         // Only settings that Homey's settings_obj schema identifies as user-writable
         // are backed up. Read-only labels/groups and unknown metadata are excluded.
-        const settingsObj = await this.client.devices.getDeviceSettingsObj({id});
+        apiCalls++;const settingsObj = await this.client.devices.getDeviceSettingsObj({id,...opts});
+        maxSettingsBytes=Math.max(maxSettingsBytes,BoundedJSON.measure(settingsObj,1024*1024));
         const info = extractDeviceSettingInfo(settingsObj);
         const liveFlatSettings = result.devices?.[id]?.settings && typeof result.devices[id].settings === 'object'
           ? result.devices[id].settings
@@ -446,7 +490,9 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
           // `settings_obj` describes the UI/schema. The Device `settings` object carries
           // the actual persisted setting values and can differ from settings_obj.value.
           if (!Object.prototype.hasOwnProperty.call(liveFlatSettings, key)) continue;
-          safeValues[key] = liveFlatSettings[key];
+          const value=liveFlatSettings[key];
+          if(value!==null && !['string','number','boolean'].includes(typeof value))continue;
+          safeValues[key] = value;
           if (meta.type) settingTypes[key] = meta.type;
         }
         if (Object.keys(safeValues).length) {
@@ -457,10 +503,17 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
         const message = String(e?.message || e);
         // Unsupported/no-settings devices are common; avoid flooding the UI with one warning per device.
         if (!/not found|404|no settings|unsupported/i.test(message)) {
-          warnings.push('device-settings ' + (d.name || id) + ': ' + message);
+          settingsFailures++;
         }
       }
+      delete result.devices[id];
+      maxDeviceBytes=Math.max(maxDeviceBytes,BoundedJSON.measure(d));
+      processed++;progress('devices',processed,totalDevices);
+      if(processed%25===0||processed===totalDevices)phase('device-settings',{processed,total:totalDevices,maxSettingsBytes,maxDeviceBytes,apiCalls});
     }
+    delete result.devices;
+    if(settingsFailures)warnings.push('device-settings: '+settingsFailures+' device schemas could not be read.');
+    checkDeadline();
     const zones = safeCollection(result.zones, (z, id) => ({id: z.id || id, ...pick(z, ['name','parent','icon'])}));
     const variables = {};
     for (const [id, v] of Object.entries(result.variables || {})) {
@@ -476,7 +529,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
       deviceSettingsValueSource: 'device.settings',
       note: tr('WebDAV-wachtwoorden worden niet opgenomen. Apparaatinstellingen kunnen gevoelige gegevens bevatten; behandel dit bestand als vertrouwelijk.'),
       flows,
-      inventory: {folders: plain(result.folders), devices, zones, variables, betterLogicVariables, apps},
+      inventory: {folders: safeCollection(result.folders,(f,id)=>({id:f.id||id,...pick(f,['name','folder','parent','parentFolder'])})), devices, zones, variables, betterLogicVariables, apps},
       stats: {
         standardFlows: flows.filter(f => f.type === 'standard').length,
         advancedFlows: flows.filter(f => f.type === 'advanced').length,
@@ -1052,7 +1105,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     const filename = 'Backup_Center_' + data.createdAt.replace(/[:.]/g, '-') + '.json';
     const base = t.url.endsWith('/') ? t.url : t.url + '/';
     const destination = new URL(encodeURIComponent(filename), base).toString();
-    const body = Buffer.from(JSON.stringify(data, null, 2), 'utf8');
+    const body = BoundedJSON.encode(data);
     const headers = {
       ...this.authHeaders(t),
       'Content-Type': 'application/json; charset=utf-8',

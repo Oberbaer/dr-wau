@@ -27,18 +27,19 @@ const BackupTransfer = (()=>{
       return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     } finally {await release(meta.id);}
   }
-  async function job(path,body){
+  async function job(path,body,progress){
     const {jobId}=await api('POST',path,body);
     // Poll only the existing operation: never automatically repeat restore writes.
-    let failures=0;
+    let failures=0;const started=Date.now();
     for(;;){
+      if(Date.now()-started>5*60*1000)throw Error('The operation status could not be retrieved. Check Homey before starting another operation.');
       let result;
       try{result=await api('POST','/job',{id:jobId});failures=0;}
-      catch(e){if(++failures>=3)throw Error('The operation status could not be retrieved. Check Homey before starting another restore.');await sleep(1000);continue;}
-      if(result.status==='running'){await sleep(500);continue;}
+      catch(e){if(++failures>=3)throw Error('The operation status could not be retrieved. Check Homey before starting another operation.');await sleep(1000);continue;}
+      if(result.status==='running'){progress?.(result.progress||{phase:'reading'});await sleep(500);continue;}
       await api('POST','/job/release',{id:jobId}).catch(()=>{});
-      if(result.status==='error')throw Error(result.error);
-      return receive(result.result);
+      if(result.status==='error'){const error=Error(result.error);error.jobFailed=true;throw error;}
+      return receive(result.result,percent=>progress?.({phase:'download',processed:percent,total:100}));
     }
   }
   async function release(id){if(id)await api('POST','/transfer/release',{id}).catch(()=>{});}

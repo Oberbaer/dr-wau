@@ -1136,6 +1136,34 @@ Object.assign(dictionaries.nl,{
   'Never restored automatically':'Nooit automatisch hersteld',
   'can create a restore plan for apps, zones, Logic, Better Logic Library, devices and Flows. Review the plan and explicitly confirm your selection before restoring.':'kan een herstelplan opvragen voor apps, zones, Logic, Better Logic Library, apparaten en flows. Controleer het plan en bevestig je selectie expliciet voordat je herstelt.'
 });
+Object.assign(dictionaries.en, {
+  "Reading Homey data…": "Reading Homey data…",
+  "Preparing Flows…": "Preparing Flows…",
+  "Reading device settings…": "Reading device settings…",
+  "Preparing backup…": "Preparing backup…",
+  "Downloading backup…": "Downloading backup…",
+  "Backup could not be created. ": "Backup could not be created. ",
+  "Dr. Wau responded with a controlled job error.": "Dr. Wau responded with a controlled job error.",
+  "The operation status could not be retrieved. Check Homey before starting another operation.": "The operation status could not be retrieved. Check Homey before starting another operation.",
+  "This backup exceeds the safe runtime size limit. It was aborted safely.": "This backup exceeds the safe runtime size limit. It was aborted safely.",
+  "Backup data could not be serialized safely.": "Backup data could not be serialized safely.",
+  "Backup creation timed out safely. Try again later.": "Backup creation timed out safely. Try again later.",
+  "The operation failed.": "The operation failed."
+});
+Object.assign(dictionaries.nl, {
+  "Reading Homey data…": "Homey-gegevens lezen…",
+  "Preparing Flows…": "Flows voorbereiden…",
+  "Reading device settings…": "Apparaatinstellingen lezen…",
+  "Preparing backup…": "Back-up voorbereiden…",
+  "Downloading backup…": "Back-up downloaden…",
+  "Backup could not be created. ": "Back-up kon niet worden gemaakt. ",
+  "Dr. Wau responded with a controlled job error.": "Dr. Wau heeft een gecontroleerde taakfout gemeld.",
+  "The operation status could not be retrieved. Check Homey before starting another operation.": "De taakstatus is niet bereikbaar. Controleer Homey voordat je een nieuwe taak start.",
+  "This backup exceeds the safe runtime size limit. It was aborted safely.": "Deze back-up overschrijdt de veilige runtimegrootte. De taak is veilig afgebroken.",
+  "Backup data could not be serialized safely.": "Back-upgegevens konden niet veilig worden verwerkt.",
+  "Backup creation timed out safely. Try again later.": "Back-up maken duurde te lang en is veilig afgebroken.",
+  "The operation failed.": "De taak is mislukt."
+});
 const german=typeof module!=='undefined'&&module.exports?require('./de'):root.BackupGerman;
 dictionaries.de={...german};
 for(const [key,english] of Object.entries(dictionaries.en))if(german[english]!==undefined)dictionaries.de[key]=german[english];

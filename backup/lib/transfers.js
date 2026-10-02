@@ -1,5 +1,6 @@
 'use strict';
 const { randomUUID } = require('node:crypto');
+const {encode} = require('./bounded-json');
 const CHUNK_BYTES = 16 * 1024;
 const MAX_BYTES = 50 * 1024 * 1024;
 const TOTAL_BYTES = 64 * 1024 * 1024;
@@ -50,7 +51,13 @@ class Transfers {
     return JSON.parse(item.buffer.toString('utf8'));
   }
   publish(value) {
-    const buffer = Buffer.from(JSON.stringify(value), 'utf8');
+    // Check aggregate storage before allocating a result buffer, leaving half
+    // of the transfer budget available for input objects and API responses.
+    const buffer = encode(value, undefined, bytes => {
+      this.prune();
+      const total = [...this.items.values()].reduce((n, x) => n + x.buffer.length, 0);
+      if (this.items.size >= 8 || total + bytes > TOTAL_BYTES / 2) throw Error('Temporary transfer storage is full. Close other backups and try again.');
+    });
     const meta = this.create(buffer.length, 'result', buffer);
     const item = this.get(meta.id); item.buffer = buffer; item.ready = true; item.received = buffer.length;
     return meta;

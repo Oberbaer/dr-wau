@@ -62,7 +62,33 @@ for(const language of ['de','en','nl'])test(`backup settings load read-only in $
 });
 
 test('backup UI and bundled runtime copies stay identical',()=>{
-  for(const file of ['index.html','backup.css','de.js','i18n.js','ui.js','network.js']){
+  for(const file of ['index.html','backup.css','de.js','i18n.js','ui.js','network.js','transfer.js']){
     assert.equal(read(file).replace(/\r/g,''),fs.readFileSync(path.resolve(root,'../../backup/settings',file),'utf8').replace(/\r/g,''),file);
   }
+});
+test('fresh backup settings have no saved private destination defaults',async()=>{
+ const dom=page(),w=dom.window;
+ const responses={'/app-info':{language:'de',version:'1.0.0'},'/network':[], '/webdav':[], '/schedule':{enabled:false},'/notification-users':[], '/restore/auth':{configured:false,connected:false}};
+ await w.onHomeyReady({ready(){},api(method,route,body,cb){cb(null,structuredClone(responses[route]));}});
+ await new Promise(r=>setImmediate(r));
+ for(const field of ['host','share','username','password','domain'])assert.equal(w.document.getElementById('net-'+field).value,'');
+ dom.window.close();
+});
+test('manual export shows device progress and a controlled job error, then unlocks the UI',async()=>{
+ const dom=page(),w=dom.window,calls=[];let polls=0;
+ const responses={'/app-info':{language:'de',version:'1.0.0'},'/network':[], '/webdav':[], '/schedule':{enabled:false},'/notification-users':[], '/restore/auth':{configured:false,connected:false}};
+ await w.onHomeyReady({ready(){},api(method,route,body,cb){calls.push({method,route});
+  if(route==='/export/prepare')return cb(null,{jobId:'synthetic-job'});
+  if(route==='/job')return cb(null,++polls===1?{status:'running',progress:{phase:'devices',processed:36,total:114}}:{status:'error',error:'Backup data could not be serialized safely.'});
+  cb(null,structuredClone(responses[route]));
+ }});
+ const operation=w.document.getElementById('fetch').onclick();await new Promise(r=>setImmediate(r));
+ assert.match(w.document.getElementById('status').textContent,/Geräteeinstellungen.*36 \/ 114/);
+ assert.equal(w.document.getElementById('fetch').disabled,true);await operation;
+ assert.match(w.document.getElementById('status').textContent,/Backup konnte nicht erstellt werden/);
+ assert.match(w.document.getElementById('status').textContent,/kontrollierten Jobfehler/);
+ assert.equal(w.document.getElementById('fetch').disabled,false);assert.equal(w.document.getElementById('save').disabled,true);
+ assert.equal(calls.filter(c=>c.route==='/export/prepare').length,1);
+ assert(!calls.some(c=>/network\/backup|webdav\/upload|restore\/run/.test(c.route)));
+ dom.window.close();
 });

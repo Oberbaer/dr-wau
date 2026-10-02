@@ -8,3 +8,9 @@ test('polling does not repeat a mutation and pending jobs cannot be released',as
  resolve({ok:true});await tick();assert.equal(jobs.get(jobId).status,'done');assert.deepEqual(jobs.get(jobId).result,{ok:true});jobs.release(jobId);assert.throws(()=>jobs.get(jobId),/expired/);
 });
 test('failed operations expose their error',async()=>{const j=new Jobs(),{jobId}=j.start(()=>{throw Error('failure')});await tick();assert.equal(j.get(jobId).status,'error');assert.equal(j.get(jobId).error,'failure');});
+test('null, undefined and hostile rejection objects cannot escape the job error handler',async()=>{
+ for(const error of [null,undefined,{get message(){throw Error('getter');}},{toString(){throw Error('stringification');}}]){
+  const j=new Jobs(),{jobId}=j.start(()=>Promise.reject(error));await tick();
+  assert.equal(j.get(jobId).status,'error');assert.equal(j.get(jobId).error,'The operation failed.');
+ }
+});

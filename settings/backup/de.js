@@ -424,5 +424,19 @@ const messages={
   "Retention days must be an integer of at least 1.":"Die Aufbewahrungsdauer muss eine ganze Zahl ab 1 sein.",
   "Minimum backups to keep must be an integer of at least 1.":"Die Mindestanzahl aufbewahrter Backups muss eine ganze Zahl ab 1 sein."
 };
+Object.assign(messages, {
+  "Reading Homey data…": "Homey-Daten werden gelesen …",
+  "Preparing Flows…": "Flows werden gesichert …",
+  "Reading device settings…": "Geräteeinstellungen werden gelesen …",
+  "Preparing backup…": "Backup wird vorbereitet …",
+  "Downloading backup…": "Backup wird heruntergeladen …",
+  "Backup could not be created. ": "Backup konnte nicht erstellt werden. ",
+  "Dr. Wau responded with a controlled job error.": "Dr. Wau hat mit einem kontrollierten Jobfehler geantwortet.",
+  "The operation status could not be retrieved. Check Homey before starting another operation.": "Der Vorgangsstatus ist nicht erreichbar. Prüfe Homey, bevor du einen weiteren Vorgang startest.",
+  "This backup exceeds the safe runtime size limit. It was aborted safely.": "Das Backup überschreitet das sichere Größenlimit der Runtime. Es wurde sicher abgebrochen.",
+  "Backup data could not be serialized safely.": "Die Backupdaten konnten nicht sicher verarbeitet werden.",
+  "Backup creation timed out safely. Try again later.": "Die Backup-Erstellung hat das Zeitlimit erreicht und wurde sicher abgebrochen.",
+  "The operation failed.": "Der Vorgang ist fehlgeschlagen."
+});
 if(typeof module!=='undefined'&&module.exports)module.exports=messages;else root.BackupGerman=messages;
 })(typeof globalThis!=='undefined'?globalThis:this);

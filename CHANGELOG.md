@@ -2,6 +2,7 @@
 
 ## 1.0.0
 
+- Contain unusual backup job rejections, bound JSON output before allocation, minimize device runtime fields, serialize API reads, and report privacy-safe backup progress and memory metrics. Real crash attribution and controlled live backup acceptance remain release blockers; see `docs/backup-crash-1.0.0.md`.
 - Clean Dr. Wau identity: `com.oberbaer.drwau`, repository `Oberbaer/dr-wau`, Homey app directly at the repository root.
 - Explicit versioned configuration export/import from legacy 0.7.1, read-only preview and file-bound confirmation; preserve learning, profiles, annotations and backup preferences.
 - Exclude credentials and retain activation choices separately; imported warning channels, vacation and backup schedules stay disabled.

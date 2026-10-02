@@ -29,3 +29,8 @@ test('expiry and deletion invalidate handles; pinned operations remain alive',as
  const n=s.create(2);s.release(n.id);assert.throws(()=>s.get(n.id),/expired/);
 });
 test('result handles cannot be used as restore inputs',()=>{const s=new Transfers(),m=s.publish({});assert.throws(()=>s.json(m.id),/expired/);});
+test('publication refuses exhausted runtime storage and does not leak a result handle',()=>{
+ const s=new Transfers(),input=s.create(32*1024*1024);
+ assert.throws(()=>s.publish({ok:true}),/storage is full/);assert.equal(s.items.size,1);
+ s.release(input.id);const output=s.publish({ok:true});assert.equal(s.items.size,1);assert.equal(output.bytes,11);
+});

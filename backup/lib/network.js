@@ -75,7 +75,7 @@ class NetworkDestinations {
   try {
    const data=await this.exportBackup();
    const filename='Backup_Center_'+new Date().toISOString().replace(/[:.]/g,'-')+'_'+randomUUID()+'.json';
-   const body=Buffer.from(JSON.stringify(data,null,2));
+   const body=require('./bounded-json').encode(data);
    await this.run(target,filename,body);
    result={ok:true,filename,bytes:body.length,destination:target.name};
    if(target.retentionEnabled===true){
