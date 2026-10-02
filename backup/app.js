@@ -404,10 +404,8 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     this.exportBusy=true;
     const started=Date.now();
     const phase=(name,counts={})=>{
-      this.backupDiagnostics.record(name,{elapsedMs:Date.now()-started,...counts});
-      const memory=typeof process!=='undefined'?process.memoryUsage():{};
-      try{this.log('backup-metrics',JSON.stringify({phase:name,elapsedMs:Date.now()-started,
-        heapUsed:memory.heapUsed,heapTotal:memory.heapTotal,rss:memory.rss,...counts}));}catch(_){/* Diagnostics must not reject the operation. */}
+      const row=this.backupDiagnostics.record(name,{elapsedMs:Date.now()-started,...counts});
+      try{if(row)this.log('backup-metrics',JSON.stringify(row));}catch(_){/* Diagnostics must not reject the operation. */}
     };
     try {
       phase('start');

@@ -18,6 +18,14 @@ eines Backups nicht. Zugangsdaten, Namen, Objekt-IDs und Fehlermeldungen werden
 über diesen Kanal nicht ausgegeben. Er ersetzt keinen historischen Stacktrace.
 Der echte Export ist zu diesem Vorbereitungsstand noch nicht gestartet.
 
+Bei der Installation des Diagnosezusatzes scheiterte die RSS-Abfrage über
+`process.memoryUsage()` in Homeys eingeschränkter Runtime. Der Diagnose-GET
+lieferte einen Fehler; die App blieb aktiv, ein Export wurde nicht gestartet.
+Die Phasen-/Heap-Messung verwendet bei diesem Fehler jetzt V8-Heapstatistiken.
+RSS/PSS stammen in diesem Fall ausschließlich aus der externen Homey-App-Usage-
+Abfrage. Derselbe abgesicherte Messpfad schützt auch das ursprüngliche Phasenlog;
+eine fehlgeschlagene RSS-Messung darf keinen Export ablehnen.
+
 **RELEASE BLOCKED.** Der gemeldete reale Absturz ist historisch nicht eindeutig
 zugeordnet. Die unten beschriebenen Fehler sind lokal nachgewiesen und korrigiert;
 das ersetzt den Nachweis der tatsächlichen Homey-Crashursache nicht.

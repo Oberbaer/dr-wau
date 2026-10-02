@@ -21,3 +21,23 @@ test('diagnostic API is owner-only and returns no content collections',()=>{
  assert.equal(route.public,false);assert.equal(route.role,'owner');assert.equal(route.method,'get');
  assert.equal(route.path,'/backup/diagnostics');
 });
+
+test('restricted RSS access still supplies V8 heap records and snapshots',()=>{
+ const original=process.memoryUsage;
+ try{
+  process.memoryUsage=()=>{throw Error('synthetic restricted RSS access');};
+  const d=new Diagnostics(),row=d.record('start'),s=d.snapshot();
+  assert(row.heapUsed>0);assert(s.memory.heapTotal>=s.memory.heapUsed);
+  assert.equal(row.rss,undefined);assert.equal(s.entries.length,1);
+ }finally{process.memoryUsage=original;}
+});
+
+test('RSS lookup failure cannot reject an otherwise valid export',async()=>{
+ const f=await fixture('en'),original=process.memoryUsage;
+ try{
+  process.memoryUsage=()=>{throw Error('synthetic restricted RSS access');};
+  const result=await job(f.app,f.app.startExport());
+  assert.equal(result.version,5);assert(result.flows.length>0);assert.equal(f.app.getBackupDiagnostics().exportRunning,false);
+  assert(f.app.getBackupDiagnostics().entries.some(x=>x.phase==='complete'));
+ }finally{process.memoryUsage=original;}
+});
