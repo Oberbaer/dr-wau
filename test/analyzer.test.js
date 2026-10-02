@@ -104,6 +104,13 @@ test('stale low battery is a review hint instead of a critical claim', () => {
   assert.ok(report.findings.some((finding) => finding.code === 'battery_reading_stale'));
   assert.equal(report.findings.some((finding) => finding.code === 'battery_critical'), false);
 });
+test('non-numeric and out-of-range battery values cannot manufacture percentages', () => {
+  for (const value of [false, true, '0', '5', -1, 101, NaN, Infinity]) {
+    const report = analyzeSnapshot(snapshot({ devices: { synthetic: { id: 'synthetic', name: 'Synthetic',
+      capabilitiesObj: { measure_battery: { value } } } } }));
+    assert.equal(report.findings.some(f => f.code.startsWith('battery_')), false);
+  }
+});
 
 test('mixed severities are penalized independently', () => {
   const deviceId = '11111111-1111-4111-8111-111111111111';
