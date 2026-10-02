@@ -484,18 +484,22 @@ class DrWauApp extends Homey.App {
     const advancedFlows = { ...advancedFlowsRaw };
     const incomplete = Object.values(advancedFlows).filter((flow) => flow?.id && !flow.cards);
     if (incomplete.length && typeof api.flow.getAdvancedFlow === 'function') {
-      const results = await Promise.all(incomplete.map(async (flow) => {
-        try {
-          return await api.flow.getAdvancedFlow({ id: flow.id, $cache: false });
-        } catch (error) {
-          coverage[`advancedFlow:${flow.id}`] = {
-            ok: false,
-            error: String(error?.message || error).slice(0, 240),
-          };
-          return flow;
+      let cursor = 0;
+      async function worker() {
+        while (cursor < incomplete.length) {
+          const flow = incomplete[cursor++];
+          try {
+            const detail = await api.flow.getAdvancedFlow({ id: flow.id, $cache: false });
+            if (detail?.id) advancedFlows[detail.id] = detail;
+          } catch (error) {
+            coverage[`advancedFlow:${flow.id}`] = {
+              ok: false,
+              error: String(error?.message || error).slice(0, 240),
+            };
+          }
         }
-      }));
-      for (const flow of results) if (flow?.id) advancedFlows[flow.id] = flow;
+      }
+      await Promise.all(Array.from({ length: Math.min(3, incomplete.length) }, worker));
     }
 
     const report = analyzeSnapshot({
