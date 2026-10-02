@@ -8,7 +8,7 @@ const HOUR = 3600000, DAY = 24 * HOUR, NOW = Date.parse('2026-10-01T12:00:00Z');
 const CONFIG = 'battery_watchdog_config_v1';
 const source = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 
-function runtime(settings = new Map(), initialNow = NOW) {
+function runtime(settings = new Map(), initialNow = NOW, failBackup = false) {
   if (!settings.has(CONFIG)) settings.set(CONFIG, normalizeConfig({ timeline: false, flowTrigger: false, pushUserIds: [] }));
   let now = initialNow, nextId = 0;
   const timers = new Map(), delays = [], errors = [];
@@ -21,7 +21,7 @@ function runtime(settings = new Map(), initialNow = NOW) {
   vm.runInNewContext(source, { module, exports: module.exports, Date: ClockDate, require(id) {
     if (id === 'homey') return { App: class {} };
     if (id === 'homey-api') return { HomeyAPI: { createAppAPI: async () => api } };
-    if (id === './backup/app') return class { async onInit() {} onUninit() {} };
+    if (id === './backup/app') return class { async onInit() { if (failBackup) throw Error('Synthetic startup failure'); } onUninit() {} };
     return require(path.join(__dirname, '..', id));
   } });
   const App = module.exports;
@@ -131,5 +131,13 @@ test('queued timer callbacks cannot rearm expiry after app uninitialization', as
   const callback = [...r.timers.values()][0].callback;
   r.app.onUninit(); await callback();
   assert.equal(r.timers.size, 0);
+  assert.equal(r.settings.get(CONFIG).vacation.enabled, true);
+});
+test('failed backup initialization cancels already scheduled vacation resources', async () => {
+  const config = normalizeConfig({ timeline: false, vacation: { enabled: true, until: new Date(NOW + 30 * DAY).toISOString() } });
+  const r = runtime(new Map([[CONFIG, config]]), NOW, true);
+  await assert.rejects(r.app.onInit(), /Synthetic startup failure/);
+  assert.equal(r.timers.size, 0);
+  assert.equal(r.app.vacationExpiryStopped, true);
   assert.equal(r.settings.get(CONFIG).vacation.enabled, true);
 });

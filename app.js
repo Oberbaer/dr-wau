@@ -82,14 +82,20 @@ class DrWauApp extends Homey.App {
       return Number(this.getReport()?.score?.overall ?? 100) < Number(score);
     });
 
+    try {
+      await BackupApp.prototype.onInit.call(this);
+    } catch (error) {
+      this.onUninit();
+      throw error;
+    }
     this.scheduleBatteryWatchdog();
-    await BackupApp.prototype.onInit.call(this);
     this.log('Dr. Wau initialized');
   }
 
   onUninit() {
     this.vacationExpiryStopped = true;
     if (this.watchdogTimer) this.homey.clearInterval(this.watchdogTimer);
+    this.watchdogTimer = null;
     if (this.vacationTimer) this.homey.clearTimeout(this.vacationTimer);
     this.vacationTimer = null;
     BackupApp.prototype.onUninit.call(this);
@@ -277,7 +283,7 @@ class DrWauApp extends Homey.App {
     const context = {};
     const results = await Promise.allSettled(routes.map(route => this.deliverWatchdogRoute(route, text, context)));
     if (results.some(result => result.status === 'rejected')) throw new Error('Mindestens ein Benachrichtigungskanal konnte nicht zustellen. API Key und Empfänger prüfen.');
-    return true;
+    return results.some(result => result.value !== false);
   }
 
   async sendWatchdogTestNotification() {

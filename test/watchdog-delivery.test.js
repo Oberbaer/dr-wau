@@ -155,4 +155,7 @@ test('removing a push recipient during preparation prevents the outgoing action'
   };
   assert.equal(await app.deliverWatchdogRoute('push:synthetic-recipient', 'synthetic'), false);
   assert.deepEqual(calls, []);
+  app.watchdogConfig.pushUserIds = ['synthetic-recipient'];
+  assert.equal(await app.deliverWatchdogMessage('synthetic'), false);
+  assert.deepEqual(calls, []);
 });
