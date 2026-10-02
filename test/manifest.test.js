@@ -11,7 +11,7 @@ test('compose manifest identifies Dr. Wau and exposes private owner APIs', () =>
   assert.equal(manifest.name.en, 'Dr. Wau');
   const trigger = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.homeycompose', 'flow', 'triggers', 'battery_watchdog_warning.json'), 'utf8'));
   assert.equal(trigger.tokens[0].name, 'text');
-  for (const id of ['getWatchdog', 'updateWatchdog', 'runWatchdog', 'previewWatchdog', 'setVacation', 'updateDeviceProfile', 'testWatchdogNotification', 'importAutomationHealth', 'exportBackup', 'restorePlan', 'restoreRun']) {
+  for (const id of Object.keys(manifest.api)) {
     assert.equal(manifest.api[id].public, false);
     assert.equal(manifest.api[id].role, 'owner');
   }

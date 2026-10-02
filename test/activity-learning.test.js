@@ -77,6 +77,11 @@ test('confirmed manual 24 hours wins while automatic recommendation stays separa
   assert.equal(decision.confirmation, 'confirmed');
   assert.equal(decision.warningAfterHours, 24);
   assert.equal(decision.automaticWarningAfterHours, 30);
+  const config = { deviceProfiles: { [device.id]: { mode: 'manual', confirmation: 'confirmed', warningAfterHours: 24 } } };
+  const state = updateLearningState({ schema: 1, devices: { [device.id]: learn() } }, [device], config,
+    { [device.id]: [{ timestamp: now + DAY, capability: 'alarm_contact', verifiedRawEvent: true }] }, now + DAY);
+  assert.equal(state.devices[device.id].activity.blockCount, 29);
+  assert.equal(profileDecision(device, config, state.devices[device.id], now + DAY).warningAfterHours, 24);
 });
 test('frequently used buttons remain event_only even with high periodic history', () => {
   const button = { ...device, class: 'remote' };
