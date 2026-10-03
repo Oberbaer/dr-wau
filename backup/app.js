@@ -35,6 +35,12 @@ function isVerifiedLegacyDeviceSettingKey(key) { return VERIFIED_LEGACY_DEVICE_S
 function isWritableDeviceSettingType(type) {
   return WRITABLE_DEVICE_SETTING_TYPES.has(String(type || '').toLowerCase());
 }
+function isSensitiveDeviceSetting(key,meta) {
+  if(meta?.sensitive || meta?.type==='password')return true;
+  if(!['text','textarea'].includes(meta?.type))return false;
+  const normalized=String(key).replace(/[^a-z0-9]/gi,'').toLowerCase();
+  return /password|passwd|passphrase|apikey|accesstoken|refreshtoken|clientsecret|privatekey|authorization/.test(normalized);
+}
 
 function extractDeviceSettingInfo(settingsObj) {
   const values = {};
@@ -478,7 +484,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     // Homey exposes settings through getDeviceSettingsObj(). Convert the UI-shaped
     // settings tree to the flat { settingId: value } format expected by setDeviceSettings().
     // Devices without readable settings are silently left without a settings payload.
-    const totalDevices=Object.keys(devices).length;let processed=0,maxSettingsBytes=0,maxDeviceBytes=0,settingsFailures=0;
+    const totalDevices=Object.keys(devices).length;let processed=0,maxSettingsBytes=0,maxDeviceBytes=0,settingsFailures=0,sensitiveSettingsOmitted=0;
     progress('devices',0,totalDevices);
     for (const [id, d] of Object.entries(devices)) {
       checkDeadline();
@@ -499,6 +505,12 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
           // the actual persisted setting values and can differ from settings_obj.value.
           if (!Object.prototype.hasOwnProperty.call(liveFlatSettings, key)) continue;
           const value=liveFlatSettings[key];
+          // Some drivers expose API keys as ordinary text settings. Credentials
+          // must be excluded by both schema type and recognizable setting ID.
+          if(isSensitiveDeviceSetting(key,meta)){
+            if(value!==null && value!==undefined && value!=='')sensitiveSettingsOmitted++;
+            continue;
+          }
           if(value!==null && !['string','number','boolean'].includes(typeof value))continue;
           safeValues[key] = value;
           if (meta.type) settingTypes[key] = meta.type;
@@ -521,6 +533,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     }
     delete result.devices;
     if(settingsFailures)warnings.push('device-settings: '+settingsFailures+' device schemas could not be read.');
+    if(sensitiveSettingsOmitted)warnings.push('device-settings: '+sensitiveSettingsOmitted+' credential settings were excluded.');
     checkDeadline();
     const zones = safeCollection(result.zones, (z, id) => ({id: z.id || id, ...pick(z, ['name','parent','icon'])}));
     const variables = {};
