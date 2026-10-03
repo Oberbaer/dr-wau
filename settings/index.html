@@ -5,27 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dr. Wau</title>
   <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <link rel="stylesheet" href="../assets/brand.css">
   <style>
-    :root { color-scheme: light dark; font-family: Inter, system-ui, sans-serif; --accent: #0d8385; --brand-highlight: #0f8f91; --critical: #b42318; --high: #d92d20; --medium: #dc6803; --low: #475467; --surface: color-mix(in srgb, Canvas 94%, var(--accent)); }
+    :root { font-family: Inter, system-ui, sans-serif; --critical: #b42318; --high: #d92d20; --medium: #dc6803; --low: #475467; }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px; background: Canvas; color: CanvasText; }
+    body { margin: 0; padding: 24px; background: var(--page); color: var(--text); }
     main { max-width: 1040px; margin: 0 auto; }
     header, .section-heading { display: flex; gap: 18px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     h1, h2, p { margin-top: 0; }
     h1 { margin-bottom: 5px; font-size: 25px; }
-    .brand-heading { display: flex; align-items: center; gap: 14px; min-width: 0; }
-    .brand-mark { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
-    .brand-heading h1::after { content: ''; display: block; width: 36px; height: 3px; margin-top: 6px; border-radius: 2px; background: var(--brand-highlight); }
+    .brand-heading { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; width: 100%; padding: 10px 0; text-align: center; }
+    .brand-mark { display: block; width: 104px; height: 104px; object-fit: contain; padding: 8px; border: 1px solid var(--border); border-radius: 28px; background: var(--surface); box-shadow: 0 5px 18px rgb(15 143 145 / 8%); }
+    .brand-heading h1::after { content: ''; display: block; width: 36px; height: 3px; margin: 6px auto 0; border-radius: 2px; background: var(--brand-highlight); }
     h2 { font-size: 18px; margin: 0; }
     .muted { opacity: .7; }
-    button { appearance: none; border: 0; border-radius: 10px; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; padding: 10px 14px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; }
+    button { appearance: none; border: 0; border-radius: 10px; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; padding: 10px 14px; background: var(--brand-button); color: white; font-weight: 700; cursor: pointer; }
     button.secondary { background: transparent; color: CanvasText; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
     button.danger { background: transparent; color: var(--critical); border: 1px solid color-mix(in srgb, var(--critical) 35%, transparent); }
     button:disabled { opacity: .55; cursor: wait; }
     .actions, .editor-actions { display: flex; gap: 9px; flex-wrap: wrap; }
     .tabs { display: flex; gap: 6px; margin: 18px 0; padding: 4px; overflow-x: auto; border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); border-radius: 12px; background: var(--surface); scrollbar-width: thin; }
     .tab { flex: 0 0 auto; padding: 9px 12px; background: transparent; color: CanvasText; border: 1px solid transparent; white-space: nowrap; }
-    .tab[aria-selected="true"] { background: var(--accent); color: white; box-shadow: 0 2px 7px color-mix(in srgb, var(--accent) 28%, transparent); }
+    .tab[aria-selected="true"] { background: var(--brand-button); color: white; box-shadow: 0 2px 7px color-mix(in srgb, var(--accent) 28%, transparent); }
     .tab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 1px; }
     .tab-panel[hidden] { display: none; }
     .panel-heading { margin-bottom: 16px; }
@@ -52,7 +53,7 @@
     .notice { margin: 18px 0; padding: 13px 15px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 12px; background: var(--surface); }
     .score-grid { display: grid; grid-template-columns: 1.25fr repeat(4, minmax(100px, 1fr)); gap: 10px; margin: 18px 0; }
     .score-card { min-height: 112px; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 14px; padding: 15px; background: var(--surface); }
-    .score-card.main { background: var(--accent); color: white; }
+    .score-card.main { background: var(--brand-button); color: white; }
     .score { font-size: 36px; font-weight: 800; line-height: 1; margin: 7px 0; }
     .label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
     .inventory { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
@@ -103,14 +104,14 @@
     .board-description { margin: 8px 0 14px; }
     .empty { text-align: center; padding: 32px; border: 1px dashed color-mix(in srgb, CanvasText 25%, transparent); border-radius: 12px; }
     @media (max-width: 760px) { body { padding: 16px; } .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; } .tab { width: 100%; min-width: 0; white-space: normal; } .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .score-card.main { grid-column: 1 / -1; } .editor, .watchdog-grid, .overview-grid, .detail-grid, .watchdog-filter-row { grid-template-columns: 1fr; } .filters { flex-wrap: wrap; } .filters select { max-width: 100%; } }
-    @media (max-width: 480px) { .device-item { grid-template-columns: minmax(0, 1fr); } .device-item span { max-width: none; text-align: left; } .device-detail { padding: 12px; } .brand-mark { width: 56px; height: 56px; flex-basis: 56px; } }
+    @media (max-width: 480px) { .device-item { grid-template-columns: minmax(0, 1fr); } .device-item span { max-width: none; text-align: left; } .device-detail { padding: 12px; } .brand-mark { width: 88px; height: 88px; } }
   </style>
 </head>
 <body>
 <main>
   <header>
     <div class="brand-heading">
-      <img class="brand-mark" src="../assets/dr-wau-avatar.png" alt="" width="72" height="72">
+      <img class="brand-mark" src="../assets/dr-wau-avatar.png" alt="" width="104" height="104">
       <div>
         <h1>Dr. Wau</h1>
         <p class="muted" data-i18n="subtitle">Read-only check with persistent finding management.</p>

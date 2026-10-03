@@ -1,9 +1,7 @@
 :root {
   color-scheme: light dark;
-  --blue: #164b88; --sky: #43adee; --cream: #fff3e3; --orange: #bd702d;
-  --page: #f2f7fd; --surface: #fff; --soft: #eaf3ff; --text: #14304f;
-  --muted: #506780; --border: #c9d9ea; --danger: #ad353b; --success: #236a50;
-  --hero: linear-gradient(125deg, #e2f2ff, #f8fcff 65%, #fff0dc);
+  --blue: var(--accent); --sky: var(--brand-line); --orange: #bd702d;
+  --danger: #ad353b; --success: #236a50;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 * { box-sizing: border-box; }
@@ -16,8 +14,9 @@ main h1 { color: var(--text); font-size: clamp(28px, 5vw, 38px); line-height: 1.
 main h2 { color: var(--text); font-size: 21px; line-height: 1.35; margin: 0 0 14px; }
 main p { color: var(--muted); margin: 10px 0 16px; overflow-wrap: anywhere; }
 .back-link { display: inline-block; padding: 5px 0 12px; font-weight: 700; }
-.hero { display: flex; gap: 20px; align-items: center; padding: 26px; border: 1px solid var(--border); border-radius: 22px; background: var(--hero); }
-.hero-mark { flex: 0 0 auto; display: grid; place-items: center; width: 66px; height: 66px; font-size: 36px; border: 1px solid var(--border); background: var(--surface); border-radius: 20px; }
+.hero { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 26px; text-align: center; border: 1px solid var(--border); border-radius: 22px; background: var(--brand-hero); }
+.hero-mark { display: block; flex: 0 0 auto; object-fit: contain; width: 104px; height: 104px; padding: 8px; border: 1px solid var(--border); background: var(--surface); border-radius: 28px; box-shadow: 0 5px 18px rgb(15 143 145 / 8%); }
+.hero-copy { max-width: 640px; }
 .hero .badge { color: var(--blue); font-size: 13px; font-weight: 750; }
 .hero p { margin-bottom: 0; }
 .hero .tagline { color: var(--blue); font-weight: 700; }
@@ -38,7 +37,7 @@ main p { color: var(--muted); margin: 10px 0 16px; overflow-wrap: anywhere; }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .stat { padding: 12px; background: var(--soft); border-radius: 12px; text-align: center; }
 .stat b { display: block; font-size: 24px; color: var(--blue); }
-main button, main .button { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; max-width: 100%; font: 650 15px/1.4 system-ui, sans-serif; background: var(--blue); color: #fff; border: 1px solid transparent; border-radius: 10px; padding: 11px 16px; cursor: pointer; text-decoration: none; white-space: normal; }
+main button, main .button { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; max-width: 100%; font: 650 15px/1.4 system-ui, sans-serif; background: var(--brand-button); color: #fff; border: 1px solid transparent; border-radius: 10px; padding: 11px 16px; cursor: pointer; text-decoration: none; white-space: normal; }
 main button:hover, main .button:hover { filter: brightness(1.08); }
 main button.secondary { background: var(--soft); color: var(--blue); border-color: var(--border); }
 main button.danger { background: var(--danger); color: #fff; }
@@ -84,15 +83,14 @@ main :focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
 .file-button:has(+input:focus-visible) { outline: 3px solid var(--sky); outline-offset: 3px; }
 .file-button:has(+input:disabled) { opacity: .5; cursor: not-allowed; }
 @media (prefers-color-scheme: dark) {
-  :root { --page: #0e192a; --surface: #182a42; --soft: #203751; --text: #eaf3ff; --muted: #b8cce1; --border: #3a5572; --blue: #96ceff; --danger: #ffb2b5; --success: #8addb4; --hero: linear-gradient(125deg, #203d60, #1a2d44 70%, #443522); }
-  main button, main .button { background: #245d9d; color: #fff; }
+  :root { --danger: #ffb2b5; --success: #8addb4; }
   main button.danger { background: #99373d; color: #fff; }
-  main input[type='checkbox'] { accent-color: #43adee; }
+  main input[type='checkbox'] { accent-color: var(--accent); }
 }
 @media (max-width: 600px) {
   main { padding: 14px; }
-  .hero { padding: 20px; gap: 13px; align-items: flex-start; }
-  .hero-mark { width: 48px; height: 48px; font-size: 28px; border-radius: 14px; }
+  .hero { padding: 20px; gap: 12px; }
+  .hero-mark { width: 88px; height: 88px; }
   .hero h1 { font-size: 28px; }
   .summary-strip, .grid { grid-template-columns: 1fr; }
   .summary-tile { padding: 14px 16px; }
