@@ -378,7 +378,7 @@ const messages={
   "Kies eerst een back-upbestemming.":"Wähle zuerst ein Backup-Ziel.",
   "Geen back-upbestemming — voeg er eerst één toe":"Noch kein Backup-Ziel – füge zuerst eines hinzu",
   "Back-upbestemmingen laden mislukt: ":"Backup-Ziele konnten nicht geladen werden: ",
-  "Keep your smart home in safe paws.":"Dein Smart Home in sicheren Pfoten.",
+  "Keep your smart home in safe paws.":"Dein Smart Home in sicheren Tatzen.",
   "Create, schedule and check your Homey configuration backups. You choose what is restored.":"Erstelle, plane und prüfe Backups deiner Homey-Konfiguration. Du entscheidest, was wiederhergestellt wird.",
   "Automatic backups":"Automatische Sicherungen",
   "Last successful backup":"Letztes erfolgreiches Backup",
