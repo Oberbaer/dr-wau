@@ -16,6 +16,17 @@ installierte PNG enthält nachweislich deckende weiße Pixel; die Ursache der
 Farbumwandlung ist noch nicht geklärt. Eine erzwungene Browser-Dunkeldarstellung
 wird mit dem Benutzer geprüft. Keine kompensierende Bildinvertierung eingebaut.
 
+Der Benutzer meldet keine erzwungene Dunkeldarstellung. Die direkt gelesene
+Homey-Firmware lädt nach dem App-CSS ihre eigene Stylesheet-Bibliothek.
+Deren Legacy-Button-Regel überschreibt Hintergrund, Rundungen und Textstil
+unserer Buttons. Eigene statische und dynamische Buttons tragen deshalb nun
+`hy-nostyle`, die ausdrücklich in dieser Regel vorgesehene Ausnahme.
+Ein lokaler DOM-Abgleich mit der tatsächlichen Firmware-Regel bestätigt,
+dass die 59 statischen Buttons nicht mehr von ihr erfasst werden.
+Alle 251 Regressionstests, Publish-Validierung und Build bestehen.
+Diese Korrektur erklärt die verfärbten PNG-Bereiche noch nicht; dafür und für
+die endgültige Darstellung der Buttons fehlt weiterhin die Live-Abnahme.
+
 Der fehlende Übersichtssatz wurde auf „Dein Smart Home in sicheren Tatzen.“
 korrigiert. Lokal bestehen weiterhin 251/251 Tests, Publish-Validierung und Build.
 Die erneute Installation dieser Textkorrektur und ihre sichtbare Abnahme stehen

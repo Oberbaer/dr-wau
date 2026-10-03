@@ -120,39 +120,39 @@
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Dr. Wau">
-    <button class="tab" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" data-tab="overview" data-i18n="tabOverview">Overview</button>
-    <button class="tab" id="tab-health" role="tab" aria-selected="false" aria-controls="panel-health" data-tab="health" data-i18n="tabHealth">Automation Health</button>
-    <button class="tab" id="tab-watchdog" role="tab" aria-selected="false" aria-controls="panel-watchdog" data-tab="watchdog" data-i18n="tabWatchdog">Battery watchdog</button>
-    <button class="tab" id="tab-backup" role="tab" aria-selected="false" aria-controls="panel-backup" data-tab="backup" data-i18n="tabBackup">Backups</button>
-    <button class="tab" id="tab-management" role="tab" aria-selected="false" aria-controls="panel-management" data-tab="management" data-i18n="tabManagement">Management</button>
+    <button class="tab hy-nostyle" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" data-tab="overview" data-i18n="tabOverview">Overview</button>
+    <button class="tab hy-nostyle" id="tab-health" role="tab" aria-selected="false" aria-controls="panel-health" data-tab="health" data-i18n="tabHealth">Automation Health</button>
+    <button class="tab hy-nostyle" id="tab-watchdog" role="tab" aria-selected="false" aria-controls="panel-watchdog" data-tab="watchdog" data-i18n="tabWatchdog">Battery watchdog</button>
+    <button class="tab hy-nostyle" id="tab-backup" role="tab" aria-selected="false" aria-controls="panel-backup" data-tab="backup" data-i18n="tabBackup">Backups</button>
+    <button class="tab hy-nostyle" id="tab-management" role="tab" aria-selected="false" aria-controls="panel-management" data-tab="management" data-i18n="tabManagement">Management</button>
   </nav>
 
   <div class="notice" id="status" data-i18n="privacy">The scan runs locally and never changes flows or devices. Your decisions are stored locally on Homey.</div>
 
   <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
     <div class="hero"><h2 id="overview-headline">🐾 Dr. Waus Revier</h2><p id="overview-summary">Dr. Wau prüft Geräte, Automationen und Backups.</p></div>
-    <div class="notice" id="watchdog-onboarding" hidden><strong>🐶 Neu im Revier</strong><p>Ich lerne, wie oft sich deine Geräte normalerweise melden. Unsichere Profile kannst du jederzeit korrigieren.</p><button type="button" id="onboarding-ok">Alles klar</button> <button type="button" class="secondary" id="onboarding-review">Unsichere Profile ansehen</button></div>
+    <div class="notice" id="watchdog-onboarding" hidden><strong>🐶 Neu im Revier</strong><p>Ich lerne, wie oft sich deine Geräte normalerweise melden. Unsichere Profile kannst du jederzeit korrigieren.</p><button class="hy-nostyle" type="button" id="onboarding-ok">Alles klar</button> <button type="button" class="secondary hy-nostyle" id="onboarding-review">Unsichere Profile ansehen</button></div>
     <div class="panel-heading">
       <h2 data-i18n="overviewTitle">System overview</h2>
       <p class="muted" data-i18n="overviewDescription">Choose a module or check its latest status at a glance.</p>
     </div>
     <div class="overview-grid">
-      <button class="module-card" type="button" data-open-tab="health">
+      <button class="module-card hy-nostyle" type="button" data-open-tab="health">
         <h2 data-i18n="tabHealth">Automation Health</h2>
         <span class="muted" data-i18n="healthDescription">Analyzes flows, devices, apps and maintenance without making changes.</span>
         <span class="module-state" id="overview-health-state" data-i18n="overviewNoScan">No scan available yet</span>
       </button>
-      <button class="module-card" type="button" data-open-tab="watchdog">
+      <button class="module-card hy-nostyle" type="button" data-open-tab="watchdog">
         <h2 data-i18n="tabWatchdog">Battery watchdog</h2>
         <span class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</span>
         <span class="module-state" id="overview-watchdog-state" data-i18n="overviewLoading">Loading status...</span>
       </button>
-      <button class="module-card" type="button" data-open-tab="backup">
+      <button class="module-card hy-nostyle" type="button" data-open-tab="backup">
         <h2 data-i18n="tabBackup">Backups</h2>
         <span class="muted" data-i18n="backupDescription">Create, schedule and selectively restore Homey configuration backups.</span>
         <span class="module-state" id="overview-backup-state">Status wird geladen …</span>
       </button>
-      <button class="module-card" type="button" data-open-tab="watchdog">
+      <button class="module-card hy-nostyle" type="button" data-open-tab="watchdog">
         <h2>🏖 Urlaubsmodus</h2><span class="muted">Gerätebezogene Regeln bleiben aktiv.</span><span class="module-state" id="overview-vacation-state">Aus</span>
       </button>
     </div>
@@ -169,12 +169,12 @@
   <section class="tab-panel watchdog" id="panel-watchdog" role="tabpanel" aria-labelledby="tab-watchdog" data-panel="watchdog" hidden>
     <div class="section-heading"><h2>Gerätewache</h2><span class="pill" id="watchdog-state">Loading…</span></div>
     <p class="muted" data-i18n="watchdogDescription">Checks battery-capable devices and warns when they stop reporting.</p>
-    <div class="actions"><label class="check"><input id="vacation-enabled" type="checkbox">🏖 Urlaubsmodus</label><label>Ende (optional) <input id="vacation-until" type="datetime-local"></label><button type="button" class="secondary" id="vacation-save">Urlaubsmodus speichern</button></div>
+    <div class="actions"><label class="check"><input id="vacation-enabled" type="checkbox">🏖 Urlaubsmodus</label><label>Ende (optional) <input id="vacation-until" type="datetime-local"></label><button type="button" class="secondary hy-nostyle" id="vacation-save">Urlaubsmodus speichern</button></div>
     <div class="actions"><label class="check"><input id="watchdog-enabled" type="checkbox"><span data-i18n="watchdogEnabled">Automatic checks enabled</span></label><label class="check"><input id="watchdog-timeline" type="checkbox"><span data-i18n="timeline">Homey Timeline</span></label></div>
     <p id="device-watch-summary" role="status"></p>
     <div class="watchdog-filter-row"><input id="device-search" type="search" placeholder="Gerät suchen" aria-label="Gerät suchen"><select id="device-zone-filter" aria-label="Zone"><option value="all">Alle Zonen</option></select><select id="device-status-filter" aria-label="Status"><option value="all">Alle</option><option value="attention">Handlungsbedarf</option><option value="ok">OK</option><option value="ignored">Ignoriert</option></select><select id="device-profile-filter" aria-label="Profilstatus"><option value="all">Alle Profile</option><option value="unconfirmed">Bitte bestätigen</option><option value="learning">Lernphase</option><option value="learned">Gelernt</option></select></div>
     <div id="device-list" class="device-list"></div>
-    <section id="device-detail" class="device-detail" hidden aria-live="polite"><div class="section-heading"><h3 id="detail-name"></h3><button type="button" class="secondary" id="detail-close">Schließen</button></div><p id="detail-status"></p><p id="detail-simple"></p><div class="actions"><button type="button" id="detail-confirm">Profil bestätigen</button><button type="button" class="secondary" id="detail-auto">Zurück auf automatisch</button><button type="button" class="secondary" id="detail-ignore">Gerät ignorieren</button></div><details><summary>Mehr Einstellungen</summary><div class="detail-grid"><label>Profil<select id="detail-profile"><option value="auto">Automatisch lernen</option><option value="contact">Kontakt</option><option value="motion">Bewegungsmelder</option><option value="safety">Rauch-/Wassermelder</option><option value="sensor">Messsensor</option><option value="button">Taster</option><option value="vacuum">Staubsauger</option><option value="generic">Allgemein</option><option value="event_only">Nur Ereignisse</option><option value="disabled">Funkstille nicht überwachen</option></select></label><label>Eigene Warnschwelle (Stunden)<input id="detail-threshold" type="number" min="1" max="720"></label><label>Im Urlaub<select id="detail-vacation"><option value="auto">Automatisch</option><option value="normal">Normal überwachen</option><option value="extend">Schwelle verlängern</option><option value="pause">Funkstille pausieren</option></select></label><label>Verlängerung ×<input id="detail-factor" type="number" min="1" max="8" step="0.5" value="2"></label></div><button type="button" id="detail-save">Eigene Einstellungen speichern</button><button type="button" class="danger" id="detail-reset-learning">Lernhistorie neu beginnen</button></details><details><summary>Warum glaubt Dr. Wau das?</summary><pre id="detail-expert"></pre></details></section>
+    <section id="device-detail" class="device-detail" hidden aria-live="polite"><div class="section-heading"><h3 id="detail-name"></h3><button type="button" class="secondary hy-nostyle" id="detail-close">Schließen</button></div><p id="detail-status"></p><p id="detail-simple"></p><div class="actions"><button class="hy-nostyle" type="button" id="detail-confirm">Profil bestätigen</button><button type="button" class="secondary hy-nostyle" id="detail-auto">Zurück auf automatisch</button><button type="button" class="secondary hy-nostyle" id="detail-ignore">Gerät ignorieren</button></div><details><summary>Mehr Einstellungen</summary><div class="detail-grid"><label>Profil<select id="detail-profile"><option value="auto">Automatisch lernen</option><option value="contact">Kontakt</option><option value="motion">Bewegungsmelder</option><option value="safety">Rauch-/Wassermelder</option><option value="sensor">Messsensor</option><option value="button">Taster</option><option value="vacuum">Staubsauger</option><option value="generic">Allgemein</option><option value="event_only">Nur Ereignisse</option><option value="disabled">Funkstille nicht überwachen</option></select></label><label>Eigene Warnschwelle (Stunden)<input id="detail-threshold" type="number" min="1" max="720"></label><label>Im Urlaub<select id="detail-vacation"><option value="auto">Automatisch</option><option value="normal">Normal überwachen</option><option value="extend">Schwelle verlängern</option><option value="pause">Funkstille pausieren</option></select></label><label>Verlängerung ×<input id="detail-factor" type="number" min="1" max="8" step="0.5" value="2"></label></div><button class="hy-nostyle" type="button" id="detail-save">Eigene Einstellungen speichern</button><button type="button" class="danger hy-nostyle" id="detail-reset-learning">Lernhistorie neu beginnen</button></details><details><summary>Warum glaubt Dr. Wau das?</summary><pre id="detail-expert"></pre></details></section>
     <details id="watchdog-advanced"><summary>Erweiterte Einstellungen</summary>
     <div class="watchdog-grid">
       <label><span data-i18n="checkHours">Check interval (hours)</span><input id="watchdog-check" type="number" min="1" max="168"></label>
@@ -195,10 +195,10 @@
     <div><span id="watchdog-ignore-zones-label" data-i18n="ignoredZones">Zones außer Betrieb (einschließlich Unterzonen)</span><div id="watchdog-ignore-zones" class="checkbox-list" role="group" aria-labelledby="watchdog-ignore-zones-label"></div></div>
     <p class="muted" data-i18n="ignoredZonesHelp">Geräte in diesen Zonen werden bei Batteriemeldungen und Gerätebefunden nicht berücksichtigt.</p>
     <div class="actions" style="margin-top:12px">
-      <button id="watchdog-save" data-i18n="saveWatchdog">Save watchdog</button>
-      <button class="secondary" id="watchdog-preview" data-i18n="previewWatchdog">Preview without notifications</button>
-      <button class="secondary" id="watchdog-run" data-i18n="runWatchdog">Run check now</button>
-      <button class="secondary" id="watchdog-test" data-i18n="testNotification">Send test notification</button>
+      <button class="hy-nostyle" id="watchdog-save" data-i18n="saveWatchdog">Save watchdog</button>
+      <button class="secondary hy-nostyle" id="watchdog-preview" data-i18n="previewWatchdog">Preview without notifications</button>
+      <button class="secondary hy-nostyle" id="watchdog-run" data-i18n="runWatchdog">Run check now</button>
+      <button class="secondary hy-nostyle" id="watchdog-test" data-i18n="testNotification">Send test notification</button>
     </div>
     <p id="watchdog-diagnostic-summary" role="status"></p>
     <details id="watchdog-monitoring">
@@ -230,13 +230,13 @@
       <summary>Dr. Wau 1.0 · Konfiguration übertragen / Transfer configuration</summary>
       <p>Eine Vorschau ändert nichts. Der bestätigte Import ersetzt die ausgewählten App-Einstellungen. Warnungen, Urlaub und Backup-Zeitpläne bleiben aus. Frühere Aktivierungswünsche und Push-Empfänger werden separat bewahrt. API-Key und Ziel-Zugangsdaten bitte neu eingeben.</p>
       <p>Preview makes no changes. Confirmed import replaces app settings and leaves warnings, vacation and backup schedules off. Previous activation choices are preserved separately. Re-enter credentials.</p>
-      <button id="migration-export" class="secondary">Konfiguration ohne Zugangsdaten exportieren / Export</button>
+      <button id="migration-export" class="secondary hy-nostyle">Konfiguration ohne Zugangsdaten exportieren / Export</button>
       <label for="migration-file">Vorherige Konfiguration / Previous configuration (JSON)</label>
       <input type="file" id="migration-file" accept="application/json,.json">
-      <button id="migration-preview" class="secondary" disabled>Vorschau / Preview</button>
+      <button id="migration-preview" class="secondary hy-nostyle" disabled>Vorschau / Preview</button>
       <pre id="migration-summary" role="status" style="white-space:pre-wrap"></pre>
       <label class="check"><input type="checkbox" id="migration-confirm" disabled>Ich bestätige das Ersetzen der Einstellungen / Confirm replacement</label>
-      <button id="migration-import" disabled>Bestätigten Import ausführen / Import</button>
+      <button class="hy-nostyle" id="migration-import" disabled>Bestätigten Import ausführen / Import</button>
     </details>
   </section>
   <section class="tab-panel" id="panel-health" role="tabpanel" aria-labelledby="tab-health" data-panel="health" hidden>
@@ -246,8 +246,8 @@
         <p class="muted" data-i18n="healthDescription">Analyzes flows, devices, apps and maintenance without making changes.</p>
       </div>
       <div class="actions">
-        <button class="secondary" id="export" disabled data-i18n="export">Export JSON</button>
-        <button id="scan" data-i18n="scan">Start scan</button>
+        <button class="secondary hy-nostyle" id="export" disabled data-i18n="export">Export JSON</button>
+        <button class="hy-nostyle" id="scan" data-i18n="scan">Start scan</button>
       </div>
     </div>
   <section id="report" hidden>
@@ -394,8 +394,8 @@
     const ignored = document.createElement('input'); ignored.type = 'checkbox'; ignored.checked = annotation?.ignored === true;
     const ignoreText = document.createElement('span'); ignoreText.textContent = t('ignoreNext'); ignoreLabel.append(ignored, ignoreText);
     const actions = document.createElement('div'); actions.className = 'editor-actions';
-    const save = document.createElement('button'); save.textContent = t('save');
-    const reset = document.createElement('button'); reset.className = 'danger'; reset.textContent = t('reset'); reset.hidden = !annotation;
+    const save = document.createElement('button'); save.className = 'hy-nostyle'; save.textContent = t('save');
+    const reset = document.createElement('button'); reset.className = 'danger hy-nostyle'; reset.textContent = t('reset'); reset.hidden = !annotation;
     save.addEventListener('click', async () => {
       save.disabled = true;
       try {
@@ -562,7 +562,7 @@
       if (!device.name.toLocaleLowerCase().includes(query) || zone !== 'all' && device.zone !== zone) continue;
       if (status === 'attention' && !problem || status === 'ok' && (problem || device.ignored) || status === 'ignored' && !device.ignored) continue;
       if (profile === 'unconfirmed' && assessment?.profile?.confirmation !== 'unconfirmed' || profile === 'learning' && profileStatus !== 'learning' || profile === 'learned' && !profileStatus?.startsWith('learned')) continue;
-      const button = document.createElement('button'); button.type = 'button'; button.className = `device-item${problem ? ' needs-attention' : ''}`;
+      const button = document.createElement('button'); button.type = 'button'; button.className = `device-item hy-nostyle${problem ? ' needs-attention' : ''}`;
       const name = document.createElement('strong'); name.textContent = device.name;
       const badge = document.createElement('span'); badge.textContent = profileBadge(device);
       const zoneName = watchdogOverview.zones?.find(item => item.id === device.zone)?.name || 'Ohne Zone';
