@@ -2,41 +2,95 @@
 
 ## Freigabestatus
 
-### Vorbereitung des kontrollierten Live-Tests
+**RELEASE BLOCKED – weiterer echter Backup-Test nicht freigegeben.**
+Der ausdrücklich freigegebene, einmalige Export war technisch erfolgreich und
+ohne Crash. Das private Backup enthält jedoch fünf Credential-Felder: drei
+Passwort-/PIN-Felder und zwei als normale Texteinstellungen deklarierte API-Key-
+Felder. Werte, Gerätezuordnung und Rohdatei werden nicht veröffentlicht.
+Die anfänglich zusätzlich gemeldeten Suchtreffer waren Schema-Typbeschreibungen;
+nach deren Prüfung bleibt kein weiterer unklassifizierter Treffer.
 
-Der Crashfix ist auf dem Feature-Branch committed und als Development-App
-installiert. Die dreiminütige Leerlaufbeobachtung zeigte keinen Absturz;
-Development- und Legacy-Einstellungen blieben unverändert. Die offizielle
-Devkit-Verbindung lieferte jedoch weder Stdout-Ereignisse noch eine Loghistorie.
-Deshalb wurde vor dem freigegebenen Export eine zusätzliche Diagnose vorbereitet:
-`GET /backup/diagnostics`, ausschließlich für den Owner, mit höchstens 128
-inhaltsfreien Phasen-/Speichereinträgen, Warnzähler und aktuellen Job-/Transfer-
-Zuständen. Dieselben Einträge werden über das dokumentierte
+### Kontrollierter Live-Export am 2026-10-03
+
+| Punkt | Ergebnis |
+|---|---|
+| Tatsächlich installierter Quellstand | `2fe9c4845033a5704c286035b89bf617af9e4b8c`, Development 1.0.0 |
+| Vorprüfung | Drei Minuten Leerlauf; Watchdog, Warnkanäle, Urlaub und Zeitplan aus |
+| Runtime-Aufzeichnung | Privater lokaler Collector: Stdout, Realtime-Phasen, Owner-Diagnose und Homey-App-Usage |
+| Start / Ende | 10:37:51,534 / 10:38:21,511 CEST |
+| Aufrufe von `/export/prepare` | Genau einer, aus dem installierten UI-Handler mit echter Owner-API |
+| Dauer / Jobstatus | 29.977 ms / `done` |
+| Geräte / Standard / Advanced Flows | 289 / 281 / 331 |
+| Zonen / Apps / Logic / Better Logic | 25 / 64 / 261 / 14 |
+| Payload | 10.065.069 Bytes = 9,60 MiB; 6,40 MiB unter dem 16-MiB-Limit |
+| Warnungen / Speicherwarnungen / Exportlimit | 0 / 0 / nicht ausgelöst |
+| RSS Baseline / max. beobachtet | 92,51 / 140,98 MiB |
+| PSS Baseline / max. beobachtet | 43,88 / 92,29 MiB |
+| Heap Baseline / max. beobachtet | 15,75 / 50,66 MiB |
+| HeapTotal Baseline / max. beobachtet | 17,56 / 56,94 MiB |
+| CPU max. beobachtet | 90 % |
+| Nachbeobachtung | Zwei Minuten, 24 Stichproben; RSS 98,61–139,12 MiB, Heap am Ende 13,83 MiB |
+| App / Crash-Zähler / Exceptions | `running` / 0 → 0 / keine unbehandelte oder fatale Exception in den aufgezeichneten Logs |
+| Jobs / Transfers / Export-Lock | Freigegeben; kein laufender Job, Transfer oder Export-Lock |
+| Produkt-UI-Pfad | 113 Statusänderungen im DOM mit realer API, Abschlussanzeige und erneut aktivem Button |
+| Sichtbare UI | Benutzer-Screenshot zeigt Backup-Ansicht und deaktivierten Zeitplan; Browsersteuerung wegen unsicherer URL-Erkennung gestoppt |
+| Struktur / Gerätefelder | Gültiges JSON, Format `homey-backup-center`, Version 5; Zählungen konsistent; schwere Runtimefelder entfernt |
+| Dr.-Wau-Netzwerk-/Restore-Credentials | Nicht im Backup enthalten |
+| Secret-Prüfung | Nicht bestanden: fünf Geräte-Credential-Felder |
+| Development-/Legacy-Einstellungen | Vollständiger Vergleich unverändert; Legacy-App blieb gestoppt |
+
+Die Speicherwerte sind beobachtete Stichproben, keine garantiert erfassten Spitzen.
+Es gab keinen zweiten Export, Restore, Upload, keine Geräteaktion oder Flow-Ausführung. Der lokale
+Collector wurde nach der Nachbeobachtung beendet; die Homey-App wurde nicht gestoppt.
+Der historische ursprüngliche Crash bleibt ohne zugehörigen Stack-/Kill-Beleg
+ungeklärt. Der neue erfolgreiche Durchlauf beweist keine allgemeine Crashfreiheit.
+
+### Diagnose und lokale Privacy-Korrektur
+
+Die erste offizielle Devkit-Historie war leer. Ergänzt wurde
+`GET /backup/diagnostics`, ausschließlich für den Owner, mit maximal 128
+inhaltsfreien Phasen-/Heap-Einträgen, Warnzähler und Job-/Transferzuständen.
+Das dokumentierte
 [SDK-Realtime-Ereignis](https://apps-sdk-v3.developer.homey.app/ManagerApi.html#realtime)
-an einen lokalen Collector gespiegelt. Transportfehler verändern das Ergebnis
-eines Backups nicht. Zugangsdaten, Namen, Objekt-IDs und Fehlermeldungen werden
-über diesen Kanal nicht ausgegeben. Er ersetzt keinen historischen Stacktrace.
-Der echte Export ist zu diesem Vorbereitungsstand noch nicht gestartet.
+spiegelt die Einträge an den privaten Collector. Dieser Diagnosekanal enthält keine
+Namen, Objekt-IDs, Settings, Zugangsdaten oder Fehlermeldungen.
 
-Bei der Installation des Diagnosezusatzes scheiterte die RSS-Abfrage über
-`process.memoryUsage()` in Homeys eingeschränkter Runtime. Der Diagnose-GET
-lieferte einen Fehler; die App blieb aktiv, ein Export wurde nicht gestartet.
-Die Phasen-/Heap-Messung verwendet bei diesem Fehler jetzt V8-Heapstatistiken.
-RSS/PSS stammen in diesem Fall ausschließlich aus der externen Homey-App-Usage-
-Abfrage. Derselbe abgesicherte Messpfad schützt auch das ursprüngliche Phasenlog;
-eine fehlgeschlagene RSS-Messung darf keinen Export ablehnen.
+Bei der Diagnose-Installation scheiterte `process.memoryUsage()` an der RSS-Abfrage
+in Homeys eingeschränkter Runtime. Ein Regressionstest und V8-Heap-Fallback
+verhindern, dass diese Messung einen Diagnose-GET oder Export ablehnt. RSS/PSS
+werden separat über Homey gelesen. Ein Verbindungs-Timeout und die spätere
+Beendigung des lokalen Collectors durch Windows wurden vor dem Export gesichert;
+die gleiche Devkit-Session wurde ohne App-Neustart wieder verbunden.
 
-**RELEASE BLOCKED.** Der gemeldete reale Absturz ist historisch nicht eindeutig
-zugeordnet. Die unten beschriebenen Fehler sind lokal nachgewiesen und korrigiert;
-das ersetzt den Nachweis der tatsächlichen Homey-Crashursache nicht.
+Nach dem einmaligen Export wurde ausschließlich lokal korrigiert: Schema-Passwort-
+felder sowie erkennbare Credential-IDs in Text-/Textarea-Einstellungen werden
+aus neuen Device-Settings-Exports entfernt. Normale numerische, Checkbox-, Dropdown-
+und Texteinstellungen bleiben erhalten; ausgelassene Credentials ergeben eine
+zusammengefasste Warnung ohne Namen oder Werte. Zwei Regressionstests belegen die
+Auslassung, unveränderte Live-/Settings-Mocks und weiterhin gültige Inventardaten.
+Alte Backups bleiben für ausdrücklich bestätigte selektive Restores lesbar.
+Dieser Privacy-Fix und die separat gewünschte Formulierung „in sicheren Tatzen“
+sind **nicht auf Homey installiert**. Es gab keine weitere Live-Reproduktion.
+Privacy-Commit: `e6524fa1b954d773d01b670a52857b20c992ffea`;
+Text-Commit: `c6502b2eea218c0d287cc9344daf7fe7e97333c6`.
+Die Erkennung ist keine Garantie für beliebig benannte Secrets in Flow-Argumenten
+oder anderen Freitexten; ein künftiger freigegebener Export muss erneut privat
+geprüft werden. Das bestehende Backup bleibt vertraulich und darf nicht geteilt werden.
 
-**Crashursache aus Runtime-Log nicht direkt verfügbar.** Kein weiterer echter
-Backup-Versuch, kein Restore und kein Netzwerk-Upload wurden ausgeführt. Die Fixes
-sind lokal vorbereitet; die laufende Development-App enthält weiterhin den zuvor
-installierten Stand. Branding, Legacy-App, Veröffentlichungen und `main` bleiben
-außerhalb dieses Crashfixes.
+### Abschließende lokale Prüfungen
 
-## Runtime-Belege
+- `npm ci`: erfolgreich, Lockfile und Dependencies unverändert.
+- **245/245 Tests** nach dem Live-Test und den lokalen Korrekturen bestanden.
+- Build und Publish-Validation bestanden. Beide CLI-Befehle erzeugen Builddateien
+  und wurden nach einem Dateisperren-Konflikt separat erfolgreich ausgeführt.
+- Runtime-Audit unverändert: **4 moderate**, keine high/critical.
+- Vollständiges Audit unverändert: **22 = 2 low, 13 moderate, 7 high**;
+  zusätzliche Dev-Befunde: **18 = 2 low, 9 moderate, 7 high**.
+  Kein `audit fix`, kein `--force`, keine Dependency-Änderung.
+- Private Backup-/Runtime-Dateien bleiben ignoriert; der öffentliche Bericht
+  enthält keine Credential-Werte, Geräte-/Homey-IDs, privaten Namen oder lokalen Pfade.
+
+## Historische Runtime-Belege vor dem freigegebenen Export
 
 - Der Benutzer meldete unmittelbar nach „Backup erstellen“: `Crashed` / `App Not Running`.
 - Exakter Crashzeitpunkt, historische stdout/stderr, Exception, Stacktrace,
@@ -144,8 +198,8 @@ garantierten Spitzen. Laufzeiten sind Maschinenmessungen, keine Homey-Zusagen.
 | 500 | 1.000 | 4.767.352 | 654 ms | 10,70 / 25,72 MiB | 96,47 MiB |
 
 Payload und Aufrufzahl wachsen linear. Keine Prozessbeendigung in diesen Fällen.
-Eine reale neue Backupgröße oder Heap-Messung während des gemeldeten Absturzes
-liegt nicht vor, da kein erneuter Live-Export freigegeben werden konnte.
+Eine Heap-Messung während des ursprünglich gemeldeten Absturzes liegt nicht vor.
+Die oben dokumentierten Realwerte stammen aus dem später freigegebenen Export.
 
 ## SMB-Herkunft und Erstinstallation
 
@@ -159,7 +213,7 @@ Passwort, und leere Erstinstallationen zeigen leere Host-/Share-/Benutzerfelder.
 Diese Fälle sind per DOM-Test geprüft. Kein separater Default-Entfernungscommit
 ist erforderlich, weil keine solchen Defaults gefunden wurden.
 
-## Prüfungen und weitere Abnahme
+## Historische lokale Prüfungen des ersten Crashfixes
 
 - `npm ci`: erfolgreich, Lockfile unverändert.
 - **238/238 Tests**, zuvor 218. Neue Fälle: vier Lastgrößen, sechs Fehlerquellen,
@@ -170,11 +224,6 @@ ist erforderlich, weil keine solchen Defaults gefunden wurden.
 - Runtime-Audit: 4 moderate, 0 high/critical. Vollständig: 22 = 2 low, 13 moderate,
   7 high; ausschließlich zusätzlich über Dev-Abhängigkeiten: 18 = 2 low, 9 moderate,
   7 high. Keine Dependency-Änderung und kein `audit fix --force`.
-- Ein erneuter kontrollierter Live-Backup-Test wurde **nicht ausgeführt**:
-  Die Voraussetzung „reale Ursache verstanden“ ist nicht erfüllt.
-- Development-App nach dem kontrollierten Neustart aktiv: **JA**, auf dem bisherigen
-  installierten Stand. Der neue Fix ist nicht installiert.
 
-Nächster benötigter Beleg ist der historische Crash-Log beziehungsweise ein
-ausdrücklich abgestimmter weiterer Diagnoseweg mit persistierter Devkit-Session
-und Runtime-Messung. Bis dahin kein weiterer echter Backupversuch und kein Release.
+Die anschließende, ausdrücklich freigegebene Live-Prüfung ist oben dokumentiert.
+Ein weiterer echter Test benötigt eine neue Freigabe; kein Release oder Merge.
