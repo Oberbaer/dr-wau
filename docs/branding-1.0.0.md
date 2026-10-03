@@ -1,8 +1,27 @@
 # Dr. Wau 1.0.0 – Branding nach Privacy-Abnahme
 
 Diese Änderungen folgen auf `BACKUP PRIVACY PASS` und sind ein separater
-Branding-Commit. Sie wurden lokal geprüft, nicht erneut auf Homey installiert.
-Auf Homey bleibt der live bestätigte Privacy-Stand `16ff364` aktiv.
+Branding-Commit. Der Branding-Stand `0328f4c` wurde am 3. Oktober 2026 als
+Development-App installiert und anschließend 60 Sekunden beobachtet:
+App läuft, Crash Counter 0, Development-Settings und Legacy unverändert.
+Watchdog, Warnkanäle, Urlaub und Backup-Zeitplan bleiben aus; kein Export,
+Restore, Netzwerk-Upload oder Gerätetest wurde ausgeführt.
+
+## Laufende visuelle Live-Abnahme
+
+Der reale Übersichtsscreenshot bestätigt ein zentriertes, vollständig sichtbares
+Badge ohne Textüberlagerung. Er zeigt jedoch schwarze statt weiße Bereiche im
+Maskottchen sowie schwarze Tabs mit kaum erkennbarem aktivem Zustand. Die
+installierte PNG enthält nachweislich deckende weiße Pixel; die Ursache der
+Farbumwandlung ist noch nicht geklärt. Eine erzwungene Browser-Dunkeldarstellung
+wird mit dem Benutzer geprüft. Keine kompensierende Bildinvertierung eingebaut.
+
+Der fehlende Übersichtssatz wurde auf „Dein Smart Home in sicheren Tatzen.“
+korrigiert. Lokal bestehen weiterhin 251/251 Tests, Publish-Validierung und Build.
+Die erneute Installation dieser Textkorrektur und ihre sichtbare Abnahme stehen
+bei Erstellung dieses Berichts noch aus. Desktop/Tablet/Smartphone, Light/Dark,
+Gerätewache, Backups und Verwaltung sind noch nicht vollständig live abgenommen.
+Status: `VISUAL LIVE BLOCKED` bis diese Nachweise vorliegen.
 
 ## Umsetzung
 
