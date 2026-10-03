@@ -1,6 +1,15 @@
 # Dr. Wau 1.0.0 – Backup-Crashprüfung, 2026-10-03
 
-## Freigabestatus
+## Aktueller Status
+
+**BACKUP PRIVACY PASS – Backup-Release-Blocker geschlossen.** Der danach separat
+freigegebene Privacy-Fix wurde auf Development installiert und mit genau einem
+neuen Export bestätigt. Siehe [abschließende Privacy-Prüfung](backup-privacy-1.0.0.md)
+für den installierten Quellstand, reale Messungen und fünf `NOT FOUND`-Ergebnisse.
+Die folgenden Befunde beschreiben den ersten Crashfix-Export und dessen damaligen
+Privacy-Blocker; sie werden als historische Diagnose erhalten.
+
+## Freigabestatus nach dem ersten Export (historisch)
 
 **RELEASE BLOCKED – weiterer echter Backup-Test nicht freigegeben.**
 Der ausdrücklich freigegebene, einmalige Export war technisch erfolgreich und
