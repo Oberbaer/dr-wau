@@ -2,6 +2,8 @@
 'use strict';
 // English message keys also serve Dutch source strings through i18n.js's aliases.
 const messages={
+"Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"Erkannte Zugangsdaten wie Passwörter, PINs, Tokens und API-Schlüssel werden nicht gesichert. Andere Geräte- und Flow-Einstellungen können dennoch sensible Informationen enthalten. Bewahre Backup-Dateien vertraulich auf.",
+"This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"Dieses Backup enthält Flows, Ordner, Geräte, unterstützte Geräteeinstellungen, Zonen, Logic-Variablen und ein App-Inventar. Der Homey-API-Schlüssel, WebDAV-Passwörter und die Logic-Variable ha_backup_token werden ausgeschlossen. Erkannte Zugangsdaten wie Passwörter, PINs, Tokens und API-Schlüssel werden nicht gesichert. Andere Geräte- und Flow-Einstellungen können dennoch sensible Informationen enthalten. Bewahre Backup-Dateien vertraulich auf.",
   "PERSONAL APP · VERSION":"PERSÖNLICHE APP · VERSION",
   "Back up your Flows and Homey inventory. Save the file on your phone, tablet, computer or a WebDAV location.":"Sichere deine Flows und Homey-Konfiguration. Speichere das Backup auf deinem Handy, Tablet, Computer oder einem Netzwerkziel.",
   "1. Create a backup":"1. Backup erstellen",

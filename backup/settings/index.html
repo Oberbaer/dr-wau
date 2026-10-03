@@ -19,7 +19,7 @@
 <div class="field language-card"><label for="language">Language</label><select id="language"><option value="de">Deutsch</option><option value="en">English</option><option value="nl">Nederlands</option></select><p id="languageStatus" class="hint">Changing language reloads this page. Save any edited settings first.</p></div>
 
 <section class="card" id="create-backup"><h2>1. Back-up ophalen</h2>
-<p>This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Other device settings and Flow arguments may contain sensitive information.</p>
+<p>This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.</p>
 <div class="target-actions"><button id="fetch">Back-up ophalen</button><button id="share" class="secondary" disabled>Share or save</button><button id="save" class="secondary" disabled>Download bestand</button></div>
 <div id="stats" class="stats" hidden></div><p id="status" role="status">Nog geen back-up opgehaald.</p>
 <p class="hint">Download file uses a save dialog or the share sheet where supported. Otherwise a file link stays available. Browser restrictions may require opening Homey Web in a regular browser or saving to WebDAV.</p>

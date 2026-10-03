@@ -8,6 +8,7 @@ const {Scheduler} = require('./lib/scheduler');
 const Jobs = require('./lib/jobs');
 const BoundedJSON = require('./lib/bounded-json');
 const Diagnostics = require('./lib/diagnostics');
+const ExportPrivacy = require('./lib/export-privacy');
 const I18n = require('./settings/i18n');
 const tr = I18n.t;
 const { HomeyAPI } = require('homey-api');
@@ -36,10 +37,7 @@ function isWritableDeviceSettingType(type) {
   return WRITABLE_DEVICE_SETTING_TYPES.has(String(type || '').toLowerCase());
 }
 function isSensitiveDeviceSetting(key,meta) {
-  if(meta?.sensitive || meta?.type==='password')return true;
-  if(!['text','textarea'].includes(meta?.type))return false;
-  const normalized=String(key).replace(/[^a-z0-9]/gi,'').toLowerCase();
-  return /password|passwd|passphrase|apikey|accesstoken|refreshtoken|clientsecret|privatekey|authorization/.test(normalized);
+  return ExportPrivacy.sensitiveSetting(key,meta);
 }
 
 function extractDeviceSettingInfo(settingsObj) {
@@ -475,6 +473,9 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     }
     BoundedJSON.measure(betterLogicVariables,BoundedJSON.EXPORT_BYTES-snapshotBytes);checkDeadline();
     const flows = Backup.buildFlows(result.folders || {}, result.standard || {}, result.advanced || {});
+    // Refuse clearly credential-bearing card arguments instead of silently
+    // deleting required arguments or changing the restored Flow's behavior.
+    ExportPrivacy.assertSafeFlowArguments(flows);
     delete result.standard;delete result.advanced;
     phase('flows',{count:flows.length});
     const devices = safeCollection(result.devices, (d, id) => ({
@@ -545,10 +546,11 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
       id: a.id || id,
       ...pick(a, ['name','version','enabled','state','origin','channel','updateAvailable','crashed','crashCount'])
     }));
-    return {
+    let urlCredentialsRemoved=0;
+    const backup={
       format: 'homey-backup-center', version: 5, createdAt: new Date().toISOString(),
       deviceSettingsValueSource: 'device.settings',
-      note: tr('WebDAV-wachtwoorden worden niet opgenomen. Apparaatinstellingen kunnen gevoelige gegevens bevatten; behandel dit bestand als vertrouwelijk.'),
+      note: tr('Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.'),
       flows,
       inventory: {folders: safeCollection(result.folders,(f,id)=>({id:f.id||id,...pick(f,['name','folder','parent','parentFolder'])})), devices, zones, variables, betterLogicVariables, apps},
       stats: {
@@ -562,6 +564,9 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
       },
       warnings
     };
+    const cleaned=ExportPrivacy.cleanTree(backup,n=>urlCredentialsRemoved+=n);
+    if(urlCredentialsRemoved)cleaned.warnings.push('urls: '+urlCredentialsRemoved+' embedded credentials were excluded; verify affected endpoints before restore.');
+    return cleaned;
   }
 
   validateRestoreBackup(data) {
