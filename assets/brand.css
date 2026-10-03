@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light dark;
+  --accent: #0d8385;
+  --brand-highlight: #0f8f91;
+  --brand-button: #0d8385;
+  --brand-line: #35bdb1;
+  --page: #f7fbfb;
+  --surface: #ffffff;
+  --soft: #edf7f6;
+  --text: #183b40;
+  --muted: #526d72;
+  --border: #c9dfdd;
+  --brand-hero: linear-gradient(135deg, #e4f5f2, #f7fbfb);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #68d7ca;
+    --brand-highlight: #68d7ca;
+    --brand-button: #0d8385;
+    --brand-line: #35bdb1;
+    --page: #0e1c20;
+    --surface: #172b30;
+    --soft: #20373c;
+    --text: #edf7f6;
+    --muted: #b1ceca;
+    --border: #3c5c5f;
+    --brand-hero: linear-gradient(135deg, #1a3c3f, #172b30);
+  }
+}

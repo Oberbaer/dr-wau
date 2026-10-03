@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <defs>
+    <linearGradient id="g" x2="1" y2="1"><stop stop-color="#062F3B"/><stop offset="1" stop-color="#0F8F91"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#4AE2D1" stop-opacity=".45"/><stop offset="1" stop-color="#4AE2D1" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1000" height="700" fill="url(#g)"/>
+  <circle cx="330" cy="330" r="370" fill="url(#glow)"/>
+  <g fill="none" stroke="#69E2D9" stroke-width="3" opacity=".25">
+    <path d="M645 85h170l100 100v100M637 615h178l100-100v-95"/>
+    <circle cx="670" cy="355" r="145"/>
+  </g>
+  <g fill="#69E2D9" opacity=".65"><circle cx="645" cy="85" r="7"/><circle cx="637" cy="615" r="7"/><circle cx="915" cy="285" r="7"/></g>
+  <image href="../dr-wau.png" x="5" y="30" width="640" height="640"/>
+  <text x="610" y="315" fill="#FFF" font-family="Arial, sans-serif" font-size="78" font-weight="700">Dr. Wau</text>
+  <rect x="615" y="342" width="76" height="7" rx="3.5" fill="#69E2D9"/>
+  <path fill="none" stroke="#69E2D9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" d="M615 405h55l24-42 35 81 25-39h125"/>
+</svg>

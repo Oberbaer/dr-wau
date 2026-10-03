@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dr. Wau – Backups</title>
+<script src="/homey.js" data-origin="settings"></script>
+<script src="de.js"></script>
+<script src="i18n.js"></script>
+<script src="backup.js"></script>
+<script src="transfer.js"></script>
+<script src="download.js"></script>
+<link rel="stylesheet" href="../../assets/brand.css"><link rel="stylesheet" href="backup.css"></head><body><main>
+<a class="back-link" href="../index.html">← Dr. Wau</a>
+<header class="hero"><img class="hero-mark" src="../../assets/dr-wau-avatar.png" alt="" width="104" height="104"><div class="hero-copy"><span class="badge"><span>Dr. Wau · Version</span> <span id="appVersion">…</span></span><h1>Backups</h1><p class="tagline">Keep your smart home in safe paws.</p><p>Create, schedule and check your Homey configuration backups. You choose what is restored.</p></div></header>
+<div class="summary-strip" aria-live="polite">
+<div class="summary-tile"><small>Automatic backups</small><strong id="backup-summary-schedule">Loading schedule…</strong><a href="#automatic-backup">Schedule</a></div>
+<div class="summary-tile"><small>Last successful backup</small><strong id="backup-summary-success">Loading status…</strong></div>
+<div class="summary-tile"><small>Restore and push access</small><strong id="backup-summary-auth">Loading status…</strong><a href="#api-key">Configure key</a></div>
+</div>
+<nav class="jump-nav" aria-label="Backup navigation"><a href="#create-backup">Create backup</a><a href="#automatic-backup">Schedule</a><a href="#network-destinations">Destinations</a><a href="#selective-restore">Restore</a></nav>
+<div class="field language-card"><label for="language">Language</label><select id="language"><option value="de">Deutsch</option><option value="en">English</option><option value="nl">Nederlands</option></select><p id="languageStatus" class="hint">Changing language reloads this page. Save any edited settings first.</p></div>
+
+<section class="card" id="create-backup"><h2>1. Back-up ophalen</h2>
+<p>This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.</p>
+<div class="target-actions"><button class="hy-nostyle" id="fetch">Back-up ophalen</button><button id="share" class="secondary hy-nostyle" disabled>Share or save</button><button id="save" class="secondary hy-nostyle" disabled>Download bestand</button></div>
+<div id="stats" class="stats" hidden></div><p id="status" role="status">Nog geen back-up opgehaald.</p>
+<p class="hint">Download file uses a save dialog or the share sheet where supported. Otherwise a file link stays available. Browser restrictions may require opening Homey Web in a regular browser or saving to WebDAV.</p>
+<div id="downloadLinks" class="hint" hidden></div>
+</section>
+
+<section class="card"><h2>2. WebDAV-locaties</h2>
+<p>Je kunt meerdere doelen opslaan, bijvoorbeeld NAS, Nextcloud of een andere WebDAV-server. De doelmap moet al bestaan. WebDAV-wachtwoorden blijven in de appinstellingen op Homey en komen niet in de back-up terecht.</p>
+<div id="targets"></div>
+<button id="addTarget" class="secondary hy-nostyle">+ WebDAV-locatie</button> <button class="hy-nostyle" id="saveTargets">Instellingen bewaren</button>
+<p id="webdavStatus" role="status"></p>
+</section>
+
+<section class="card" id="network-destinations"><h2>SMB / SFTP / FTP network backups</h2>
+<p>Configure a destination, test it, then select it in the “Create backup to network destination” Flow action. Use a Homey date/time trigger to schedule it. The destination folder must already exist.</p>
+<p>Passwords stay in Homey app settings and are excluded from this app's backup exports and Flow tokens. SMB2 is for a trusted local network; this client does not provide SMB3 encryption. FTP is not encrypted and should only be used on a trusted network. SFTP requires the server host-key fingerprint. SHA256 is recommended, but SHA1 fingerprints are also accepted. Use the fingerprint of the existing SSH/SFTP host key shown by your NAS/server; do not create a separate key for Backup Center.</p>
+<fieldset id="network-fields"><legend>Network destination</legend>
+<label for="net-select">Saved destinations</label><select id="net-select"></select>
+<div class="grid">
+<div class="field"><label for="net-name">Name</label><input id="net-name" type="text" autocomplete="off"></div>
+<div class="field"><label for="net-type">Protocol</label><select id="net-type"><option value="sftp">SFTP</option><option value="smb">SMB2</option><option value="ftp">FTP</option></select></div>
+<div class="field"><label for="net-host">Host / IP address</label><input id="net-host" type="text" autocomplete="off"></div>
+<div class="field"><label for="net-port">Port</label><input id="net-port" type="number" autocomplete="off"></div>
+<div class="field"><label for="net-share">SMB share name</label><input id="net-share" type="text" autocomplete="off" placeholder="e.g. home"><p class="hint">Only the share name, not smb://host/ or a folder path.</p></div>
+<div class="field"><label id="net-directory-label" for="net-directory">Remote folder</label><input id="net-directory" type="text" autocomplete="off" placeholder="/home/user/backups"><p id="net-directory-hint" class="hint">SFTP: enter the existing absolute remote folder, for example /home/user/backups.</p><p id="net-ftp-warning" class="hint" hidden><b>Warning:</b> FTP is not encrypted. Use it only on a trusted network.</p></div>
+<div class="field"><label for="net-domain">SMB domain (optional)</label><input id="net-domain" type="text" autocomplete="off"></div>
+<div class="field"><label for="net-username">Username</label><input id="net-username" type="text" autocomplete="off"></div>
+<div class="field"><label for="net-password">Password</label><input id="net-password" type="password" autocomplete="new-password"></div>
+<div class="field"><label for="net-fingerprint">SFTP host-key fingerprint</label><input id="net-fingerprint" type="text" autocomplete="off" placeholder="SHA256:… or SHA1:aa:bb:…"><p class="hint">Copy the host-key fingerprint shown by your NAS/server. SHA256 is recommended; SHA1 is also supported. Do not invent or generate a new key for Backup Center.</p></div>
+<div class="field"><label for="net-timeoutMs">Timeout in milliseconds (5000–120000)</label><input id="net-timeoutMs" type="number" autocomplete="off"></div>
+</div><div class="field"><strong>Backup retention</strong><label><input id="net-retentionEnabled" type="checkbox" style="width:auto"> Automatically delete old backups</label></div>
+<div class="grid"><div class="field"><label for="net-retentionDays">Keep backups for (days)</label><input id="net-retentionDays" type="number" min="1" step="1" value="60"></div><div class="field"><label for="net-minimumBackupsToKeep">Always keep at least (backups)</label><input id="net-minimumBackupsToKeep" type="number" min="1" step="1" value="3"></div></div>
+<p id="network-status" class="hint" role="status" aria-live="polite" style="white-space:pre-wrap"></p><div class="target-actions"><button class="hy-nostyle" id="net-save">Save destination</button><button id="net-test" class="secondary hy-nostyle">Test connection</button><button class="hy-nostyle" id="net-backup">Back up now</button><button id="net-remove" class="danger hy-nostyle">Remove destination</button></div>
+</fieldset>
+<p>Flow scheduling runs once per action. Use the completion/failure trigger cards for follow-up actions. The existing WebDAV schedule remains configured separately.</p>
+</section>
+<section class="card"><h2>3. Back-up openen</h2>
+<p>Open hier de back-up die je wilt controleren of herstellen. De losse flowzoeker staat verder naar beneden.</p>
+<label class="button file-button" for="file">Choose backup file</label><input id="file" type="file" accept=".json,.txt" class="file-input"><p id="source"></p>
+</section>
+
+<section class="card" id="api-key"><h2>4. Schrijfrechten voor restore</h2>
+<p>For restore writes, save a Homey API Key. Earlier versions called this a Personal Access Token (PAT). Existing saved keys are kept.</p>
+<p>This key also enables direct watchdog pushes to selected Homey users (Flow write permission). Saving a key never starts a restore; restore still requires a reviewed selection and explicit confirmation.</p>
+<div class="field"><label for="restorePat">Homey API Key</label><input id="restorePat" type="password" autocomplete="new-password" placeholder="Leeg laten om bestaande token te behouden"></div>
+<div class="target-actions"><button class="hy-nostyle" id="saveRestorePat">Homey API Key bewaren</button><button id="testRestorePat" class="secondary hy-nostyle">Verbinding testen</button><button id="clearRestorePat" class="danger hy-nostyle">Homey API Key wissen</button></div>
+<p id="restoreAuthStatus" class="hint" role="status">Status wordt geladen…</p>
+<details><summary>Where do I create a Homey API Key?</summary>
+<p>Open Homey Web, select your Homey and go to Settings → API Keys → New API Key. Name it Dr. Wau and grant the permissions below. Copy the key when it is shown and paste it here; Homey only shows it once.</p>
+<p><span>Required permissions for full selective restore: Logic, Devices, Zones, Flows and Apps (write access). Technical scopes:</span> <code>homey.logic</code>, <code>homey.device</code>, <code>homey.zone</code>, <code>homey.flow</code>, <code>homey.app</code>.</p>
+<p>The connection test checks authentication. It does not prove that every write permission is present.</p>
+<a href="https://support.homey.app/hc/en-us/articles/8178797067292-Create-and-use-API-Keys-on-Homey-Pro" target="_blank" rel="noopener">Official Homey instructions</a></details>
+</section>
+
+<section class="card" id="automatic-backup"><h2>5. Automatische back-up</h2>
+<p>On selected weekdays, the app starts around the chosen time (Europe/Amsterdam, checked every minute). A failed backup gets up to two retries, at least 15 minutes apart, including after midnight. Manual backups have their own status. Only after all three attempts fail does the app send a push and create a Timeline notification.</p>
+<div class="field"><label><input id="schedEnabled" type="checkbox" style="width:auto"> Automatische back-up inschakelen</label></div>
+<div class="grid">
+<div class="field"><label for="schedTime">Tijd</label><input id="schedTime" type="time" value="03:00"></div>
+<div class="field"><label for="schedTarget">Back-upbestemming</label><select id="schedTarget"></select></div>
+</div>
+<div class="field"><label for="schedNotifyUser">Push recipient</label><select id="schedNotifyUser"></select><p id="notificationHelp" class="hint">The default recipient is this Homey's owner. Push requires a working Homey API Key with Flow write access; recipient lookup uses the app's Homey access. A critical push is used if available, otherwise a normal push. Phone notification settings still apply. Delivery errors appear below.</p></div>
+<fieldset id="schedWeekdays"><legend>Dagen</legend></fieldset>
+<div class="target-actions"><button class="hy-nostyle" id="saveSchedule">Schema bewaren</button><button id="runScheduleNow" class="secondary hy-nostyle">Nu een back-up maken</button></div>
+<p id="scheduleStatus" class="hint" role="status">Schema laden…</p>
+</section>
+
+<section class="card restore-card" id="selective-restore"><h2>6. Selective restore</h2>
+<p class="tagline">Never restored automatically</p>
+<p>Versie <span id="restoreVersion">…</span> <span>can create a restore plan for apps, zones, Logic, Better Logic Library, devices and Flows. Review the plan and explicitly confirm your selection before restoring.</span></p>
+<div class="target-actions"><button id="planRestore" class="secondary hy-nostyle" disabled>Wijzigingen selecteren</button><button id="runRestore" class="danger hy-nostyle" disabled>Restore uitvoeren</button></div>
+<p id="restoreStatus" role="status">Open eerst een back-upbestand.</p>
+<div id="restoreResult" class="restore-result" role="status"></div>
+<div id="restoreCounts" class="restore-counts hint"></div>
+<div id="logicSelection" class="restore-selection"></div>
+<details id="restoreDetails" class="restore-details"><summary>Technische details tonen</summary><pre id="restorePlan" class="hint" style="white-space:pre-wrap"></pre></details>
+<p class="hint"><b>Veiligheidsgrens:</b> radio-pairings en een volledige Homey-systeemimage kunnen niet betrouwbaar via deze configuratierestore worden gereconstrueerd. Gebruik daarvoor Homey's officiële systeem/cloud/USB-herstel waar van toepassing.</p>
+</section>
+
+
+<section class="card"><h2>7. Individuele flows terugvinden</h2>
+<p>Zoek in de geopende back-up naar losse Standard- of Advanced Flows om die apart te exporteren.</p>
+<label for="search">Zoek op flownaam of map</label><input id="search" type="search" placeholder="Bijvoorbeeld: vaatwasser"><div id="list"></div>
+</section>
+
+<section class="card"><h2>Wat apart blijft</h2>
+<p>Individuele flows blijven exporteerbaar als <code>.homeystdflow</code> of <code>.homeyadvflow</code>. Zelfgebouwde Developer App-broncode kan Homey niet uit de oorspronkelijke projectmap terughalen; bewaar die projectmappen apart.</p>
+</section>
+
+<section class="card"><h2>Credits</h2><p>De oorspronkelijke Homey-flowback-up- en splitscripts zijn gemaakt en gedeeld door Mike_Nono (Homey Community). Deze app bouwt daarop voort.</p></section>
+</main><script src="ui.js"></script><script src="network.js"></script></body></html>

@@ -1,33 +1,48 @@
-# Project Notes — Homey Battery Watchdog
+# Project Notes - Dr. Wau
 
 ## Purpose
 
-Generate a reviewable, disabled Homey Advanced Flow that detects battery-capable devices which have stopped reporting.
+Maintain the native Dr. Wau app in the repository root. It combines read-only Automation Health diagnostics, scheduled battery monitoring, and integrated Backup Center functionality.
 
 ## Architecture
 
-- `flow-template.js` builds the Flow and embeds the self-contained runtime.
-- `watchdog-runtime.js` evaluates devices and persists notification state only after successful delivery.
-- `homey-api.js` resolves the Homey CLI API from a local dependency, an explicitly configured module directory, or the global npm directory.
-- `generate-flow-proposal.js` produces ignored local JSON for review.
-- Live install and repair scripts require explicit `--apply --approve` flags.
+- `app.js` initializes the app, owner-only API, scans, schedules, notifications, and persistent settings.
+- `lib/analyzer.js` produces health scores and findings.
+- `lib/battery-watchdog.js` evaluates battery-capable devices and repeat suppression.
+- `lib/heartbeat.js` evaluates native/capability evidence, profiles, availability and battery independently; `heartbeat-insights.js` adds bounded read-only driver-origin raw events, never resampled numeric buckets.
+- `lib/zone-exclusions.js` applies whole-zone exclusions, including descendants.
+- `backup/` contains Backup Center's runtime and license; `settings/backup/` hosts its UI.
+- `settings/index.html` provides Overview, Automation Health, Battery Watchdog, Backups, and Management views.
+- `.homeycompose/` is the source for app metadata and Flow cards; `app.json` is generated.
+- Direct push uses checkbox-selected Homey users and the shared restore API Key. The legacy warning Flow trigger is separately configurable. Timeline delivery stays inside the app.
+- Repeat suppression is tracked per channel/recipient; only successful route deliveries are persisted.
+- Backup translations are shared between `backup/settings/` and the served `settings/backup/` UI. German `de.js` uses English canonical messages with aliases for the imported Dutch source strings; tests enforce copy consistency and preserve protocol data.
 
 ## Design decisions
 
-- The Flow runs every six hours; stale reporting begins after 24 hours and repeats no sooner than every six hours.
-- Device inspection is read-only and only considers `measure_battery` and `alarm_battery` capabilities.
-- Missing timestamps are monitoring unknown, not a known low-battery condition.
-- The generated Flow is disabled by default.
+- Recommended defaults are a 6-hour check interval, a warning after 24 hours, and a 24-hour repeat interval. Existing settings are preserved unless explicitly changed.
+- Device inspection is read-only and considers `measure_battery` and `alarm_battery` capabilities.
+- Missing timestamps are diagnostic limitations, not recurring warnings or proof of an outage. Contacts/remotes without communication timestamps do not warn solely for lack of usage; old periodic measurements are review findings, not an offline assertion.
+- Battery thresholds default to 20% low / 5% critical. Old low values and alarms remain visible with provenance, rather than pretending they are current measurements.
+- Suppression schema v2 uses a new settings key and preserves v1 unchanged for rollback. Recovery requires positive data and is sent only to routes that received the original problem; intermediate unknown data stays unresolved silently.
+- Automatic checks start disabled on a fresh installation.
+- Finding decisions and reports remain local on Homey.
+- Dr. Wau 1.0.0 uses a new app identity and an explicit configuration migration. Credentials require re-entry; migrated warning channels, vacation and backup schedules remain off.
 
 ## Known limitations
 
 - Communication silence does not identify its cause.
-- A later optional push failure can cause duplicate Timeline and previously successful push notifications on retry.
+- Direct push requires an owner-supplied API Key with Flow write permission. The connection test verifies authentication, not every write scope.
+- Backup settings language persistence and status endpoints have been verified on a live Homey. Live browser visual verification and selective restore remain untested.
 
 ## Test strategy
 
-Run `npm test` for local runtime, Flow, and diagnostic configuration tests. Run `npm run proposal` to validate a disabled generated proposal. These checks make no live Homey changes.
+Run `npm.cmd ci`, `npm.cmd test`, `npm.cmd run validate:publish`, and `npx.cmd homey app build` from the repository root. These checks do not install or publish the app.
 
-## Release status and next steps
+## Current status
 
-The project is prepared as a sanitized source tree for a future 0.1.0 public release. Before publishing a new repository, rerun the public-data scan, tests, proposal generation, and review the proposed Flow in a non-production context.
+Dr. Wau 1.0.0 is prepared on `feature/dr-wau-new-identity`; the Homey app lives directly at the repository root and origin points to Oberbaer/dr-wau. Migration has a versioned credential-free export, owner-only preview and explicit confirmation. The legacy 0.7.1 app and branch are preserved. See [migration](docs/migration.md) for transfer, safety and rollback rules.
+
+Validation on 2026-10-03: 251/251 tests, publish validation and local build passed. Development 1.0.0 runs privacy/crashfix commit `16ff3649afd134dd1bac50374033bfdd44ec4f18`, including the requested “Tatzen” wording. Exactly one newly authorized real local export completed through the installed UI handler and owner API: 29.675 seconds, 9.83 MiB, no crash, memory warning or lingering job/transfer. All five previous real credential values are absent; all 1,049 ordinary settings are preserved. BACKUP PRIVACY PASS; privacy release blocker closed. The user confirmed manually saving the disabled schedule during installation; other Development settings and the stopped legacy app remained unchanged. Warning channels, watchdog, vacation and schedule stayed off. Old plaintext backup was removed after verified local DPAPI archival outside the repository. No third export, restore, network upload or device action. See [privacy acceptance](docs/backup-privacy-1.0.0.md). [PR #3](https://github.com/Oberbaer/dr-wau/pull/3) stays draft; CI has no deployment. Earlier [crash](docs/backup-crash-1.0.0.md), [quality](docs/quality-day-1.0.0.md) and [identity](docs/identity-1.0.0-review.md) results remain historical. Branding commit `0328f4c` was subsequently installed as Development on 2026-10-03: running, crash counter 0, all settings and legacy preserved, no export or device action. Visual acceptance remains incomplete: the real overview screenshot shows unexpected image/tab colors; browser theme transformation is under investigation. The overview tagline is corrected locally to “Dein Smart Home in sicheren Tatzen.”; see [branding acceptance](docs/branding-1.0.0.md).
+
+Runtime audit: four moderate affected packages in the parseuri chain; complete audit: 24 (2 low, 12 moderate, 10 high), including 20 additional Dev findings (2 low, 8 moderate, 10 high). No dependency changes or forced fixes. Private exports and live reports remain in ignored artifacts/.

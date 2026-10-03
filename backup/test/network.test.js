@@ -1,0 +1,74 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {NetworkDestinations}=require('../lib/network');
+const {fixture}=require('./helpers.cjs');
+const target={type:'sftp',name:'NAS',host:'nas.invalid',username:'backup',password:'test-secret',fingerprint:'SHA256:'+'A'.repeat(43),directory:'/backup'};
+function setup(run=async()=>({ok:true}),emit=async()=>{}){const state={};return new NetworkDestinations({settings:{get:k=>state[k],set:(k,v)=>state[k]=v},exportBackup:async()=>({flows:[],version:4}),run,emit});}
+test('destination validation, secret preservation, deletion and endpoint changes',()=>{
+ const n=setup();const [t]=n.save(target);assert.equal(t.hasPassword,true);assert.equal(t.password,undefined);
+ assert.equal(n.save({...t,password:''})[0].id,t.id);
+ for(const change of [{host:'new.invalid'},{username:'different'},{port:2222},{fingerprint:'SHA256:'+'B'.repeat(43)}])assert.throws(()=>n.save({...t,...change,password:''}),/password/);
+ for(const change of [{directory:'../escape'},{host:'sftp://nas'},{port:0.5},{timeoutMs:500},{fingerprint:'anything'}])assert.throws(()=>n.save({...target,...change}));
+ n.remove(t.id);assert.throws(()=>n.get(t.id));
+});
+
+test('FTP destination uses port 21 and does not require SMB or SFTP fields',()=>{
+ const n=setup();
+ const [t]=n.save({type:'ftp',name:'FTP NAS',host:'nas.local',username:'backup',password:'secret',directory:'/backup',timeoutMs:30000});
+ assert.equal(t.type,'ftp');
+ assert.equal(t.port,21);
+ assert.equal(t.directory,'/backup');
+ assert.equal(t.share,'');
+ assert.equal(t.domain,'');
+ assert.equal(t.fingerprint,'');
+ assert.equal(t.hasPassword,true);
+});
+
+test('backup success emits only safe tokens; failed event delivery cannot undo success',async()=>{
+ let call,event;const n=setup(async(...args)=>{call=args;return {ok:true};},async(...args)=>{event=args;throw Error('Flow failed');});const [t]=n.save(target);const result=await n.backup(t.id);
+ assert.equal(call[0].password,'test-secret');assert.match(call[1],/^Backup_Center_.*\.json$/);assert.equal(JSON.parse(call[2]).version,4);assert.equal(result.ok,true);assert.equal(event[0],'network_backup_completed');assert(!JSON.stringify(event).includes('test-secret'));assert.equal(n.busy,false);
+});
+test('failed upload is redacted and triggers failure only',async()=>{
+ let event;const n=setup(async()=>{throw Error('server leaked test-secret');},async(...args)=>{event=args;});const [t]=n.save(target);await assert.rejects(n.backup(t.id),/Network operation failed/);assert.equal(event[0],'network_backup_failed');assert(!JSON.stringify(event).includes('test-secret'));assert.equal(n.busy,false);
+});
+test('simultaneous uploads and mutations are rejected and recover after completion',async()=>{
+ let resolve;const n=setup(()=>new Promise(r=>resolve=r));const [t]=n.save(target);const task=n.backup(t.id);await new Promise(r=>setImmediate(r));await assert.rejects(n.backup(t.id),/already running/);await assert.rejects(n.test(t.id),/already running/);assert.throws(()=>n.remove(t.id),/already running/);assert.throws(()=>n.save(target),/already running/);resolve({ok:true});await task;assert.equal(n.busy,false);
+});
+test('Flow cards select stable IDs and filter completion events by destination',async()=>{
+ const {app,flowCards}=await fixture();const [t]=app.network.save(target);let runId;app.network.backup=async id=>{runId=id;return {ok:true,destination:'NAS',warnings:[]};};const action=flowCards.get('network_backup');assert.equal(await action.run({destination:{id:t.id}}),true);assert.equal(runId,t.id);const results=await action.autocomplete('nas');assert(results.some(item=>item.id===t.id));assert(!JSON.stringify(results).includes('test-secret'));
+ const trigger=flowCards.get('network_backup_completed');assert.equal(await trigger.run({destination:{id:t.id}},{destinationId:t.id}),true);assert.equal(await trigger.run({destination:{id:'other'}},{destinationId:t.id}),false);
+ app.network.test=async()=>{throw Error('offline');};assert.equal(await flowCards.get('network_destination_reachable').run({destination:{id:t.id}}),false);
+ const backup=await app.exportBackup();assert(!JSON.stringify(backup).includes('test-secret'));assert(!JSON.stringify(backup).includes('networkTargets'));
+});
+test('SFTP accepts Synology-style SHA1 fingerprints as well as SHA256',()=>{
+ const n=setup();
+ const common={type:'sftp',name:'NAS',host:'nas.local',port:22,username:'backup',password:'secret',directory:'/backup',timeoutMs:30000};
+ assert.doesNotThrow(()=>n.save({...common,fingerprint:'SHA1:'+'aa:'.repeat(19)+'aa'}));
+ assert.throws(()=>n.save({...common,name:'bad',fingerprint:'SHA1:not-a-fingerprint'}),/SHA256.*SHA1/);
+});
+
+test('retention runs only after a successful network upload and cleanup failures preserve success',async()=>{
+ const calls=[],events=[],logs=[];
+ const n=setup(async(t,filename,body,operation,entry)=>{
+  calls.push(operation||'upload');
+  if(operation==='retention-list')return {ok:true,entries:[{name:filename,type:'file',size:body?.length||100}]};
+  if(operation==='retention-delete')throw Error('server secret');
+  return {ok:true};
+ },async id=>events.push(id));n.log=(...args)=>logs.push(args);
+ const [t]=n.save({...target,retentionEnabled:true,retentionDays:60,minimumBackupsToKeep:1});
+ const result=await n.backup(t.id);assert.equal(result.ok,true);assert.deepEqual(calls,['upload','retention-list']);
+ assert.deepEqual(events,['network_backup_completed']);assert.equal(result.retention.deleted.length,0);assert.equal(n.busy,false);
+ assert.equal(JSON.stringify(logs).includes('test-secret'),false);
+});
+test('listing failure does not fire a failed-backup event',async()=>{
+ const events=[];const n=setup(async(t,filename,body,operation)=>{if(operation==='retention-list')throw Error('secret listing failure');return {ok:true};},async id=>events.push(id));
+ const [t]=n.save({...target,retentionEnabled:true});const result=await n.backup(t.id);
+ assert.equal(result.ok,true);assert.equal(result.retention.errors.length,1);assert.deepEqual(events,['network_backup_completed']);
+});
+test('older destinations without retention fields do not list or delete',async()=>{
+ const calls=[];const n=setup(async(t,filename,body,operation)=>{calls.push(operation||'upload');return {ok:true};});
+ const [saved]=n.save(target);const original=n.get(saved.id);delete original.retentionEnabled;delete original.retentionDays;delete original.minimumBackupsToKeep;
+ const result=await n.backup(saved.id);assert.equal(result.ok,true);assert.deepEqual(calls,['upload']);
+ assert.equal(n.list()[0].retentionEnabled,false);
+});
