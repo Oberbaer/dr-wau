@@ -12,6 +12,29 @@
   --border: #c9dfdd;
   --brand-hero: linear-gradient(135deg, #e4f5f2, #f7fbfb);
 }
+/* Homey's legacy form CSS loads after app CSS. Scope these rules to our
+   custom views and outrank its label and typed-input selectors. */
+main.dr-wau-ui label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+}
+main.dr-wau-ui input[type='text'],
+main.dr-wau-ui input[type='password'],
+main.dr-wau-ui input[type='search'] {
+  font: 16px/1.5 system-ui, sans-serif;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  text-indent: 0;
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --accent: #68d7ca;

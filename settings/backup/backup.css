@@ -45,12 +45,12 @@ main button:disabled { opacity: .5; cursor: not-allowed; }
 main input, main select { font: 16px/1.5 system-ui, sans-serif; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); }
 main select option { background: var(--surface); color: var(--text); }
 main input[type='checkbox'] { width: 20px !important; min-height: 20px; height: 20px; padding: 0; flex: 0 0 auto; accent-color: var(--blue); }
-main label { color: var(--text); font-size: 15px; line-height: 1.5; letter-spacing: normal; text-transform: none; }
+main.dr-wau-ui label { color: var(--text); font-size: 15px; line-height: 1.5; letter-spacing: normal; text-transform: none; }
 .field { margin: 12px 0; }
 .field label { display: block; font-weight: 650; margin-bottom: 6px; }
 .field label:has(input[type='checkbox']) { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 main fieldset { min-width: 0; margin: 16px 0; padding: 17px; border: 1px solid var(--border); border-radius: 13px; }
-main legend { color: var(--blue); font-size: 15px; font-weight: 700; padding: 0 7px; }
+main.dr-wau-ui legend { color: var(--blue); font-size: 15px; font-weight: 700; padding: 0 7px; text-transform: none; }
 .target { border-top: 1px solid var(--border); padding: 16px 0; }
 .target-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
 .flow { padding: 15px 0; border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; justify-content: space-between; overflow-wrap: anywhere; }
