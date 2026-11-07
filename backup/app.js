@@ -9,6 +9,7 @@ const Jobs = require('./lib/jobs');
 const BoundedJSON = require('./lib/bounded-json');
 const Diagnostics = require('./lib/diagnostics');
 const ExportPrivacy = require('./lib/export-privacy');
+const FlowSource = require('./lib/flow-source');
 const I18n = require('./settings/i18n');
 const tr = I18n.t;
 const { HomeyAPI } = require('homey-api');
@@ -422,27 +423,52 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
     finally{this.exportBusy=false;}
   }
 
+  async createBackupFlowReader() { return FlowSource.createReader(this.homey.api,this.client.id,this.homey.platformVersion); }
+
   async collectBackup(progress,phase,started) {
     if (!this.client) throw new Error(tr('De app start nog op. Probeer het zo opnieuw.'));
     const initialWarnings=this.memoryWarnings;
     const checkDeadline=()=>{
       if(Date.now()-started>180000)throw Error(tr('Backup creation timed out safely. Try again later.'));
-      if(this.memoryWarnings>initialWarnings)throw Error(tr(BoundedJSON.TOO_LARGE));
+      if(this.memoryWarnings>initialWarnings)throw Error(tr('Homey reported memory pressure. Backup creation was stopped safely.'));
     };
     const opts={$cache:false,$updateCache:false,$timeout:8000};
     progress('reading');
+    const result = {}, warnings = [], flows = [];
+    let snapshotBytes=0,apiCalls=0;
+    checkDeadline();
+    try {apiCalls++;result.folders=await this.client.flow.getFlowFolders(opts);}
+    catch (_) {result.folders={};warnings.push('folders: data could not be read.');}
+    snapshotBytes+=BoundedJSON.measure(result.folders,BoundedJSON.EXPORT_BYTES-snapshotBytes);
+    checkDeadline();phase('folders',{count:Object.keys(result.folders).length,apiCalls});
+    const readFlows=await this.createBackupFlowReader();
+    for(const type of ['standard','advanced']){
+      let count=0;apiCalls++;
+      // No whole-response JSON string, SDK Item collection or second full Flow
+      // graph copy. A failed/truncated collection must abort the entire export.
+      await readFlows(type,async(id,record)=>{
+        checkDeadline();
+        const collection={[id]:record};
+        const flow=Backup.buildFlows(result.folders,type==='standard'?collection:{},type==='advanced'?collection:{},{owned:true})[0];
+        ExportPrivacy.assertSafeFlowArguments([flow]);
+        snapshotBytes+=BoundedJSON.measure(flow,BoundedJSON.EXPORT_BYTES-snapshotBytes);
+        flows.push(flow);count++;progress('flows',flows.length);
+        if(count%25===0){
+          phase(type+'-items',{processed:count,apiCalls});
+          await new Promise(resolve=>setTimeout(resolve,0));
+        }
+        checkDeadline();
+      },BoundedJSON.EXPORT_BYTES-snapshotBytes,checkDeadline);
+      checkDeadline();phase(type,{count,apiCalls});
+    }
+    if(!flows.length)throw new Error(tr('Flows konden niet worden opgehaald. Back-up is afgebroken.'));
+    Backup.validate(flows);
     const jobs = {
-      folders: () => this.client.flow.getFlowFolders(opts),
-      standard: () => this.client.flow.getFlows(opts),
-      advanced: () => this.client.flow.getAdvancedFlows(opts),
       devices: () => this.client.devices.getDevices(opts),
       zones: () => this.client.zones.getZones(opts),
       variables: () => this.client.logic.getVariables(opts),
       apps: () => this.client.apps.getApps(opts),
     };
-    const result = {};
-    const warnings = [];
-    let snapshotBytes=0,apiCalls=0;
     // Read one manager at a time. Do not launch seven large API responses together.
     // Devices are reduced immediately, before the other collections are read.
     for(const [key,read] of Object.entries(jobs)){
@@ -468,15 +494,7 @@ module.exports = class HomeyBackupCenterApp extends Homey.App {
         warnings.push('better-logic-library: data could not be read.');
       }
     }
-    if (!Object.keys(result.standard).length && !Object.keys(result.advanced).length) {
-      throw new Error(tr('Flows konden niet worden opgehaald. Back-up is afgebroken.'));
-    }
     BoundedJSON.measure(betterLogicVariables,BoundedJSON.EXPORT_BYTES-snapshotBytes);checkDeadline();
-    const flows = Backup.buildFlows(result.folders || {}, result.standard || {}, result.advanced || {});
-    // Refuse clearly credential-bearing card arguments instead of silently
-    // deleting required arguments or changing the restored Flow's behavior.
-    ExportPrivacy.assertSafeFlowArguments(flows);
-    delete result.standard;delete result.advanced;
     phase('flows',{count:flows.length});
     const devices = safeCollection(result.devices, (d, id) => ({
       id: d.id || id,

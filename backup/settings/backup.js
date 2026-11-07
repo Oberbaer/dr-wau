@@ -17,14 +17,16 @@
     return flows;
   }
 
-  function buildFlows(folders, standard, advanced) {
+  function buildFlows(folders, standard, advanced, {owned = false} = {}) {
     for (const value of [folders, standard, advanced]) {
       if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error(tr('Homey gaf onvolledige flowgegevens.'));
     }
     const flows = [];
     for (const [type, collection] of [['standard', standard], ['advanced', advanced]]) {
       for (const [id, item] of Object.entries(collection)) {
-        const f = JSON.parse(JSON.stringify(item));
+        // Streamed server records are already owned by the exporter. Keep the
+        // default clone for callers passing SDK objects or shared UI data.
+        const f = owned ? item : JSON.parse(JSON.stringify(item));
         let folderId = f.folder;
         const path = [], seen = new Set();
         while (folderId) {
@@ -35,7 +37,8 @@
           path.unshift(folder.name);
           folderId = folder.folder ?? folder.parent ?? folder.parentFolder ?? null;
         }
-        flows.push({...f, id: f.id || id, type, folderName: path.join(' / ') || 'Root', folderPath: path});
+        const metadata = {id: f.id || id, type, folderName: path.join(' / ') || 'Root', folderPath: path};
+        flows.push(owned ? Object.assign(f, metadata) : {...f, ...metadata});
       }
     }
     return validateFlows(flows);

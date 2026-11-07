@@ -1148,7 +1148,9 @@ Object.assign(dictionaries.en, {
   "This backup exceeds the safe runtime size limit. It was aborted safely.": "This backup exceeds the safe runtime size limit. It was aborted safely.",
   "Backup data could not be serialized safely.": "Backup data could not be serialized safely.",
   "Backup creation timed out safely. Try again later.": "Backup creation timed out safely. Try again later.",
-  "The operation failed.": "The operation failed."
+  "The operation failed.": "The operation failed.",
+  "Flow data could not be read completely. No backup was created.": "Flow data could not be read completely. No backup was created.",
+  "Homey reported memory pressure. Backup creation was stopped safely.": "Homey reported memory pressure. Backup creation was stopped safely."
 });
 Object.assign(dictionaries.nl, {
   "Reading Homey data…": "Homey-gegevens lezen…",
@@ -1162,7 +1164,9 @@ Object.assign(dictionaries.nl, {
   "This backup exceeds the safe runtime size limit. It was aborted safely.": "Deze back-up overschrijdt de veilige runtimegrootte. De taak is veilig afgebroken.",
   "Backup data could not be serialized safely.": "Back-upgegevens konden niet veilig worden verwerkt.",
   "Backup creation timed out safely. Try again later.": "Back-up maken duurde te lang en is veilig afgebroken.",
-  "The operation failed.": "De taak is mislukt."
+  "The operation failed.": "De taak is mislukt.",
+  "Flow data could not be read completely. No backup was created.": "De flowgegevens konden niet volledig worden gelezen. Er is geen back-up gemaakt.",
+  "Homey reported memory pressure. Backup creation was stopped safely.": "Homey heeft geheugendruk gemeld. Het maken van de back-up is veilig afgebroken."
 });
 Object.assign(dictionaries.en, {"Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.","This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential."});
 Object.assign(dictionaries.nl, {"Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"Herkenbare wachtwoorden, pincodes, tokens en API-sleutels worden uitgesloten. Andere apparaat- en flowinstellingen kunnen nog gevoelige informatie bevatten. Bewaar back-upbestanden vertrouwelijk.","This backup includes Flows, folders, devices, supported device settings, zones, Logic variables and an app inventory. The Homey API Key, WebDAV passwords and the Logic variable ha_backup_token are excluded. Recognized passwords, PINs, tokens and API keys are excluded. Other device and Flow settings may still contain sensitive information. Keep backup files confidential.":"Deze back-up bevat flows, mappen, apparaten, ondersteunde apparaatinstellingen, zones, Logic en een app-inventaris. Herkenbare wachtwoorden, pincodes, tokens en API-sleutels worden uitgesloten. Andere apparaat- en flowinstellingen kunnen nog gevoelige informatie bevatten. Bewaar back-upbestanden vertrouwelijk."});

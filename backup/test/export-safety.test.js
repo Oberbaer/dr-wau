@@ -26,7 +26,7 @@ for(const source of ['export','getDevices','getDeviceSettingsObj','getAdvancedFl
  if(source==='betterLogic')undo=replace(f.app,'getBetterLogicVariables');
  if(source==='publish'){const original=f.app.transfers.publish;f.app.transfers.publish=()=>{throw Error('synthetic failure');};undo=()=>f.app.transfers.publish=original;}
  const handle=f.app.startExport();await tick();const status=f.app.jobs.get(handle.jobId);
- assert.equal(status.status,['export','publish'].includes(source)?'error':'done');
+ assert.equal(status.status,['export','publish','getAdvancedFlows'].includes(source)?'error':'done');
  if(status.status==='done'){assert.equal(f.app.transfers.items.size,1);f.app.transfers.release(status.result.id);}
  f.app.jobs.release(handle.jobId);undo();assert.equal(Boolean(f.app.exportBusy),false);
  const backup=await job(f.app,f.app.startExport());assert.equal(backup.stats.devices,1);

@@ -47,9 +47,16 @@ async function fixture(language='nl',options={}){
  const sandbox={module:{exports:{}},require:name=>name==='homey'?{App:class{}}:name==='homey-api'?{HomeyAPI:{createAppAPI:async()=>client,createLocalAPI:async()=>client}}:realRequire(name),Buffer,URL,setTimeout,process};
  vm.runInNewContext(fs.readFileSync(base+'/app.js','utf8'),sandbox,{filename:'app.js'});
  const app=new sandbox.module.exports();app.log=()=>{};app.error=()=>{};app.homey={flow:{getActionCard:card,getConditionCard:card,getTriggerCard:card},settings:{get:k=>structuredClone(state[k]),set:(k,v)=>state[k]=structuredClone(v),unset:k=>delete state[k]},i18n:{getLanguage:()=>language},api:{getLocalUrl:async()=> 'http://example.invalid'},app:{manifest:{version:'0.3.27'}},setInterval:()=>1,clearInterval:()=>{},notifications:{createNotification:async()=>{}}};
- await app.onInit();await new Promise(r=>setImmediate(r));return {app,state,data,calls,client,flowCards};
+ await app.onInit();
+ // Synthetic transport seam. Production uses the authenticated HTTP stream;
+ // existing app tests supply the same owned JSON records without Homey access.
+ app.createBackupFlowReader=async()=>async(type,onEntry,maxBytes,check)=>{
+  check();const records=await client.flow[type==='standard'?'getFlows':'getAdvancedFlows']();check();
+  for(const [id,record] of Object.entries(records))await onEntry(id,structuredClone(record));
+ };
+ await new Promise(r=>setImmediate(r));return {app,state,data,calls,client,flowCards};
 }
-async function job(app,handle){for(let i=0;i<30;i++){await new Promise(r=>setImmediate(r));const s=app.jobs.get(handle.jobId);if(s.status==='error')throw Error(s.error);if(s.status==='done'){const chunks=[];for(let offset=0;offset<s.result.bytes;){const p=app.transfers.read(s.result.id,offset);chunks.push(Buffer.from(p.data,'base64'));offset=p.next;}app.transfers.release(s.result.id);app.jobs.release(handle.jobId);return JSON.parse(Buffer.concat(chunks));}}throw Error('test job timed out');}
+async function job(app,handle){const deadline=Date.now()+5000;while(Date.now()<deadline){await new Promise(r=>setTimeout(r,1));const s=app.jobs.get(handle.jobId);if(s.status==='error')throw Error(s.error);if(s.status==='done'){const chunks=[];for(let offset=0;offset<s.result.bytes;){const p=app.transfers.read(s.result.id,offset);chunks.push(Buffer.from(p.data,'base64'));offset=p.next;}app.transfers.release(s.result.id);app.jobs.release(handle.jobId);return JSON.parse(Buffer.concat(chunks));}}throw Error('test job timed out');}
 function stage(app,data,kind='backup'){const bytes=Buffer.from(JSON.stringify(data)),meta=app.startBackupTransfer(bytes.length,kind);for(let offset=0;offset<bytes.length;offset+=meta.chunkBytes)app.appendBackupTransfer({id:meta.id,offset,data:bytes.subarray(offset,offset+meta.chunkBytes).toString('base64')});app.finishBackupTransfer(meta.id);return meta.id;}
 
 module.exports={fixture,job,stage};

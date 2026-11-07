@@ -438,7 +438,9 @@ Object.assign(messages, {
   "This backup exceeds the safe runtime size limit. It was aborted safely.": "Das Backup überschreitet das sichere Größenlimit der Runtime. Es wurde sicher abgebrochen.",
   "Backup data could not be serialized safely.": "Die Backupdaten konnten nicht sicher verarbeitet werden.",
   "Backup creation timed out safely. Try again later.": "Die Backup-Erstellung hat das Zeitlimit erreicht und wurde sicher abgebrochen.",
-  "The operation failed.": "Der Vorgang ist fehlgeschlagen."
+  "The operation failed.": "Der Vorgang ist fehlgeschlagen.",
+  "Flow data could not be read completely. No backup was created.": "Die Flow-Daten konnten nicht vollständig gelesen werden. Es wurde kein Backup erstellt.",
+  "Homey reported memory pressure. Backup creation was stopped safely.": "Homey hat Speicherdruck gemeldet. Die Backup-Erstellung wurde sicher abgebrochen."
 });
 if(typeof module!=='undefined'&&module.exports)module.exports=messages;else root.BackupGerman=messages;
 })(typeof globalThis!=='undefined'?globalThis:this);
