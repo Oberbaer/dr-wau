@@ -115,9 +115,9 @@ test('device watch shows an old measurement timestamp without invoking a write A
   dom.window.eval(script);
   dom.window.onHomeyReady({ ready() {}, api(method, route, body, done) { calls.push({ method, route }); done(null, route === '/report' ? { report: null } : overview); } });
   await new Promise(resolve => setImmediate(resolve));
-  assert.match(dom.window.document.querySelector('#watchdog-monitoring-rows').textContent, /Messdaten prüfen:.*62.0 Tage/);
+  assert.match(dom.window.document.querySelector('#watchdog-monitoring-rows').textContent, /(?:Messdaten prüfen:.*62\.0 Tage|Check measurements:.*62\.0 days)/);
   dom.window.document.querySelector('#device-list button').click();
-  assert.match(dom.window.document.querySelector('#detail-simple').textContent, /Kein Beweis für Funkstille/);
+  assert.match(dom.window.document.querySelector('#detail-simple').textContent, /(?:Kein Beweis für Funkstille|Not proof of radio silence)/);
   assert.match(dom.window.document.querySelector('#detail-expert').textContent, /2026-08-09T00:00:00.000Z/);
   assert.equal(calls.every(call => call.method === 'GET'), true);
   dom.window.close();
