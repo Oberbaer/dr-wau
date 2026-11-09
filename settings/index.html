@@ -491,6 +491,13 @@
   function checkedIds(id) {
     return [...byId(id).querySelectorAll('input[type="checkbox"]:checked')].map(checkbox => checkbox.value);
   }
+  function measurementReviewText(data) {
+    if (data?.status !== 'review' || !Number.isFinite(data.ageHours)) return '';
+    const duration = data.ageHours >= 48 ? (data.ageHours / 24).toFixed(1) + (de ? ' Tage' : ' days') : data.ageHours.toFixed(1) + ' h';
+    return de
+      ? 'Messdaten prüfen: letzte bekannte Aktualisierung vor ' + duration + '. Kein Beweis für Funkstille.'
+      : 'Check measurements: latest known update ' + duration + ' ago. Not proof of radio silence.';
+  }
   function renderMonitoring(overview) {
     const body = byId('watchdog-monitoring-rows'); body.replaceChildren();
     let problems = 0;
@@ -515,6 +522,8 @@
       source.textContent = assessment ? `${assessment.heartbeat.sourceLabel} · ${assessment.heartbeat.ageHours === null ? '–' : `${assessment.heartbeat.ageHours.toFixed(1)} h`}` : '–';
       result.textContent = assessment ? `${assessment.category} · ${assessment.battery.level === null ? '–' : `${assessment.battery.level} %${assessment.battery.stale ? (de ? ' (veraltet)' : ' (stale)') : ''}`}` : t(device.ignored ? 'diagnosticExcluded' : 'diagnosticPending');
       if (assessment) { const reason = document.createElement('small'); reason.textContent = `${assessment.heartbeat.reason}${assessment.battery.problem ? ` ${assessment.battery.problem.message}` : ''}`; result.append(reason); }
+      const measurementHint = measurementReviewText(assessment?.measurement);
+      if (measurementHint) { const hint = document.createElement('small'); hint.textContent = measurementHint; result.append(hint); }
       row.append(profileCell, limitCell, source, result); body.append(row);
     }
     byId('watchdog-diagnostic-summary').textContent = `${t('diagnosticPreview')}: ${problems} ${t('diagnosticProblems')}`;
@@ -595,6 +604,8 @@
       ? `${assessment.profile.automaticWarningAfterHours} h` : 'keine automatische Schweigewarnung';
     const recommendationText = `Dr.-Wau-Empfehlung: ${recommendation}.${assessment?.profile?.mode === 'manual' ? ` Deine Einstellung: ${assessment.profile.warningAfterHours} h.` : ''}`;
     byId('detail-simple').textContent += ` ${assessment?.profile?.activityDescription || ''} ${recommendationText}`;
+    const measurementHint = measurementReviewText(assessment?.measurement);
+    if (measurementHint) byId('detail-simple').textContent += ' ' + measurementHint;
     const reason = ({ irregular_intervals: `Unregelmäßige Intervalle: P90/P10 = ${learning?.regularityRatio?.toFixed(1) || '–'} (höchstens 12 für ein gelerntes Profil).`,
       too_few_intervals: `Zu wenige Intervalle: ${learning?.sampleCount || 0}; mindestens 4 für die Lernphase, 10 für ein gelerntes Profil.`,
       too_short_observation: 'Weniger als 1 Tag verwertbare Beobachtung; mindestens 3 Tage für ein gelerntes Profil.',
@@ -616,6 +627,7 @@
     const modelLabel = ({ activity: 'Aktivitätsbasiert', periodic: 'Periodisch', event_only: 'Nur Ereignisse' })[assessment?.profile?.learningModel] || 'noch nicht gespeichert';
     const activityText = activity ? `\nKontakt-Rohereignisse: ${activity.rawEventCount}\nAktivitätsblöcke (${activity.blockMinutes} Minuten): ${activity.blockCount}\nBeobachtungstage (UTC, einschließlich stiller Tage): ${activity.observedDays}\nTage mit Aktivität: ${activity.activeDays}\nAktive Tage: ${activity.activeDayPercent.toFixed(1)} %\nPausen zwischen Blöcken: ${activity.pauseCount}\nNormale Pausen verwendet: ${activity.usedPauseCount}\nPausenausreißer ausgeschlossen: ${activity.excludedPauseCount}\nMedian Ruhephase: ${activity.medianPauseHours?.toFixed(1) ?? '–'} h · P90: ${activity.p90PauseHours?.toFixed(1) ?? '–'} h · P95: ${activity.p95PauseHours?.toFixed(1) ?? '–'} h\nLängste normale Aktivitätspause: ${activity.maxNormalPauseHours?.toFixed(1) ?? '–'} h` : '';
     byId('detail-expert').textContent = `Lernmodell: ${modelLabel}\n${byId('detail-expert').textContent}${activityText}\nAutomatische Empfehlung: ${recommendation}${assessment?.profile?.mode === 'manual' ? `\nDeine Einstellung: ${assessment.profile.warningAfterHours} h` : ''}`;
+    if (assessment?.measurement?.timestamp) byId('detail-expert').textContent += '\n' + (de ? 'Letzte Messwertaktualisierung' : 'Latest measurement update') + ': ' + assessment.measurement.timestamp + ' (' + assessment.measurement.capability + ')';
     byId('detail-close').focus();
   }
   async function saveDeviceProfile(changes) {

@@ -103,3 +103,22 @@ test('activity details show calculated usage and keep recommendation separate fr
     'Median Ruhephase:', 'Automatische Empfehlung: 30 h', 'Deine Einstellung: 24 h']) assert.ok(expert.includes(expected), expected);
   dom.window.close();
 });
+
+test('device watch shows an old measurement timestamp without invoking a write API', async () => {
+  const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://my.homey.app/' });
+  const item = assessment('assumed');
+  item.measurement = { status: 'review', ageHours: 62 * 24, timestamp: '2026-08-09T00:00:00.000Z', capability: 'measure_humidity' };
+  const overview = { config: { enabled: false, timeline: false, flowTrigger: false, pushUserIds: [], checkHours: 6, staleHours: 24, repeatHours: 24,
+    ignoredDeviceIds: [], ignoredZoneIds: [], deviceProfiles: {}, vacation: { enabled: false, until: null } },
+    batteryDevices: [{ id: 'bath', name: 'Synthetic Bath Sensor', zone: null, ignored: false, assessment: item }], zones: [], users: [], status: null };
+  const calls = [];
+  dom.window.eval(script);
+  dom.window.onHomeyReady({ ready() {}, api(method, route, body, done) { calls.push({ method, route }); done(null, route === '/report' ? { report: null } : overview); } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(dom.window.document.querySelector('#watchdog-monitoring-rows').textContent, /Messdaten prüfen:.*62.0 Tage/);
+  dom.window.document.querySelector('#device-list button').click();
+  assert.match(dom.window.document.querySelector('#detail-simple').textContent, /Kein Beweis für Funkstille/);
+  assert.match(dom.window.document.querySelector('#detail-expert').textContent, /2026-08-09T00:00:00.000Z/);
+  assert.equal(calls.every(call => call.method === 'GET'), true);
+  dom.window.close();
+});

@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { timestamp, evaluateHeartbeat, evaluateBattery, profileForDevice } = require('../lib/heartbeat');
+const { timestamp, evaluateHeartbeat, evaluateMeasurementFreshness, evaluateBattery, profileForDevice } = require('../lib/heartbeat');
 const { evaluateBatteryDevices } = require('../lib/battery-watchdog');
 const NOW = Date.parse('2026-09-29T15:00:00Z');
 const HOUR = 3600000;
@@ -101,4 +101,35 @@ test('nine synthetic regression cases separate stale measurements, event-only de
   assert.equal(result.assessments.filter(item => item.category === 'LEBENSZEICHEN_OK').length, 4);
   assert.equal(result.assessments.find(item => item.id === 'button-low').category, 'BATTERIE_KRITISCH');
   assert.equal(result.pending.some(item => /Überwachung unklar/.test(item.message)), false);
+});
+
+test('62-day old measurements are shown as review even with a fresh native heartbeat, without an alert', () => {
+  const old = 62 * 24;
+  const d = sensor('bath', { lastSeenAt: at(0.2), capabilitiesObj: {
+    measure_humidity: cap(56.7, old), measure_temperature: cap(26.8, old), measure_battery: cap(70, old),
+  } });
+  const result = evaluateBatteryDevices([d], {}, { timeline: false }, NOW);
+  const assessment = result.assessments[0];
+  assert.equal(assessment.heartbeat.status, 'active');
+  assert.equal(assessment.measurement.status, 'review');
+  assert.equal(assessment.measurement.ageHours, old);
+  assert.equal(assessment.measurement.confidence, 'indirect');
+  assert.equal(result.activeProblems, 0);
+  assert.equal(result.pending.length, 0);
+});
+
+test('measurement freshness never invents timestamps and excludes event-only remotes', () => {
+  assert.equal(evaluateMeasurementFreshness(sensor('missing', { capabilitiesObj: { measure_humidity: cap(50, null), measure_battery: cap(70, 0.2) } }), NOW).status, 'unknown');
+  assert.equal(evaluateMeasurementFreshness(sensor('remote', { class: 'remote', capabilitiesObj: { measure_humidity: cap(50, 1500) } }), NOW).status, 'not_applicable');
+  assert.equal(evaluateMeasurementFreshness(sensor('recent', { capabilitiesObj: { measure_humidity: cap(50, 1500), measure_temperature: cap(20, 2) } }), NOW).status, 'recent');
+  assert.equal(evaluateMeasurementFreshness(sensor('future', { capabilitiesObj: { measure_humidity: cap(50, -1) } }), NOW).status, 'unknown');
+});
+
+test('battery and actuator timestamps cannot mask an old sensor measurement', () => {
+  const d = sensor('old', { capabilitiesObj: {
+    measure_battery: cap(70, 0.2), target_temperature: cap(20, 0.1), onoff: cap(true, 0.1), measure_humidity: cap(56.7, 80),
+  } });
+  const result = evaluateMeasurementFreshness(d, NOW);
+  assert.equal(result.status, 'review');
+  assert.equal(result.capability, 'measure_humidity');
 });
