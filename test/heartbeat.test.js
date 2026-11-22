@@ -49,7 +49,8 @@ test('old sensor values produce a data-quality warning, not an offline claim', (
   const result = evaluateHeartbeat(sensor('a', { capabilitiesObj: { measure_humidity: cap(50, 1000) } }), {}, NOW);
   assert.equal(result.status, 'data_stale');
   assert.equal(result.category, 'NICHT_SICHER_BEWERTBAR');
-  assert.match(result.problem.message, /Kommunikation nicht sicher beurteilbar/);
+  assert.equal(result.problem, null);
+  assert.match(result.reason, /kein Kommunikations-Timestamp/);
 });
 
 test('vacuum profiles use status reports without applying button or contact assumptions', () => {
@@ -97,10 +98,21 @@ test('nine synthetic regression cases separate stale measurements, event-only de
   ];
   const result = evaluateBatteryDevices(devices, {}, {}, NOW);
   assert.equal(result.checkedDevices, 9);
-  assert.equal(result.activeProblems, 3);
+  assert.equal(result.activeProblems, 1);
   assert.equal(result.assessments.filter(item => item.category === 'LEBENSZEICHEN_OK').length, 4);
   assert.equal(result.assessments.find(item => item.id === 'button-low').category, 'BATTERIE_KRITISCH');
   assert.equal(result.pending.some(item => /Überwachung unklar/.test(item.message)), false);
+});
+
+test('old measurements without native or raw-event evidence remain diagnostic with an explicit threshold', () => {
+  const d = sensor('old-only', { capabilitiesObj: { measure_humidity: cap(56, 96), measure_battery: cap(80, 100) } });
+  const config = { timeline: true, deviceProfiles: { 'old-only': { mode: 'manual', profile: 'sensor', warningAfterHours: 24 } } };
+  const result = evaluateBatteryDevices([d], {}, config, NOW);
+  assert.equal(result.assessments[0].measurement.status, 'review');
+  assert.equal(result.assessments[0].heartbeat.status, 'data_stale');
+  assert.equal(result.pending.length, 0);
+  const withHeartbeat = evaluateBatteryDevices([{ ...d, lastSeenAt: at(48) }], {}, config, NOW);
+  assert.deepEqual(withHeartbeat.pending.map(item => item.type), ['communication']);
 });
 
 test('62-day old measurements are shown as review even with a fresh native heartbeat, without an alert', () => {

@@ -67,6 +67,7 @@ test('periodic sensor and vacuum learn class-sensitive thresholds', () => {
   assert.equal(warningHours(sensorLearning, 'sensor'), 16);
   assert.equal(warningHours(sensorLearning, 'vacuum'), 16);
   const sensor = { ...contact(20), id: 'sensor-1', capabilities: ['measure_humidity', 'measure_battery'], capabilitiesObj: { measure_humidity: cap(45, NOW - 20 * HOUR), measure_battery: cap(70, NOW - 100 * HOUR) } };
+  sensor.lastSeenAt = new Date(NOW - 20 * HOUR).toISOString();
   const state = { schema: 1, devices: { 'sensor-1': sensorLearning } };
   assert.equal(evaluateBatteryDevices([sensor], {}, {}, NOW, {}, {}, state).assessments[0].heartbeat.category, 'UNGEWOEHNLICH_STILL');
 });

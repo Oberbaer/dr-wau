@@ -82,6 +82,34 @@ test('failed recovery channel is retried without repeating a successful recovery
   assert.deepEqual(retry.pending[0].routes, ['push:u']);
 });
 
+test('pending recovery waits through unknown data and retains successful channel delivery', () => {
+  const config = { pushUserIds: ['u'] };
+  const first = evaluateBatteryDevices([device('sensor', 48, 2)], {}, config, NOW);
+  markDelivered(first.state, first.pending.map(item => item.key), NOW, ['timeline', 'push:u']);
+  const recovery = evaluateBatteryDevices([device('sensor', 0, 80)], first.state, config, NOW + 1000);
+  assert.equal(recovery.pending.filter(item => item.kind === 'recovery').length, 2);
+  markDelivered(recovery.state, recovery.pending.map(item => item.key), NOW + 1000, ['timeline']);
+  const uncertain = evaluateBatteryDevices([device('sensor', null, null)], recovery.state, config, NOW + 2000);
+  assert.equal(uncertain.pending.length, 0);
+  const restored = evaluateBatteryDevices([device('sensor', 0, 80)], uncertain.state, config, NOW + 3000);
+  assert.deepEqual(restored.pending.map(item => [item.kind, item.type, item.routes]).sort(), [
+    ['recovery', 'battery', ['push:u']], ['recovery', 'communication', ['push:u']],
+  ]);
+});
+
+test('raising the threshold and reading a stale healthy percentage do not confirm recovery', () => {
+  const first = evaluateBatteryDevices([device('sensor', 30, 2)], {}, {}, NOW);
+  markDelivered(first.state, first.pending.map(item => item.key), NOW, ['timeline']);
+  const staleHealthy = device('sensor', 30, 80);
+  staleHealthy.capabilitiesObj.measure_battery.lastUpdated = new Date(NOW - 100 * 86400000).toISOString();
+  const stillUncertain = evaluateBatteryDevices([staleHealthy], first.state, { staleHours: 48 }, NOW + 1000);
+  assert.equal(stillUncertain.pending.length, 0);
+  assert.ok(stillUncertain.state.devices.sensor.unresolved.battery);
+  assert.ok(stillUncertain.state.devices.sensor.unresolved.communication);
+  const restored = evaluateBatteryDevices([device('sensor', 0, 80)], stillUncertain.state, { staleHours: 48 }, NOW + 2000);
+  assert.equal(restored.pending.filter(item => item.kind === 'recovery').length, 2);
+});
+
 test('legacy missing-data alerts do not generate an all-clear or hide battery problems', () => {
   const previous = { schema: 1, devices: { button: { fingerprint: 'unknown', notifiedAt: NOW } } };
   const next = evaluateBatteryDevices([{ ...device('button', null, 1), class: 'remote' }], previous, {}, NOW + 1000);

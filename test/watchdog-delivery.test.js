@@ -8,18 +8,84 @@ const vm = require('node:vm');
 
 const appPath = path.join(__dirname, '..', 'app.js');
 const moduleStub = { exports: {} };
+let simulatedNow;
 vm.runInNewContext(fs.readFileSync(appPath, 'utf8'), {
   module: moduleStub,
   exports: moduleStub.exports,
+  Date: class extends Date { static now() { return simulatedNow ?? Date.now(); } },
   require(id) {
     if (id === 'homey') return { App: class {} };
     if (id === 'homey-api') return { HomeyAPI: {} };
-    if (id === './backup/app') return class {};
+    if (id === './backup/app') return class { async onInit() {} onUninit() {} };
     return require(path.join(__dirname, '..', id));
   },
 }, { filename: appPath });
 
 const App = moduleStub.exports;
+
+test('a fresh app instance resumes persisted per-device warnings and recoveries without duplicate delivery', async () => {
+  const start = Date.parse('2026-09-12T20:00:00.000Z');
+  const hour = 3600000;
+  const iso = value => new Date(value).toISOString();
+  const configKey = 'battery_watchdog_config_v1';
+  const stateKey = 'battery_watchdog_state_v2';
+  const settings = new Map([[configKey, { enabled: false, timeline: true, repeatHours: 6 }]]);
+  const sent = [];
+  const device = (id, level, lastSeenAt) => ({ id, name: id, lastSeenAt, capabilities: ['measure_battery'],
+    capabilitiesObj: { measure_battery: { value: level } } });
+  let devices = { first: device('first', 4, iso(start - 48 * hour)), second: device('second', 80, null) };
+  async function boot() {
+    const app = new App();
+    app.log = app.error = () => {};
+    const card = () => ({ registerRunListener() {} });
+    app.homey = {
+      settings: { get: key => structuredClone(settings.get(key)), set: (key, value) => settings.set(key, JSON.parse(JSON.stringify(value))) },
+      flow: { getActionCard: card, getConditionCard: card, getTriggerCard: card },
+      notifications: { createNotification: async ({ excerpt }) => sent.push(excerpt) },
+    };
+    app.ensureApi = async () => ({ call: async () => devices, zones: { getZones: async () => ({}) } });
+    await app.onInit();
+    assert.equal(app.watchdogTimer, null);
+    return app;
+  }
+  try {
+    simulatedNow = start;
+    let app = await boot();
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 1);
+    assert.match(sent[0], /kein bestätigtes Lebenszeichen/);
+    assert.match(sent[0], /Batterie zuletzt 4 %/);
+    assert.equal(settings.get(stateKey).devices.first.problems.battery.deliveryTimes.timeline, start);
+    assert.equal(settings.get(stateKey).devices.first.problems.communication.deliveryTimes.timeline, start);
+    app.onUninit();
+    app = await boot();
+    simulatedNow = start + 6 * hour - 1;
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 1);
+    devices = { ...devices, second: device('second', 4, null) };
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 2);
+    assert.match(sent[1], /second/);
+    assert.doesNotMatch(sent[1], /first/);
+    simulatedNow = start + 6 * hour;
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 3);
+    assert.match(sent[2], /first/);
+    assert.doesNotMatch(sent[2], /second/);
+    simulatedNow++;
+    devices = { ...devices, first: device('first', 4, iso(simulatedNow)) };
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 4);
+    assert.match(sent[3], /wieder aktuelles Lebenszeichen/);
+    assert.doesNotMatch(sent[3], /Batterieproblem behoben/);
+    app.onUninit();
+    app = await boot();
+    simulatedNow++;
+    await app.runBatteryWatchdog('simulation');
+    assert.equal(sent.length, 4);
+    app.onUninit();
+  } finally { simulatedNow = undefined; }
+});
 
 test('watchdog sends only through explicitly enabled channels', async () => {
   const app = Object.create(App.prototype);
