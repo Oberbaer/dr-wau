@@ -53,6 +53,23 @@ test('coverage failure is explicit instead of silently presenting a complete rep
   assert.ok(report.findings.some((finding) => finding.code === 'scan_coverage_incomplete'));
 });
 
+test('disabled ALT flows keep diagnostic evidence as info without masking an active ALT flow', () => {
+  const missing = '11111111-1111-4111-8111-111111111111';
+  const unavailable = '22222222-2222-4222-8222-222222222222';
+  const flow = (id, enabled) => ({ id, name: `ALT_${id}`, enabled,
+    trigger: { id: `homey:device:${missing}:trigger` }, actions: [{ id: `homey:device:${unavailable}:action` }] });
+  const report = analyzeSnapshot(snapshot({
+    normalFlows: { archived: flow('archived', false), active: flow('active', true) },
+    devices: { [unavailable]: { id: unavailable, name: 'Sensor', available: false } },
+  }));
+  const archived = report.findings.filter(finding => finding.subject.startsWith('ALT_archived'));
+  assert.deepEqual(archived.map(finding => [finding.code, finding.severity]).sort(), [
+    ['flow_uses_unavailable_device', 'info'], ['missing_device_reference', 'info'],
+  ]);
+  assert.match(archived.find(finding => finding.code === 'flow_uses_unavailable_device').title.de, /^Deaktivierter Flow/);
+  assert.equal(report.findings.find(finding => finding.code === 'missing_device_reference' && finding.subject === 'ALT_active').severity, 'critical');
+});
+
 test('stale Zigbee timestamps are findings but do not claim a mesh defect', () => {
   const generatedAt = new Date(Date.now() - 8 * 86400000).toISOString();
   const report = analyzeSnapshot(snapshot({
