@@ -1,5 +1,20 @@
 # Dr. Wau 1.0.0 – Branding nach Privacy-Abnahme
 
+## Schäferhund und Petrol-Palette
+
+Das neue Maskottchen steht als SVG in `assets/dr-wau.svg`. Das Werkzeug unter
+`tools/generate-assets.cjs` rendert daraus den Avatar und die drei Store-Bilder.
+Das monochrome App-Icon greift dieselbe Silhouette auf.
+
+Hauptseite und Backups verwenden eine gemeinsame Palette. Je 24 Kombinationen
+aus Text, Statusfarben, Flächen und Buttonfarben wurden geprüft. Der niedrigste
+Kontrast beträgt 5,41:1 im hellen und 6,01:1 im dunklen App-Theme.
+
+Die frühere Live-Messung zeigte im dunklen Homey-Webmodus einen Farbfilter am
+äußeren Frame. Dieser kann die komplette App einschließlich der Bilder umfärben
+und liegt außerhalb ihres Stylesheets. Die neuen App-Farben verwenden keine
+Gegenfilter. Die Darstellung im Homey-Dialog bleibt manuell abzunehmen.
+
 Diese Änderungen folgen auf `BACKUP PRIVACY PASS` und sind ein separater
 Branding-Commit. Der Branding-Stand `0328f4c` wurde am 3. Oktober 2026 als
 Development-App installiert und anschließend 60 Sekunden beobachtet:

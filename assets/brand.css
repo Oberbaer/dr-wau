@@ -1,16 +1,24 @@
 :root {
   color-scheme: light dark;
-  --accent: #0d8385;
-  --brand-highlight: #0f8f91;
-  --brand-button: #0d8385;
-  --brand-line: #35bdb1;
-  --page: #f7fbfb;
+  --brand-primary: #087f8c;
+  --accent: #066772;
+  --brand-highlight: var(--brand-primary);
+  --brand-button: #066c78;
+  --brand-button-hover: #055762;
+  --brand-line: #087f8c;
+  --page: #f3f7f8;
   --surface: #ffffff;
-  --soft: #edf7f6;
-  --text: #183b40;
-  --muted: #526d72;
-  --border: #c9dfdd;
-  --brand-hero: linear-gradient(135deg, #e4f5f2, #f7fbfb);
+  --soft: #e4eef1;
+  --text: #172b35;
+  --muted: #415c69;
+  --border: #a4bac4;
+  --low: #627984;
+  --success: #226c41;
+  --medium: #934700;
+  --high: #a22d33;
+  --critical: #a52430;
+  --critical-button: #a52430;
+  --brand-hero: linear-gradient(135deg, var(--soft), var(--surface));
 }
 /* Homey's legacy form CSS loads after app CSS. Scope these rules to our
    custom views and outrank its label and typed-input selectors. */
@@ -37,16 +45,27 @@ main.dr-wau-ui input[type='search'] {
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --accent: #68d7ca;
-    --brand-highlight: #68d7ca;
-    --brand-button: #0d8385;
-    --brand-line: #35bdb1;
-    --page: #0e1c20;
-    --surface: #172b30;
-    --soft: #20373c;
-    --text: #edf7f6;
-    --muted: #b1ceca;
-    --border: #3c5c5f;
-    --brand-hero: linear-gradient(135deg, #1a3c3f, #172b30);
+    --accent: #8bdce2;
+    --brand-highlight: #65cbd2;
+    --brand-line: #65cbd2;
+    --page: #102a35;
+    --surface: #183641;
+    --soft: #20424e;
+    --text: #f3f7f8;
+    --muted: #b9ccd4;
+    --border: #547582;
+    --low: #83a3af;
+    --success: #8be0ac;
+    --medium: #ffc478;
+    --high: #ffc2ab;
+    --critical: #ffabb2;
   }
+}
+
+main.dr-wau-ui :is(a, button, input, select, summary, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+main.dr-wau-ui input[type='checkbox'] {
+  accent-color: var(--brand-primary);
 }

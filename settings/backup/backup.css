@@ -1,7 +1,7 @@
 :root {
   color-scheme: light dark;
-  --blue: var(--accent); --sky: var(--brand-line); --orange: #bd702d;
-  --danger: #ad353b; --success: #236a50;
+  --blue: var(--accent); --sky: var(--brand-line); --orange: var(--brand-primary);
+  --danger: var(--critical);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 * { box-sizing: border-box; }
@@ -9,7 +9,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: 18px; }
 body { margin: 0; background: var(--page); color: var(--text); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; }
 main { max-width: 960px; padding: 24px; margin: auto; }
-main a { color: var(--blue); text-underline-offset: 4px; }
+main a:not(.button) { color: var(--blue); text-underline-offset: 4px; }
 main h1 { color: var(--text); font-size: clamp(28px, 5vw, 38px); line-height: 1.15; margin: 9px 0 12px; }
 main h2 { color: var(--text); font-size: 21px; line-height: 1.35; margin: 0 0 14px; }
 main p { color: var(--muted); margin: 10px 0 16px; overflow-wrap: anywhere; }
@@ -38,9 +38,10 @@ main p { color: var(--muted); margin: 10px 0 16px; overflow-wrap: anywhere; }
 .stat { padding: 12px; background: var(--soft); border-radius: 12px; text-align: center; }
 .stat b { display: block; font-size: 24px; color: var(--blue); }
 main button, main .button { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; max-width: 100%; font: 650 15px/1.4 system-ui, sans-serif; background: var(--brand-button); color: #fff; border: 1px solid transparent; border-radius: 10px; padding: 11px 16px; cursor: pointer; text-decoration: none; white-space: normal; }
-main button:hover, main .button:hover { filter: brightness(1.08); }
+main button:hover, main .button:hover { background: var(--brand-button-hover); }
+main button.secondary:hover { background: var(--surface); }
 main button.secondary { background: var(--soft); color: var(--blue); border-color: var(--border); }
-main button.danger { background: var(--danger); color: #fff; }
+main button.danger { background: var(--critical-button); color: #fff; }
 main button:disabled { opacity: .5; cursor: not-allowed; }
 main input, main select { font: 16px/1.5 system-ui, sans-serif; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); }
 main select option { background: var(--surface); color: var(--text); }
@@ -82,11 +83,6 @@ main :focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
 .file-input { position: absolute; width: 1px; height: 1px; opacity: 0; padding: 0; min-height: 0; }
 .file-button:has(+input:focus-visible) { outline: 3px solid var(--sky); outline-offset: 3px; }
 .file-button:has(+input:disabled) { opacity: .5; cursor: not-allowed; }
-@media (prefers-color-scheme: dark) {
-  :root { --danger: #ffb2b5; --success: #8addb4; }
-  main button.danger { background: #99373d; color: #fff; }
-  main input[type='checkbox'] { accent-color: var(--accent); }
-}
 @media (max-width: 600px) {
   main { padding: 14px; }
   .hero { padding: 20px; gap: 12px; }
