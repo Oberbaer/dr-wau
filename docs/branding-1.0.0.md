@@ -2,9 +2,10 @@
 
 ## Schäferhund und Petrol-Palette
 
-Das neue Maskottchen steht als SVG in `assets/dr-wau.svg`. Das Werkzeug unter
-`tools/generate-assets.cjs` rendert daraus den Avatar und die drei Store-Bilder.
-Das monochrome App-Icon greift dieselbe Silhouette auf.
+Die unveränderte Originalvorlage liegt als `Dr_Wau_Schaeferhund_Designvorlage.png`
+im Repository. `tools/generate-assets.cjs` leitet daraus das vollständige Motiv
+mit 1.024 Px, Kopfausschnitte mit 48, 128 und 256 Px und die drei Store-Bilder ab.
+Das monochrome Homey-Icon vereinfacht den Kopf der Vorlage zur Silhouette.
 
 Hauptseite und Backups verwenden eine gemeinsame Palette. Je 24 Kombinationen
 aus Text, Statusfarben, Flächen und Buttonfarben wurden geprüft. Der niedrigste
