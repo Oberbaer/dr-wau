@@ -1,5 +1,3 @@
-Dr. Wau verbindet eine transparente Zustandsübersicht für Flows, Geräte, Apps und Abhängigkeiten mit Batterieüberwachung und Konfigurationsbackups.
+Dr. Wau zeigt dir, wo dein Smart Home Aufmerksamkeit braucht. Der lokale Gesundheitscheck fasst zusammengehörige Befunde zu Flows, Geräten und Apps zusammen. Die Gerätewache kann in der Homey-Timeline warnen oder Push-Meldungen an ausgewählte Empfänger senden.
 
-Der Gesundheitscheck liefert Kategoriewerte und priorisierte Befunde. Der Batterie-Watchdog prüft in einem einstellbaren Intervall die vorhandenen Gerätezeitstempel in Homey, warnt bei ausbleibenden Lebenszeichen und kann Meldungen an die Homey-Timeline sowie per Handy-Push an alle Homey-Benutzer senden.
-
-Die Zustandsanalyse läuft lokal auf Homey Pro und steuert keine Geräte. Ganze Zonen samt Unterzonen lassen sich von Batteriemeldungen und Gerätebefunden ausnehmen. Backups können heruntergeladen oder an eingerichtete Ziele gesendet werden. Eine gezielte Wiederherstellung erfordert Auswahl und Bestätigung.
+Lade Konfigurationsbackups herunter oder speichere sie an einem selbst eingerichteten Ziel. Bei der Wiederherstellung wählst du die gewünschten Änderungen aus und bestätigst sie vor der Ausführung.

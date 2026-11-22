@@ -30,6 +30,16 @@
   "author": {
     "name": "Oberbaer"
   },
+  "contributors": {
+    "developers": [
+      {
+        "name": "Dennis Weel"
+      },
+      {
+        "name": "Mike_Nono"
+      }
+    ]
+  },
   "api": {
     "getReport": {
       "method": "get",

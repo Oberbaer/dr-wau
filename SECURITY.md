@@ -7,14 +7,14 @@ selection and confirmation. The app does not expose an external server.
 
 ## Dependency audit
 
-The 2026-10-02 `npm audit --omit=dev` reports four moderate affected packages:
+The 2026-11-22 release check upgraded `basic-ftp` to 6.2.6 to address
+[GHSA-5pm8-86m8-9m6r](https://github.com/advisories/GHSA-5pm8-86m8-9m6r) and
+[GHSA-r4jh-29pc-gfqr](https://github.com/advisories/GHSA-r4jh-29pc-gfqr).
+After this update, `npm audit --omit=dev` reports four moderate affected packages:
 `parseuri`, `engine.io-client`, `socket.io-client` and the direct `homey-api`
 dependency. They belong to the known `parseuri` advisory chain. These are
-runtime dependencies; the audit counts affected packages, not four separate
-root causes. The complete audit reports 22 affected packages (2 low,
-13 moderate, 7 high), of which 18 are development-only (2 low, 9 moderate,
-7 high). Advisory data changes; re-run before distribution. No dependency
-versions or forced audit fixes were applied for the identity migration.
+runtime dependencies affected by a single advisory. Advisory data changes.
+Re-run the production audit before distribution. No forced audit fixes were applied.
 
 Installed `parseuri` 0.0.6 is in the affected range of
 [GHSA-6fx8-h7jm-663j](https://github.com/advisories/GHSA-6fx8-h7jm-663j).
