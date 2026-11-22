@@ -70,6 +70,7 @@
     .finding.ignored { opacity: .82; border-left-style: dashed; }
     .finding h3 { font-size: 15px; margin: 5px 0; }
     .finding p { margin: 4px 0 0; font-size: 13px; }
+    .cause-details > details { border-top: 1px solid var(--border); }
     .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11px; opacity: .75; text-transform: uppercase; letter-spacing: .04em; }
     details { margin-top: 10px; }
     summary { cursor: pointer; color: var(--accent); font-weight: 700; font-size: 13px; }
@@ -292,6 +293,14 @@
     boardDescription: ['Ignored findings do not affect the active score, but remain available here and can be restored at any time.', 'Ignorierte Befunde beeinflussen den aktiven Score nicht, bleiben hier aber sichtbar und können jederzeit zurückgeholt werden.'],
     boardEmpty: ['No saved decisions yet.', 'Noch keine gespeicherten Entscheidungen.'], scoreHint: ['Ignored findings and user priority changes are already reflected in the score.', 'Ignorierte Befunde und geänderte Prioritäten sind im Score bereits berücksichtigt.'],
     category: ['Category', 'Kategorie'], categoryAll: ['All categories', 'Alle Kategorien'], filteredEmpty: ['No findings in this category.', 'Keine Befunde in dieser Kategorie.'],
+    cause_unavailable_device: ['Device unavailable', 'Gerät nicht verfügbar'],
+    cause_missing_device: ['Missing device', 'Fehlendes Gerät'],
+    cause_inactive_app: ['App is not running', 'App läuft nicht'],
+    cause_missing_app: ['Missing app', 'Fehlende App'],
+    cause_missing_variable: ['Missing logic variable', 'Fehlende Logikvariable'],
+    disabledFlows: ['disabled flows', 'deaktivierte Flows'],
+    flowActive: ['Active', 'Aktiv'], flowDisabled: ['Disabled', 'Deaktiviert'], flowArchived: ['Disabled archive', 'Deaktiviertes Archiv'],
+    findingDetails: ['Finding details', 'Befunddetails'], findingsCount: ['findings', 'Befunde'],
     current: ['Currently detected', 'Aktuell erkannt'], historical: ['Not detected in latest scan', 'Im letzten Scan nicht erkannt'], lastSeen: ['Last seen', 'Zuletzt gesehen'], ignored: ['Ignored', 'Ignoriert'], original: ['original', 'ursprünglich'],
     pAuto: ['Automatic', 'Automatisch'], pCritical: ['Critical', 'Kritisch'], pHigh: ['High', 'Hoch'], pMedium: ['Normal', 'Normal'], pLow: ['Low', 'Niedrig'], pUnimportant: ['Unimportant', 'Unwichtig'],
     sOpen: ['Open', 'Offen'], sAcknowledged: ['Acknowledged', 'Bestätigt'], sExpected: ['Expected / intentional', 'Erwartet / absichtlich'], sResolved: ['Resolved', 'Erledigt'],
@@ -417,7 +426,7 @@
     const severity = finding.effectiveSeverity || finding.severity || annotation?.snapshot?.severity || 'info';
     const row = document.createElement('article'); row.className = `finding ${severity}${annotation?.ignored ? ' ignored' : ''}`;
     const meta = document.createElement('div'); meta.className = 'meta';
-    const details = [severity, finding.group || annotation?.snapshot?.group, finding.confidence].filter(Boolean);
+    const details = [severity, finding.group || annotation?.snapshot?.group, finding.confidence, finding.flow && flowState(finding.flow)].filter(Boolean);
     meta.textContent = details.join(' · ');
     if (finding.severity && finding.effectiveSeverity !== finding.severity) meta.textContent += ` · ${t('original')}: ${finding.severity}`;
     if (annotation?.ignored) { const badge = document.createElement('span'); badge.className = 'badge ignored'; badge.textContent = t('ignored'); meta.append(badge); }
@@ -429,8 +438,92 @@
       const seen = document.createElement('p'); seen.className = 'muted';
       seen.textContent = `${annotation.current ? t('current') : t('historical')} · ${t('lastSeen')}: ${annotation.lastSeenAt ? new Date(annotation.lastSeenAt).toLocaleString() : '–'}`; row.append(seen);
     }
-    const detailsElement = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = t('manage');
-    detailsElement.append(summary, editor(finding, annotation)); row.append(detailsElement); return row;
+    row.append(disclosure(t('manage'), (detailsElement) => detailsElement.append(editor(finding, annotation))));
+    return row;
+  }
+
+  function flowState(flow) {
+    return t(flow.enabled ? 'flowActive' : flow.archived ? 'flowArchived' : 'flowDisabled');
+  }
+
+  function disclosure(label, renderDetails) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = label;
+    details.append(summary);
+    function loadDetails() {
+      if (!details.open) return;
+      details.removeEventListener('toggle', loadDetails);
+      renderDetails(details);
+    }
+    details.addEventListener('toggle', loadDetails);
+    return details;
+  }
+
+  const severityRank = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+  const severityOf = finding => finding.effectiveSeverity || finding.severity || 'info';
+
+  function groupFindings(findings) {
+    const groups = new Map();
+    const rows = [];
+    for (const finding of findings) {
+      const severity = severityOf(finding);
+      const cause = finding.cause;
+      if (!cause?.id || !translations[`cause_${cause.type}`]) {
+        rows.push({ finding, severity });
+        continue;
+      }
+      const key = JSON.stringify([cause.type, cause.id]);
+      if (!groups.has(key)) {
+        const group = { cause, severity, findings: [] };
+        groups.set(key, group);
+        rows.push(group);
+      }
+      const group = groups.get(key);
+      if (severityRank[severity] > severityRank[group.severity]) group.severity = severity;
+      group.findings.push(finding);
+    }
+    return rows.sort((a, b) => severityRank[b.severity] - severityRank[a.severity]);
+  }
+
+  function causeCard(group, annotations) {
+    const row = document.createElement('article');
+    row.className = `finding cause-group ${group.severity}`;
+    const title = document.createElement('h3');
+    const label = t(`cause_${group.cause.type}`);
+    title.textContent = group.cause.name || label;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = group.cause.name ? `${label} · ${group.severity}` : group.severity;
+    row.append(title, meta);
+
+    const byFlow = new Map();
+    const general = [];
+    for (const finding of group.findings) {
+      if (!finding.flow?.id) { general.push(finding); continue; }
+      if (!byFlow.has(finding.flow.id)) byFlow.set(finding.flow.id, { flow: finding.flow, findings: [] });
+      byFlow.get(finding.flow.id).findings.push(finding);
+    }
+    const flows = [...byFlow.values()].sort((a, b) => Number(b.flow.enabled) - Number(a.flow.enabled));
+    if (flows.length) {
+      const counts = document.createElement('p');
+      counts.className = 'cause-flow-counts';
+      const active = flows.filter(item => item.flow.enabled).length;
+      counts.textContent = `${active} ${t('enabledFlows')} · ${flows.length - active} ${t('disabledFlows')}`;
+      row.append(counts);
+    }
+    function appendFindings(container, items) {
+      for (const finding of items) container.append(findingCard(finding, annotations.get(finding.id)));
+    }
+    const details = disclosure(`${t('findingDetails')} · ${group.findings.length} ${t('findingsCount')}`, (container) => {
+      appendFindings(container, general);
+      for (const item of flows) {
+        container.append(disclosure(`${item.flow.name} · ${flowState(item.flow)}`, (flowDetails) => appendFindings(flowDetails, item.findings)));
+      }
+    });
+    details.className = 'cause-details';
+    row.append(details);
+    return row;
   }
 
   function scoreCard(label, score, main = false) {
@@ -473,7 +566,9 @@
       : `${filteredFindings.length} / ${report.findings.length} · ${filteredIgnored.length} ${t('ignored')}`;
     if (!filteredFindings.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = report.findings.length ? t('filteredEmpty') : t('noFindings'); findings.append(empty); return; }
     const annotationMap = new Map(latestAnnotations.map((item) => [item.id, item]));
-    for (const item of filteredFindings.slice(0, 250)) findings.append(findingCard(item, annotationMap.get(item.id)));
+    for (const row of groupFindings(filteredFindings)) {
+      findings.append(row.finding ? findingCard(row.finding, annotationMap.get(row.finding.id)) : causeCard(row, annotationMap));
+    }
   }
 
   async function load() { const result = await api('GET', '/report'); render(result?.report, result?.annotations); }
