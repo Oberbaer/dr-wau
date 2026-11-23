@@ -44,7 +44,7 @@ main.dr-wau-ui input[type='search'] {
   text-indent: 0;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.homey-web-theme) {
     --accent: #8bdce2;
     --brand-highlight: #65cbd2;
     --brand-line: #65cbd2;
@@ -61,6 +61,8 @@ main.dr-wau-ui input[type='search'] {
     --critical: #ffabb2;
   }
 }
+
+:root.homey-web-theme { color-scheme: light; }
 
 main.dr-wau-ui :is(a, button, input, select, summary, textarea):focus-visible {
   outline: 2px solid var(--accent);

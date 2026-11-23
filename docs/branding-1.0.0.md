@@ -14,7 +14,10 @@ Kontrast beträgt 5,41:1 im hellen und 6,01:1 im dunklen App-Theme.
 Die frühere Live-Messung zeigte im dunklen Homey-Webmodus einen Farbfilter am
 äußeren Frame. Dieser kann die komplette App einschließlich der Bilder umfärben
 und liegt außerhalb ihres Stylesheets. Die neuen App-Farben verwenden keine
-Gegenfilter. Die Darstellung im Homey-Dialog bleibt manuell abzunehmen.
+Gegenfilter. Im als Homey Web erkannten Frame bleibt die helle App-Palette
+aktiv, damit der Host das Thema nur einmal anwendet. Ohne erkennbare Web-Herkunft
+richtet sich die App nach der Betriebssystempräferenz. Der Filter kann das
+Maskottchen weiterhin umfärben. Die Darstellung im Homey-Dialog bleibt manuell abzunehmen.
 
 Diese Änderungen folgen auf `BACKUP PRIVACY PASS` und sind ein separater
 Branding-Commit. Der Branding-Stand `0328f4c` wurde am 3. Oktober 2026 als
