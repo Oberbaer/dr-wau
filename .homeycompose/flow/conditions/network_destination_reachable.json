@@ -1,0 +1,20 @@
+{
+  "title": {
+    "en": "Network destination is writable",
+    "nl": "Netwerkbestemming is beschrijfbaar"
+  },
+  "args": [
+    {
+      "name": "destination",
+      "type": "autocomplete",
+      "title": {
+        "en": "Destination",
+        "nl": "Bestemming"
+      }
+    }
+  ],
+  "titleFormatted": {
+    "en": "Network destination is writable [[destination]]",
+    "nl": "Netwerkbestemming is beschrijfbaar [[destination]]"
+  }
+}

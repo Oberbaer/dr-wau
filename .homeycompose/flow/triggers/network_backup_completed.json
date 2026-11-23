@@ -1,0 +1,46 @@
+{
+  "title": {
+    "en": "Network backup completed",
+    "nl": "Netwerkback-up geslaagd"
+  },
+  "args": [
+    {
+      "name": "destination",
+      "type": "autocomplete",
+      "title": {
+        "en": "Destination",
+        "nl": "Bestemming"
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "name": "destination",
+      "type": "string",
+      "title": {
+        "en": "Destination",
+        "nl": "Bestemming"
+      }
+    },
+    {
+      "name": "filename",
+      "type": "string",
+      "title": {
+        "en": "Filename",
+        "nl": "Bestandsnaam"
+      }
+    },
+    {
+      "name": "bytes",
+      "type": "number",
+      "title": {
+        "en": "Bytes",
+        "nl": "Bytes"
+      }
+    }
+  ],
+  "titleFormatted": {
+    "en": "Network backup completed [[destination]]",
+    "nl": "Netwerkback-up geslaagd [[destination]]"
+  }
+}

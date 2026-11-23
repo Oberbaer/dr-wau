@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <defs>
+    <linearGradient id="petrol" x2=".25" y2="1">
+      <stop stop-color="#03242b"/>
+      <stop offset="1" stop-color="#042c35"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="700" fill="url(#petrol)"/>
+  <image href="../dr-wau.png" x="150" y="0" width="700" height="700"/>
+</svg>
